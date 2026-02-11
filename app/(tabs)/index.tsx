@@ -1,11 +1,13 @@
 import { Image } from "expo-image";
-import { Platform, StyleSheet, Text } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 import { HelloWave } from "@/components/hello-wave";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Link } from "expo-router";
+
+import { Dumbbell } from "lucide-react-native";
 
 export default function HomeScreen() {
   return (
@@ -20,7 +22,10 @@ export default function HomeScreen() {
       <ThemedView className="flex flex-row items-center gap-2">
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
-        <Text className="text-cyan-500 font-bold text-2xl">Living Sports</Text>
+        <View className="flex flex-row items-center gap-2">
+          <Text className="text-cyan-500 font-bold text-2xl">Living Sports</Text>
+          <Dumbbell size={24} color="#84cc16"/>
+        </View>
       </ThemedView>
       <ThemedView className="gap-2 mb-2">
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
