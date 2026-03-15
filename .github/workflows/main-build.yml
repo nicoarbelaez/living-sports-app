@@ -49,14 +49,6 @@ jobs:
             echo "release=false" >> $GITHUB_OUTPUT
           fi
 
-      # 👇 NUEVO PASO
-      - name: Update Expo version
-        if: steps.release.outputs.release == 'true'
-        run: |
-          VERSION=${{ steps.release.outputs.version }}
-          jq ".expo.version = \"$VERSION\"" app.json > tmp.json
-          mv tmp.json app.json
-
       - name: Setup Expo
         if: steps.release.outputs.release == 'true'
         uses: expo/expo-github-action@v8
