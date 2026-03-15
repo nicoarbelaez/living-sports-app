@@ -68,6 +68,7 @@ const LoginScreen = () => {
     >
       <AnimatePresence>
         <MotiText 
+          key="header"
           from={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'timing', duration: 800 }}
@@ -76,7 +77,7 @@ const LoginScreen = () => {
           LIVING SPORT
         </MotiText>
         
-        <View style={styles.content}>
+        <View key="content" style={styles.content}>
           <MotiText 
             from={{ opacity: 0, translateY: 20 }}
             animate={{ 
