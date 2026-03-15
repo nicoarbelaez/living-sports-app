@@ -1,3 +1,10 @@
+# [1.0.0-dev.2](https://github.com/nicoarbelaez/living-sports-app/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2026-03-15)
+
+
+### Features
+
+* set up initial project structure with README, contribution guidelines, and Expo configuration files. ([e02a54f](https://github.com/nicoarbelaez/living-sports-app/commit/e02a54f7e94a230f119c56856a9334f0bc8c9033))
+
 # 1.0.0-dev.1 (2026-03-15)
 
 
