@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Deportes Vivos",
+    "name": "Living Sports ",
     "slug": "living-sports-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,7 +24,11 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "scheme": "living-sports",
     "plugins": [
       "expo-router"
