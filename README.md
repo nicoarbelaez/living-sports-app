@@ -1,50 +1,163 @@
-# Welcome to your Expo app 👋
+# Living Sport - Aplicación móvil (Expo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Living Sport** es una red social fitness: usuarios publican en un feed cómo se sienten, comparten rutinas, crean grupos y compiten en ejercicios. Cada semana se genera un podio con puntos canjeables por recompensas.
 
-## Get started
+## Estado del repositorio
 
-1. Install dependencies
+> [!IMPORTANT]
+> La rama principal de desarrollo es **`develop`** (ya creada). No hagas cambios directamente en `main` ni en `develop`, crea ramas desde `develop` para nuevas funcionalidades.
 
-   ```bash
-   npm install
-   ```
+> [!NOTE]
+> `package.json` contiene scripts útiles (`start`, `android`, `ios`, `web`, `lint`) y dependencias clave para arrancar el proyecto localmente. Revisa dicho archivo antes de levantar el entorno.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Estructura recomendada (breve)
 
 ```bash
-npm run reset-project
+
+/app               # rutas y pantallas (file-based routing)
+/components        # componentes reutilizables
+/providers         # context / providers (auth, theme, supabase, etc.)
+/hooks             # hooks personalizados
+/assets            # imágenes y recursos
+/constants         # constantes de la app (colores, tamaños, rutas)
+/scripts           # scripts de utilidad (reset, migraciones locales)
+
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+> [!TIP]
+> Mantén los componentes atómicos y documenta la API de cada componente con JSDoc/TSDoc para acelerar revisiones.
 
-## Learn more
+## Mockups / diseño
 
-To learn more about developing your project with Expo, look at the following resources:
+Los mockups y wireframes están en
+https://excalidraw.com/#room=fe51052756dd08f952e2,81v6_zqcd2q7A4Hs4ywT_A
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+> [!NOTE]
+> En ese lienzo están los flujos UI y los wireframes para feed, perfil, creación de grupos y flujo de competición.
 
-## Join the community
+## Flujo de trabajo (resumen)
 
-Join our community of developers creating universal apps.
+1. **Base**: parte siempre de `develop`.
+2. **Ramas**:
+   - `feature/<descripcion>` → nuevas funcionalidades.
+   - `hotfix/<descripcion>` → correcciones urgentes.
+   - `chore/<descripcion>` → mantenimiento/no funcional.
+   - `docs/<descripcion>` → documentación.
+3. **Commits**: atómicos, con prefijo (ver sección “Convenciones de commit” abajo).
+4. **Push**: `git push origin feature/<descripcion>`
+5. **Pull Request**: crea PR hacia `develop`. Incluye descripción, pasos para probar y screenshots si aplica. Asigna al menos 1 revisor.
+6. **Merge**: después de la aprobación; preferido: **Squash Merge** para mantener historial limpio.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+> [!IMPORTANT]
+> No trabajar directamente en `develop` ni en `main`. Siempre crea una rama nueva desde `develop`.
+
+## Convenciones de commits (escritura de commits)
+
+Formato recomendado:
+
+```
+
+<tipo>(alcance opcional): descripción breve en inglés
+
+```
+
+**Tipos permitidos y significado:**
+
+- `feat`: nueva funcionalidad para el usuario.
+- `fix`: corrección de bug que afecta al usuario.
+- `perf`: cambios que mejoran el rendimiento.
+- `build`: cambios en build/despliegue o dependencias.
+- `ci`: cambios en pipelines o CI.
+- `docs`: cambios en la documentación.
+- `refactor`: refactor sin cambio de comportamiento.
+- `style`: cambios de formato, tabulaciones, espacios; no afectan funcionalidad.
+- `test`: añadir o modificar tests.
+
+Ejemplos:
+
+```
+
+feat(auth): add Google sign-in
+fix(feed): correct post timestamp
+chore(deps): update expo to ~54.0.33
+
+```
+
+> [!NOTE]
+> Mensajes de commit en **inglés** (consistencia) y descriptivos. Evita mensajes vagos como `fix` o `update` sin contexto.
+
+## Cómo empezar - guía rápida (entorno de pruebas con Expo)
+
+> [!IMPORTANT]
+> Antes de ejecutar: añade un `.env` con las variables requeridas (p. ej. `SUPABASE_URL`, `SUPABASE_ANON_KEY`) y no subas claves al repositorio.
+
+1. Clona y cambia a `develop`:
+
+```bash
+git clone https://github.com/nicoarbelaez/living-sports-app.git
+cd living-sports-app
+git checkout develop
+git pull origin develop
+```
+
+2. Instala dependencias:
+
+```bash
+npm install
+```
+
+3. Crea `.env` (ejemplo):
+
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+> [!CAUTION]
+> Nunca incluyas las keys reales en commits públicos. Usa `.gitignore` para excluir `.env`.
+
+4. Inicia Expo:
+
+```bash
+npx expo start
+```
+
+5. Atajos en la terminal de Expo:
+
+- `a` → abrir en emulador Android
+- `i` → abrir en simulador iOS (macOS)
+- `w` → abrir en web
+
+6. Scripts útiles (desde `package.json`):
+
+```bash
+npm run start        # expo start
+npm run android      # expo start --android
+npm run ios          # expo start --ios
+npm run web          # expo start --web
+npm run lint         # ejecutar linter
+```
+
+## Pruebas y lint
+
+```bash
+npm run lint
+# npm test  (si se configura suite de tests)
+```
+
+> [!TIP]
+> Configura pre-commit hooks (husky) para ejecutar `npm run lint` y tests básicos antes de hacer push.
+
+## Contribuyendo / Enlaces rápidos
+
+- Archivo de contribución: `CONTRIBUTING.md` (contiene flujo Git detallado y convención de commits).
+- Mockups: [https://excalidraw.com/#room=fe51052756dd08f952e2,81v6_zqcd2q7A4Hs4ywT_A](https://excalidraw.com/#room=fe51052756dd08f952e2,81v6_zqcd2q7A4Hs4ywT_A)
+- Repositorio: GitHub.
+
+## Notas finales
+
+> [!WARNING]
+> Si vas a ejecutar pruebas en un emulador, asegúrate de tener las versiones de SDK nativas compatibles con `expo` indicado en `package.json`.
+
+> [!TIP]
+> Documenta en este README las rutas principales dentro de `app/` (por ejemplo: `app/(auth)/login.tsx`, `app/feed/index.tsx`) para que nuevos colaboradores arranquen más rápido.
