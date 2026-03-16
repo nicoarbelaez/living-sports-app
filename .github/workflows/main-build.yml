@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
@@ -65,17 +65,23 @@ jobs:
         id: build-url
         if: steps.release.outputs.release == 'true'
         run: |
-          BUILD_URL=$(eas build:list --platform android --limit 1 --json --non-interactive | jq -r '.[0].artifacts.buildUrl')
+          BUILD_URL=$(eas build:list \
+            --platform android \
+            --status finished \
+            --limit 1 \
+            --json \
+            --non-interactive | jq -r '.[0].artifacts.buildUrl')
+
           echo "url=$BUILD_URL" >> "$GITHUB_OUTPUT"
 
       - name: Download build
         if: steps.build-url.outputs.url != ''
         run: |
-          curl -L -o app-release.aab "${{ steps.build-url.outputs.url }}"
+          curl -L -o living-sports.apk "${{ steps.build-url.outputs.url }}"
 
       - name: Attach build to release
         if: steps.build-url.outputs.url != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.release.outputs.version }}
-          files: app-release.aab
+          files: living-sports.apk
