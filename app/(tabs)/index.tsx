@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, View, Platform, Image, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, View, Platform, Image, StyleSheet, ScrollView } from 'react-native';
 
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +9,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 import { Dumbbell } from 'lucide-react-native';
+
+import Header from "@/components/header";
+import ActivityCard from "@/components/activity-card";
+import PostCard from "@/components/post-card";
 
 export default function HomeScreen() {
   const { session } = useAuth();
@@ -26,32 +30,36 @@ function AuthenticatedHome({ session }: { session: any }) {
   };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.headerImage}
+    <View className="flex-1 bg-gray-100">
+      <Header />
+
+      <ScrollView>
+        <View style={styles.card}>
+          <Text style={styles.emailText}>Signed in as: {session?.user?.email ?? 'User'}</Text>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ActivityCard />
+
+        <PostCard
+          user="Nicolas"
+          time="Hace 2 horas"
+          avatar="https://avatars.githubusercontent.com/u/111522939?v=4"
+          image="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b"
+          text="Hola Chavales! Acabo de completar una carrera de 5 km en 25 minutos. ¡Estoy muy emocionado por mi progreso! #Running #Fitness"
         />
-      }
-    >
-      <ThemedView style={styles.card}>
-        <ThemedText type="title">Welcome back,</ThemedText>
-        <Text style={styles.emailText}>{session?.user?.email ?? 'User'}</Text>
 
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </ThemedView>
-
-      <ThemedView style={styles.section}>
-        <Link href="/modal">
-          <ThemedText type="subtitle" style={styles.linkText}>
-            Go to Modal
-          </ThemedText>
-        </Link>
-      </ThemedView>
-    </ParallaxScrollView>
+        <PostCard
+          user="Cristiano"
+          time="Hace 1 minuto"
+          avatar="https://instagram.fclo1-4.fna.fbcdn.net/v/t51.2885-19/472007201_1142000150877579_994350541752907763_n.jpg?stp=dst-jpg_s150x150_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=instagram.fclo1-4.fna.fbcdn.net&_nc_cat=1&_nc_oc=Q6cZ2QH68d2Kz8PnedVxySy8djVyfp9t2ozmrCEq4STgGoB0MBZEtUDT8gHUKh0GYMNt7nE&_nc_ohc=jdw21VYLqxoQ7kNvwF750-d&_nc_gid=mUOfs5PHW-jQkreYRt7mwA&edm=AOQ1c0wBAAAA&ccb=7-5&oh=00_AfyzylhMjG7XJY2h8epzAVDv2q66eJt-Nxv2D3JU9-QkJA&oe=69BCFF1E&_nc_sid=8b3546"
+          image="https://i.ytimg.com/vi/D61hfPHcLKc/hq720.jpg"
+          text="Es falso, no me lesioné, solo estaba descansando después de un entrenamiento intenso. #Fitness #NoPainNoGain"
+        />
+      </ScrollView>
+    </View>
   );
 }
 

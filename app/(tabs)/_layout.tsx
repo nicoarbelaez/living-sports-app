@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Compass } from 'lucide-react-native';
+import { Home, Users, User, Compass } from 'lucide-react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
@@ -34,7 +34,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'HOME',
           tabBarIcon: ({ color, size }) => (
             <Home color={color} size={size ?? 24} />
           ),
@@ -42,11 +42,21 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="explore"
+        name="comunidades"
         options={{
-          title: 'Explore',
+          title: 'COMUNIDADES',
           tabBarIcon: ({ color, size }) => (
-            <Compass color={color} size={size ?? 24} />
+            <Users color={color} size={size ?? 24} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'PERFIL',
+          tabBarIcon: ({ color, size }) => (
+            <User color={color} size={size ?? 24} />
           ),
         }}
       />
