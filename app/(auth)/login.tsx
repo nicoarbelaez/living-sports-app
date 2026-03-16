@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform, Pressable } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { Github, Mail } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText, AnimatePresence } from 'moti';
 
 const LoginScreen = () => {
+  WebBrowser.maybeCompleteAuthSession();
   const [googlePressed, setGooglePressed] = useState(false);
   const [githubPressed, setGithubPressed] = useState(false);
 
@@ -21,15 +23,16 @@ const LoginScreen = () => {
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          skipBrowserRedirect: false,
+          skipBrowserRedirect: true,
         }
       });
       
       if (error) {
         console.error('--- SUPABASE GOOGLE OAUTH ERROR ---');
         console.error('Error Object:', JSON.stringify(error, null, 2));
-      } else {
-        console.log('Supabase Initial Response:', data);
+      } else if (data?.url) {
+        console.log('Opening Google auth URL...');
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
       }
     } catch (err) {
       console.error('Caught exception during Google Login:', err);
@@ -46,15 +49,16 @@ const LoginScreen = () => {
         provider: 'github',
         options: {
           redirectTo: redirectUrl,
-          skipBrowserRedirect: false,
+          skipBrowserRedirect: true,
         }
       });
       
       if (error) {
         console.error('--- SUPABASE GITHUB OAUTH ERROR ---');
         console.error('Error Object:', JSON.stringify(error, null, 2));
-      } else {
-        console.log('Supabase Initial Response:', data);
+      } else if (data?.url) {
+        console.log('Opening GitHub auth URL...');
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
       }
     } catch (err) {
       console.error('Caught exception during GitHub Login:', err);
