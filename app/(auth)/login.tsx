@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform, Pressable } from 'react-native';
-import { supabase } from '../../lib/supabase';
+import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Github, Mail } from 'lucide-react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText, AnimatePresence } from 'moti';
+import { supabase } from '@/lib/supabase';
 
 const LoginScreen = () => {
   WebBrowser.maybeCompleteAuthSession();

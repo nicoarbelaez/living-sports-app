@@ -1,8 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity, View, Platform, Image, StyleSheet, ScrollView } from 'react-native';
-
-import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
@@ -10,9 +7,11 @@ import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 import { Dumbbell } from 'lucide-react-native';
 
-import Header from "@/components/header";
 import ActivityCard from "@/components/activity-card";
+import Header from "@/components/header";
 import PostCard from "@/components/post-card";
+import { useAuth } from '@/providers/AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { session } = useAuth();
