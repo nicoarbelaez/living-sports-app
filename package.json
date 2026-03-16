@@ -1,7 +1,7 @@
 {
   "name": "living-sports-app",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.0-dev.3",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",

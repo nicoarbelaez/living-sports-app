@@ -1,3 +1,10 @@
+# [1.0.0-dev.3](https://github.com/nicoarbelaez/living-sports-app/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2026-03-16)
+
+
+### Bug Fixes
+
+* Se agrego el package en el expo android y se refactorizo lot github actions ([7dd0dac](https://github.com/nicoarbelaez/living-sports-app/commit/7dd0dac1f1141846a52279ffa49672844be739ae))
+
 # [1.0.0-dev.2](https://github.com/nicoarbelaez/living-sports-app/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2026-03-15)
 
 
