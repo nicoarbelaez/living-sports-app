@@ -15,6 +15,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "dev.arbelaeznicolas.livingsportsapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,14 +25,19 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "scheme": "living-sports",
-    "plugins": [
-      "expo-router"
-    ]
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a8cbff15-35ae-41ba-ae2d-1b1a0dc694c4"
+      }
+    },
+    "owner": "arbelaeznicolas"
   }
 }
