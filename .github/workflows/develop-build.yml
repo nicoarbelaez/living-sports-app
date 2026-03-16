@@ -35,6 +35,35 @@ jobs:
         run: npm run lint
 
       - name: Generate prerelease
+        id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: |
+          OUTPUT=$(npx semantic-release 2>&1) || true
+          echo "$OUTPUT"
+
+          if echo "$OUTPUT" | grep -q "Published release"; then
+            VERSION=$(echo "$OUTPUT" | grep -oP 'Published release \K[0-9]+\.[0-9]+\.[0-9]+')
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update package.json + app.json
+        if: steps.release.outputs.release == 'true'
+        run: |
+          VERSION=${{ steps.release.outputs.version }}
+
+          # Actualiza package.json.version
+          jq ".version = \"$VERSION\"" package.json > tmp.package.json && mv tmp.package.json package.json
+
+          # Actualiza expo.version en app.json
+          jq ".expo.version = \"$VERSION\"" app.json > tmp.app.json && mv tmp.app.json app.json
+
+          # Commit and push changes back to develop
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add package.json app.json
+          git commit -m "chore: bump version to $VERSION [skip ci]" || echo "no changes to commit"
+          git push origin develop
