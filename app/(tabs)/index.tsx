@@ -18,6 +18,38 @@ export default function HomeScreen() {
           source={require("@/assets/images/partial-react-logo.png")}
           style={styles.reactLogo}
         />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
+        <Image
+          source={require("@/assets/images/partial-react-logo.png")}
+          style={styles.reactLogo}
+        />
       }>
       <ThemedView className="flex flex-row items-center gap-2">
         <ThemedText type="title">Welcome!</ThemedText>
