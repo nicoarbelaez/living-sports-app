@@ -1,3 +1,11 @@
+# [1.1.0-dev.1](https://github.com/nicoarbelaez/living-sports-app/compare/v1.0.0...v1.1.0-dev.1) (2026-03-16)
+
+
+### Features
+
+* agregar navegación de vistas (home, comunidades y perfil) y eliminar la pantalla de exploración ([ab92754](https://github.com/nicoarbelaez/living-sports-app/commit/ab92754c4905c5531671d1e5f30c933766b5d6f4))
+* Implementar una interfaz de usuario para la pantalla de inicio con tarjeta de actividad y feed de la comunidad. ([fe866e1](https://github.com/nicoarbelaez/living-sports-app/commit/fe866e1a12dace6d9fa0d4feed555363d0fb6011))
+
 # [1.0.0-dev.4](https://github.com/nicoarbelaez/living-sports-app/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2026-03-16)
 
 
