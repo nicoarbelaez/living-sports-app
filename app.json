@@ -30,7 +30,7 @@
       "android",
       "web"
     ],
-    "scheme": "living-sports",
+    "scheme": "livingsports",
     "plugins": [
       "expo-router",
       "expo-sqlite"
