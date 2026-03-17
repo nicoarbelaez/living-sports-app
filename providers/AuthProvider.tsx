@@ -6,13 +6,14 @@ import { useRouter } from 'expo-router';
 type AuthContextType = {
   session: Session | null;
   isLoading: boolean;
+  setIsLoading: (isLoading: boolean) => void;
 };
 
 interface Props {
   children: React.ReactNode;
 }
 
-const AuthContext = createContext<AuthContextType>({ session: null, isLoading: true });
+const AuthContext = createContext<AuthContextType>({ session: null, isLoading: true, setIsLoading: () => {} });
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -71,7 +72,7 @@ export const AuthProvider = ({ children }: Props) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, isLoading }}>
+    <AuthContext.Provider value={{ session, isLoading, setIsLoading }}>
       {children}
     </AuthContext.Provider>
   );

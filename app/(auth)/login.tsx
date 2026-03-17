@@ -11,7 +11,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { makeRedirectUri } from "expo-auth-session";
 
 const LoginScreen = () => {
-  const { session } = useAuth();
+  const { session, isLoading } = useAuth();
   const redirectTo = makeRedirectUri();
   console.log({ redirectTo });
 
