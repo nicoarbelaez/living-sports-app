@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useRouter, useSegments } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 type AuthContextType = {
   session: Session | null;
@@ -19,7 +19,6 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: Props) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export const AuthProvider = ({ children }: Props) => {
           setSession(session);
 
           if (!session) {
-            router.replace("/(auth)/login");
+            router.replace("/login");
           }
         }
       } finally {
@@ -59,9 +58,9 @@ export const AuthProvider = ({ children }: Props) => {
       setIsLoading(false);
 
       if (!session) {
-        router.replace("/(auth)/login");
+        router.replace("/login");
       }else{
-        router.replace("/(tabs)");
+        router.replace("/");
       }
     });
 
@@ -69,21 +68,7 @@ export const AuthProvider = ({ children }: Props) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [router]);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!session && !inAuthGroup) {
-      // Redirect to login if user is not authenticated
-      router.replace('/(auth)/login');
-    } else if (session && inAuthGroup) {
-      // Redirect away from login if user is authenticated
-      router.replace('/(tabs)');
-    }
-  }, [session, segments, isLoading, router]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, isLoading }}>
