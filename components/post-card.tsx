@@ -1,5 +1,7 @@
-import { View, Text, Image } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import { Heart, MessageCircle } from "lucide-react-native";
+import CommentsSheet from "./comments-sheet";
 
 interface PostCardProps {
   user: string;
@@ -16,6 +18,8 @@ export default function PostCard({
   image,
   text,
 }: PostCardProps) {
+  const [showComments, setShowComments] = useState(false);
+
   return (
     <View className="mx-4 mt-3 bg-white rounded-2xl shadow overflow-hidden">
       
@@ -40,12 +44,19 @@ export default function PostCard({
           <Text>34</Text>
         </View>
 
-        <View className="flex-row items-center gap-1">
+        <TouchableOpacity 
+          className="flex-row items-center gap-1"
+          onPress={() => setShowComments(true)}
+        >
           <MessageCircle size={18} color="#6b7280" />
           <Text>2</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
+      <CommentsSheet 
+        isVisible={showComments} 
+        onClose={() => setShowComments(false)} 
+      />
     </View>
   );
 }
