@@ -1,162 +1,91 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Platform, Pressable } from 'react-native';
-import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
-import { Github, Mail } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, MotiText, AnimatePresence } from 'moti';
-import { supabase } from '@/lib/supabase';
+import React from "react";
+import { View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { Github, Mail } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { MotiView, MotiText, AnimatePresence } from "moti";
+import { supabase } from "@/lib/supabase";
+import AuthButton from "@/components/auth-button";
+import { Provider } from "@supabase/supabase-js";
+import { useAuth } from "@/providers/AuthProvider";
+import { makeRedirectUri } from "expo-auth-session";
 
 const LoginScreen = () => {
-  WebBrowser.maybeCompleteAuthSession();
-  const [googlePressed, setGooglePressed] = useState(false);
-  const [githubPressed, setGithubPressed] = useState(false);
+  const { session } = useAuth();
+  const redirectTo = makeRedirectUri();
+  console.log({ redirectTo });
 
-  const handleGoogleLogin = async () => {
+  const handleProviderLogin = async (provider: Provider) => {
     try {
-      const redirectUrl = Linking.createURL('/');
-      console.log('--- DIAGNOSTICS: Google Login ---');
-      console.log('Redirecting to:', redirectUrl);
-      
+      const redirectTo = makeRedirectUri();
+
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider,
         options: {
-          redirectTo: redirectUrl,
+          redirectTo,
           skipBrowserRedirect: true,
-        }
+        },
       });
-      
+
       if (error) {
-        console.error('--- SUPABASE GOOGLE OAUTH ERROR ---');
-        console.error('Error Object:', JSON.stringify(error, null, 2));
-      } else if (data?.url) {
-        console.log('Opening Google auth URL...');
-        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        console.error("OAuth error:", error);
+        return;
+      }
+
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data?.url ?? "", redirectTo);
+
+        if (result.type === "success") {
+          await supabase.auth.getSession();
+        } else {
+        }
       }
     } catch (err) {
-      console.error('Caught exception during Google Login:', err);
-    }
-  };
-
-  const handleGithubLogin = async () => {
-    try {
-      const redirectUrl = Linking.createURL('/');
-      console.log('--- DIAGNOSTICS: GitHub Login ---');
-      console.log('Redirecting to:', redirectUrl);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: true,
-        }
-      });
-      
-      if (error) {
-        console.error('--- SUPABASE GITHUB OAUTH ERROR ---');
-        console.error('Error Object:', JSON.stringify(error, null, 2));
-      } else if (data?.url) {
-        console.log('Opening GitHub auth URL...');
-        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-      }
-    } catch (err) {
-      console.error('Caught exception during GitHub Login:', err);
+      console.error("OAuth login error:", err);
     }
   };
 
   return (
-    <LinearGradient
-      colors={['#F7F7F7', '#FFFFFF']}
-      style={styles.container}
-    >
+    <LinearGradient colors={["#F7F7F7", "#FFFFFF"]} className="flex-1 justify-between p-6">
       <AnimatePresence>
-        <MotiText 
-          key="header"
-          from={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'timing', duration: 800 }}
-          style={styles.headerText}
-        >
-          LIVING SPORT
-        </MotiText>
-        
-        <View key="content" style={styles.content}>
-          <MotiText 
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ 
-              opacity: 1, 
-              translateY: 0,
-              scale: [1, 1.03, 1]
-            }}
-            transition={{
-              opacity: { type: 'timing', duration: 800, delay: 0 },
-              translateY: { type: 'timing', duration: 800, delay: 0 },
-              scale: {
-                type: 'timing',
-                duration: 2000,
-                loop: true,
-              }
-            }}
-            style={styles.title}
-          >
-            Living Sports
-          </MotiText>
-          
-          <MotiText 
+        <View key="content" className="flex justify-center items-center h-full">
+          <MotiText
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'spring', delay: 200 }}
-            style={styles.subtitle}
-          >
+            transition={{ type: "spring", delay: 200 }}
+            className="text-4xl font-bold text-center mb-8">
+            Living Sports {session?.user?.email}
+          </MotiText>
+
+          <MotiText
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "spring", delay: 200 }}
+            className="text-lg font-semibold text-center mb-8">
             Sign in to your account to continue
           </MotiText>
 
-          <MotiView 
+          <MotiView
             from={{ opacity: 0, translateY: 40 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'spring', delay: 300 }}
-            style={styles.cardContainer}
-          >
-            <View style={styles.buttonContainer}>
-              <MotiView
-                animate={{ scale: googlePressed ? 0.95 : 1 }}
-                transition={{ 
-                  type: 'spring', 
-                  damping: 10, 
-                  mass: 0.5 
-                }}
-              >
-                <Pressable 
-                  onPressIn={() => setGooglePressed(true)}
-                  onPressOut={() => setGooglePressed(false)}
-                  onPress={handleGoogleLogin}
-                >
-                  <View style={styles.button}>
-                    <Mail color="#000000" size={20} style={styles.icon} />
-                    <MotiText style={styles.buttonText}>Continue with Google</MotiText>
-                  </View>
-                </Pressable>
-              </MotiView>
+            transition={{ type: "spring", delay: 300 }}
+            className="w-full bg-white rounded-2xl p-6 border border-gray-200">
+            <View className="w-full gap-4">
+              <AuthButton
+                icon={<Mail color="#000000" size={20} />}
+                text="Continue with Google"
+                onPress={() => handleProviderLogin("google")}
+                containerClassName="bg-[#F2F2F7]"
+                textClassName="text-black"
+              />
 
-              <MotiView
-                animate={{ scale: githubPressed ? 0.95 : 1 }}
-                transition={{ 
-                  type: 'spring', 
-                  damping: 10, 
-                  mass: 0.5 
-                }}
-              >
-                <Pressable 
-                  onPressIn={() => setGithubPressed(true)}
-                  onPressOut={() => setGithubPressed(false)}
-                  onPress={handleGithubLogin}
-                >
-                  <View style={[styles.button, styles.githubButton]}>
-                    <Github color="#FFFFFF" size={20} style={styles.icon} />
-                    <MotiText style={[styles.buttonText, styles.githubButtonText]}>Continue with GitHub</MotiText>
-                  </View>
-                </Pressable>
-              </MotiView>
+              <AuthButton
+                icon={<Github color="#FFFFFF" size={20} />}
+                text="Continue with GitHub"
+                onPress={() => handleProviderLogin("github")}
+                containerClassName="bg-black"
+                textClassName="text-white"
+              />
             </View>
           </MotiView>
         </View>
@@ -165,90 +94,4 @@ const LoginScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'space-between',
-  },
-  headerText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#8E8E93',
-    letterSpacing: 2,
-    textAlign: 'center',
-    marginTop: Platform.OS === 'ios' ? 60 : 40,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8E8E93',
-    marginBottom: 48,
-    textAlign: 'center',
-  },
-  cardContainer: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#E1E1E1',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.05,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 5,
-      },
-      web: {
-        boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
-      }
-    }),
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: 16,
-  },
-  button: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  icon: {
-    marginRight: 12,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  githubButton: {
-    backgroundColor: '#000000',
-  },
-  githubButtonText: {
-    color: '#FFFFFF',
-  },
-});
-
-
 export default LoginScreen;
-
