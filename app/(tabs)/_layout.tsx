@@ -15,14 +15,11 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
 
-        // nuevo comportamiento
         tabBarButton: HapticTab,
 
-        // colores dinámicos
         tabBarActiveTintColor: theme.tint,
         tabBarInactiveTintColor: theme.icon,
 
-        // estilos del tab bar con soporte dark mode
         tabBarStyle: {
           backgroundColor: theme.background,
           borderTopColor: 'transparent',
