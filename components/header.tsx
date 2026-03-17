@@ -1,15 +1,37 @@
-import { View, Text } from "react-native";
-import { Search, Bell } from "lucide-react-native";
+import { View } from "react-native";
+import { Search, Bell, Settings } from "lucide-react-native";
 
-export default function Header() {
-  return (
-    <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-gray-200">
-      <Text className="text-xl font-bold text-black">Living Sport</Text>
+type Props = {
+  screen: "home" | "comunidades" | "profile";
+};
 
-      <View className="flex-row gap-5">
+export default function HeaderActions({ screen }: Props) {
+  if (screen === "home") {
+    return (
+      <View style={{ flexDirection: "row", gap: 15 }}>
         <Search size={22} color="#374151" />
         <Bell size={22} color="#374151" />
       </View>
-    </View>
-  );
+    );
+  }
+
+  if (screen === "comunidades") {
+    return (
+      <View style={{ flexDirection: "row", gap: 15 }}>
+        <Search size={22} color="#374151" />
+        <Bell size={22} color="#374151" />
+      </View>
+    );
+  }
+
+  if (screen === "profile") {
+    return (
+      <View style={{ flexDirection: "row", gap: 15 }}>
+        <Settings size={22} color="#374151" />
+        <Bell size={22} color="#374151" />  
+      </View>
+    );
+  }
+
+  return null;
 }

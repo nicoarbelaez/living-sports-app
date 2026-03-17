@@ -1,21 +1,23 @@
 import { Tabs } from "expo-router";
 import { Home, Users, User } from "lucide-react-native";
+import HeaderActions from "@/components/header";
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
         tabBarActiveTintColor: "#2563eb",
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{
+        options={{  
           title: "HOME",
           tabBarIcon: ({ color, size }) => (
             <Home size={size} color={color} />
           ),
+          headerRight: () => <HeaderActions screen="home" />,
         }}
       />
 
@@ -26,6 +28,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Users size={size} color={color} />
           ),
+          headerRight: () => <HeaderActions screen="comunidades" />,
         }}
       />
 
@@ -36,6 +39,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <User size={size} color={color} />
           ),
+          headerRight: () => <HeaderActions screen="profile" />,
         }}
       />
     </Tabs>
