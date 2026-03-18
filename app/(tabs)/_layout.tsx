@@ -1,20 +1,39 @@
-import { Tabs } from "expo-router";
-import { Home, Users, User } from "lucide-react-native";
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { Home, Users, User, Compass } from 'lucide-react-native';
 
-export default function TabLayout() {
+import { HapticTab } from '@/components/haptic-tab';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+export default function TabsLayout() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? 'light'];
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#2563eb",
+
+        tabBarButton: HapticTab,
+
+        tabBarActiveTintColor: theme.tint,
+        tabBarInactiveTintColor: theme.icon,
+
+        tabBarStyle: {
+          backgroundColor: theme.background,
+          borderTopColor: 'transparent',
+          elevation: 0,
+          shadowOpacity: 0,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "HOME",
+          title: 'HOME',
           tabBarIcon: ({ color, size }) => (
-            <Home size={size} color={color} />
+            <Home color={color} size={size ?? 24} />
           ),
         }}
       />
@@ -22,9 +41,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="comunidades"
         options={{
-          title: "COMUNIDADES",
+          title: 'COMUNIDADES',
           tabBarIcon: ({ color, size }) => (
-            <Users size={size} color={color} />
+            <Users color={color} size={size ?? 24} />
           ),
         }}
       />
@@ -32,9 +51,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "PERFIL",
+          title: 'PERFIL',
           tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
+            <User color={color} size={size ?? 24} />
           ),
         }}
       />
