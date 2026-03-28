@@ -1,7 +1,8 @@
 import "@/global.css";
-import { Stack } from "expo-router";
+import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import { useFonts } from "expo-font";
+import React, { useEffect } from "react";
 import "react-native-reanimated";
 import * as WebBrowser from "expo-web-browser";
 
@@ -18,6 +19,18 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [loaded] = useFonts({
+  })
+
+  useEffect(()=> {
+    if(loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded])
+
+  if(!loaded) {
+    return null;
+  }
 
   return (
     <ScrollProvider>
