@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 
 type AuthContextType = {
   session: Session | null;
@@ -13,7 +13,11 @@ interface Props {
   children: React.ReactNode;
 }
 
-const AuthContext = createContext<AuthContextType>({ session: null, isLoading: true, setIsLoading: () => {} });
+const AuthContext = createContext<AuthContextType>({
+  session: null,
+  isLoading: true,
+  setIsLoading: () => {},
+});
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -21,6 +25,7 @@ export const AuthProvider = ({ children }: Props) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const segments = useSegments();
 
   useEffect(() => {
     let isMounted = true;
@@ -40,7 +45,7 @@ export const AuthProvider = ({ children }: Props) => {
           setSession(session);
 
           if (!session) {
-            router.replace("/login");
+            router.replace('/login');
           }
         }
       } finally {
@@ -59,9 +64,9 @@ export const AuthProvider = ({ children }: Props) => {
       setIsLoading(false);
 
       if (!session) {
-        router.replace("/login");
-      }else{
-        router.replace("/");
+        router.replace('/login');
+      } else {
+        router.replace('/');
       }
     });
 
@@ -69,7 +74,7 @@ export const AuthProvider = ({ children }: Props) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [router, segments]);
 
   return (
     <AuthContext.Provider value={{ session, isLoading, setIsLoading }}>

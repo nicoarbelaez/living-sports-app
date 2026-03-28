@@ -5,6 +5,6 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ['.agents/*', '.husky/*', '.expo/*', '.vscode/*', 'dist/*', 'build/*', 'node_modules/*', '*.config.js', 'package-lock.json', 'pnpm-lock.yaml'],
   },
 ]);

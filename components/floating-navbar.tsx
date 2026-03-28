@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ComponentProps } from 'react';
 import { View } from 'react-native';
 import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -12,7 +12,11 @@ import { useScrollContext } from '@/providers/scroll-context';
 cssInterop(OriginalMotiPressable, { className: 'style' });
 
 // Add TypeScript support for className
-const MotiPressable = OriginalMotiPressable as any;
+type MotiPressableProps = ComponentProps<typeof OriginalMotiPressable> & {
+  className?: string;
+};
+
+const MotiPressable = OriginalMotiPressable as React.FC<MotiPressableProps>;
 
 export type FloatingNavbarProps = MaterialTopTabBarProps & {
   showPlusBottom?: boolean;
@@ -26,8 +30,8 @@ export function FloatingNavbar({
 }: FloatingNavbarProps) {
   const insets = useSafeAreaInsets();
   const { shouldHideNavbar } = useScrollContext();
-  
-  const onTabPress = (route: any, isFocused: boolean) => {
+
+  const onTabPress = (route: (typeof state.routes)[0], isFocused: boolean) => {
     const event = navigation.emit({
       type: 'tabPress',
       target: route.key,
@@ -53,7 +57,7 @@ export function FloatingNavbar({
   };
 
   return (
-    <MotiView 
+    <MotiView
       className="absolute bottom-6 left-6 right-6 z-30 flex-row justify-center"
       style={{ marginBottom: insets.bottom > 0 ? insets.bottom / 2 : 0 }}
       animate={{
@@ -67,10 +71,8 @@ export function FloatingNavbar({
         mass: 1,
       }}
     >
-      <View 
-        className="bg-white/95 dark:bg-gray-800/95 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-around items-center px-6 w-full"
-      >
-        {state.routes.map((route: any, index: number) => {
+      <View className="bg-white/95 dark:bg-gray-800/95 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-around items-center px-6 w-full">
+        {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const iconName = getIconName(route.name);
 
@@ -80,7 +82,7 @@ export function FloatingNavbar({
             <React.Fragment key={route.key}>
               <MotiPressable
                 onPress={() => onTabPress(route, isFocused)}
-                animate={({ hovered, pressed }: any) => {
+                animate={({ hovered, pressed }) => {
                   'worklet';
                   return {
                     scale: hovered || pressed ? 1.15 : 1,
@@ -89,16 +91,16 @@ export function FloatingNavbar({
                 }}
                 className="p-2"
               >
-                <MaterialIcons 
+                <MaterialIcons
                   name={iconName}
-                  size={30} 
-                  color={isFocused ? "#0a7ea4" : "#9BA1A6"} 
+                  size={30}
+                  color={isFocused ? '#0a7ea4' : '#9BA1A6'}
                 />
               </MotiPressable>
 
               {showPlus && (
                 <MotiPressable
-                  animate={({ hovered, pressed }: any) => {
+                  animate={({ hovered, pressed }) => {
                     'worklet';
                     return {
                       scale: hovered || pressed ? 1.1 : 1,

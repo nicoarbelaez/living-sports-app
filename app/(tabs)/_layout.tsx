@@ -5,9 +5,6 @@ import { FloatingNavbar } from '@/components/floating-navbar';
 import { MaterialTopTabs } from '@/components/swipable-tabs';
 
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
-
   return (
     <MaterialTopTabs
       tabBar={(props) => <FloatingNavbar {...props} />}

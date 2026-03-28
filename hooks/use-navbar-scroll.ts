@@ -13,10 +13,13 @@ export function useNavbarScroll() {
     }, [resetNavbar])
   );
 
-  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offset = event.nativeEvent.contentOffset.y;
-    handleScroll(offset);
-  }, [handleScroll]);
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offset = event.nativeEvent.contentOffset.y;
+      handleScroll(offset);
+    },
+    [handleScroll]
+  );
 
   return { onScroll };
 }

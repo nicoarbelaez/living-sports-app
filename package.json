@@ -7,7 +7,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "eslint app components providers hooks lib constants",
+    "format": "prettier --write \"{app,components,providers,hooks,lib,constants}/**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "prepare": "husky"
   },
   "release": {
     "branches": [
@@ -92,9 +94,22 @@
     "babel-preset-expo": "~54.0.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "lint-staged": {
+    "{app,components,providers,hooks,lib,constants}/**/*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "{app,components,providers,hooks,lib,constants}/**/*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
 }

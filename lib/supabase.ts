@@ -13,4 +13,3 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
     detectSessionInUrl: Platform.OS === 'web',
   },
 });
-
