@@ -4,12 +4,8 @@ import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { MotiPressable as OriginalMotiPressable } from 'moti/interactions';
-import { cssInterop } from 'nativewind';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScrollContext } from '@/providers/scroll-context';
-
-// Map className to style for MotiPressable
-cssInterop(OriginalMotiPressable, { className: 'style' });
 
 // Add TypeScript support for className
 type MotiPressableProps = ComponentProps<typeof OriginalMotiPressable> & {
@@ -58,7 +54,7 @@ export function FloatingNavbar({
 
   return (
     <MotiView
-      className="absolute bottom-6 left-6 right-6 z-30 flex-row justify-center"
+      className="absolute right-6 bottom-6 left-6 z-30 flex-row justify-center"
       style={{ marginBottom: insets.bottom > 0 ? insets.bottom / 2 : 0 }}
       animate={{
         translateY: shouldHideNavbar ? 150 : 0,
@@ -71,7 +67,7 @@ export function FloatingNavbar({
         mass: 1,
       }}
     >
-      <View className="bg-white/95 dark:bg-gray-800/95 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-around items-center px-6 w-full">
+      <View className="w-full flex-row items-center justify-around rounded-full border border-gray-100 bg-white/95 p-2 px-6 shadow-2xl dark:border-gray-700 dark:bg-gray-800/95">
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const iconName = getIconName(route.name);
@@ -106,7 +102,7 @@ export function FloatingNavbar({
                       scale: hovered || pressed ? 1.1 : 1,
                     };
                   }}
-                  className="bg-[#0a7ea4] rounded-2xl p-4 shadow-xl shadow-[#0a7ea4]/30 -mt-12 border-4 border-white dark:border-gray-800"
+                  className="-mt-12 rounded-2xl border-4 border-white bg-[#0a7ea4] p-4 shadow-xl shadow-[#0a7ea4]/30 dark:border-gray-800"
                   onPress={() => {
                     // Action button logic
                     console.log('Action Pressed');
