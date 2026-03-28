@@ -14,9 +14,16 @@ cssInterop(OriginalMotiPressable, { className: 'style' });
 // Add TypeScript support for className
 const MotiPressable = OriginalMotiPressable as any;
 
-export type FloatingNavbarProps = BottomTabBarProps;
+export type FloatingNavbarProps = BottomTabBarProps & {
+  showPlusBottom?: boolean;
+};
 
-export function FloatingNavbar({ state, descriptors, navigation }: FloatingNavbarProps) {
+export function FloatingNavbar({
+  state,
+  descriptors,
+  navigation,
+  showPlusBottom = false,
+}: FloatingNavbarProps) {
   const insets = useSafeAreaInsets();
   const { shouldHideNavbar } = useScrollContext();
   
@@ -61,13 +68,13 @@ export function FloatingNavbar({ state, descriptors, navigation }: FloatingNavba
       }}
     >
       <View 
-        className="bg-white/95 dark:bg-gray-800/95 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-between items-center px-6 w-full"
+        className="bg-white/95 dark:bg-gray-800/95 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-around items-center px-6 w-full"
       >
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const iconName = getIconName(route.name);
-          
-          const showPlus = index === 1;
+
+          const showPlus = showPlusBottom ? index === 1 : false;
 
           return (
             <React.Fragment key={route.key}>
@@ -84,7 +91,7 @@ export function FloatingNavbar({ state, descriptors, navigation }: FloatingNavba
               >
                 <MaterialIcons 
                   name={iconName}
-                  size={26} 
+                  size={30} 
                   color={isFocused ? "#0a7ea4" : "#9BA1A6"} 
                 />
               </MotiPressable>
