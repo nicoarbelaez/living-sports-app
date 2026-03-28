@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode, useState } from 'react';
 import { View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Github, Mail } from 'lucide-react-native';
@@ -10,14 +10,23 @@ import { Provider } from '@supabase/supabase-js';
 import { useAuth } from '@/providers/AuthProvider';
 import { makeRedirectUri } from 'expo-auth-session';
 
+interface LoginButtonProps {
+  provider: Provider;
+  icon: ReactNode;
+  text: string;
+  containerClassName: string;
+  textClassName: string;
+}
+
 const LoginScreen = () => {
   const { session } = useAuth();
-  const redirectTo = makeRedirectUri();
-  console.log({ redirectTo });
+  const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
   const handleProviderLogin = async (provider: Provider) => {
     try {
+      setLoadingProvider(provider);
       const redirectTo = makeRedirectUri();
+      console.log(`[OAuth] Using redirect URI: ${redirectTo}`);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -28,21 +37,45 @@ const LoginScreen = () => {
       });
 
       if (error) {
-        console.error('OAuth error:', error);
+        console.error(`[OAuth] Error starting ${provider} flow:`, error.message);
+        setLoadingProvider(null);
         return;
       }
 
       if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(data?.url ?? '', redirectTo);
-
-        if (result.type === 'success') {
-          await supabase.auth.getSession();
-        } else {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        if (result.type !== 'success') {
+          console.log('[OAuth] Browser closed before success.');
+          setLoadingProvider(null);
         }
+      } else {
+        console.error('[OAuth] No URL returned from signInWithOAuth');
+        setLoadingProvider(null);
       }
     } catch (err) {
-      console.error('OAuth login error:', err);
+      console.error('[OAuth] Error in handleProviderLogin:', err);
+      setLoadingProvider(null);
     }
+  };
+
+  const LoginButton = ({
+    provider,
+    icon,
+    text,
+    containerClassName,
+    textClassName,
+  }: LoginButtonProps) => {
+    return (
+      <AuthButton
+        icon={icon}
+        text={text}
+        onPress={() => handleProviderLogin(provider)}
+        loading={loadingProvider === provider}
+        disabled={loadingProvider !== null && loadingProvider !== provider}
+        containerClassName={containerClassName}
+        textClassName={textClassName}
+      />
+    );
   };
 
   return (
@@ -55,7 +88,7 @@ const LoginScreen = () => {
             transition={{ type: 'spring', delay: 200 }}
             className="text-4xl font-bold text-center mb-8"
           >
-            Living Sports {session?.user?.email}
+            Living Sports
           </MotiText>
 
           <MotiText
@@ -64,7 +97,7 @@ const LoginScreen = () => {
             transition={{ type: 'spring', delay: 200 }}
             className="text-lg font-semibold text-center mb-8"
           >
-            Sign in to your account to continue
+            Inicia sesión para continuar
           </MotiText>
 
           <MotiView
@@ -74,18 +107,18 @@ const LoginScreen = () => {
             className="w-full bg-white rounded-2xl p-6 border border-gray-200"
           >
             <View className="w-full gap-4">
-              <AuthButton
+              <LoginButton
+                provider="google"
                 icon={<Mail color="#000000" size={20} />}
-                text="Continue with Google"
-                onPress={() => handleProviderLogin('google')}
+                text="Continuar con Google"
                 containerClassName="bg-[#F2F2F7]"
                 textClassName="text-black"
               />
 
-              <AuthButton
+              <LoginButton
+                provider="github"
                 icon={<Github color="#FFFFFF" size={20} />}
-                text="Continue with GitHub"
-                onPress={() => handleProviderLogin('github')}
+                text="Continuar con GitHub"
                 containerClassName="bg-black"
                 textClassName="text-white"
               />

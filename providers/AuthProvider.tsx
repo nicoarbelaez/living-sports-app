@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useRouter, useSegments } from 'expo-router';
 
 type AuthContextType = {
   session: Session | null;
@@ -24,9 +23,6 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: Props) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const segments = useSegments();
-
   useEffect(() => {
     let isMounted = true;
 
@@ -35,7 +31,7 @@ export const AuthProvider = ({ children }: Props) => {
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error(error);
+          console.error('[Auth] Initial session error:', error);
           return;
         }
 
@@ -43,10 +39,6 @@ export const AuthProvider = ({ children }: Props) => {
 
         if (isMounted) {
           setSession(session);
-
-          if (!session) {
-            router.replace('/login');
-          }
         }
       } finally {
         if (isMounted) {
@@ -59,14 +51,13 @@ export const AuthProvider = ({ children }: Props) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setIsLoading(false);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[Auth] State Change Event: ${event}`);
+      console.log(`[Auth] User: ${session?.user?.email ?? 'No User'}`);
 
-      if (!session) {
-        router.replace('/login');
-      } else {
-        router.replace('/');
+      if (isMounted) {
+        setSession(session);
+        setIsLoading(false);
       }
     });
 
@@ -74,7 +65,7 @@ export const AuthProvider = ({ children }: Props) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [router, segments]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, isLoading, setIsLoading }}>
