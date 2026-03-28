@@ -8,6 +8,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { ScrollProvider } from "@/providers/scroll-context";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -19,16 +20,18 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
-        </Stack>
+    <ScrollProvider>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
+          </Stack>
 
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </AuthProvider>
+    </ScrollProvider>
   );
 }

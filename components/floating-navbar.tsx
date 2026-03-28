@@ -6,6 +6,7 @@ import { MotiView } from 'moti';
 import { MotiPressable as OriginalMotiPressable } from 'moti/interactions';
 import { cssInterop } from 'nativewind';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScrollContext } from '@/providers/scroll-context';
 
 // Map className to style for MotiPressable
 cssInterop(OriginalMotiPressable, { className: 'style' });
@@ -17,6 +18,7 @@ export type FloatingNavbarProps = BottomTabBarProps;
 
 export function FloatingNavbar({ state, descriptors, navigation }: FloatingNavbarProps) {
   const insets = useSafeAreaInsets();
+  const { shouldHideNavbar } = useScrollContext();
   
   const onTabPress = (route: any, isFocused: boolean) => {
     const event = navigation.emit({
@@ -44,9 +46,19 @@ export function FloatingNavbar({ state, descriptors, navigation }: FloatingNavba
   };
 
   return (
-    <View 
+    <MotiView 
       className="absolute bottom-6 left-6 right-6 z-30 flex-row justify-center"
       style={{ marginBottom: insets.bottom > 0 ? insets.bottom / 2 : 0 }}
+      animate={{
+        translateY: shouldHideNavbar ? 150 : 0,
+        opacity: shouldHideNavbar ? 0 : 1,
+      }}
+      transition={{
+        type: 'spring',
+        damping: 12,
+        stiffness: 90,
+        mass: 1,
+      }}
     >
       <View 
         className="bg-white/95 dark:bg-gray-800/95 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-between items-center px-6 w-full"
@@ -98,6 +110,6 @@ export function FloatingNavbar({ state, descriptors, navigation }: FloatingNavba
           );
         })}
       </View>
-    </View>
+    </MotiView>
   );
 }
