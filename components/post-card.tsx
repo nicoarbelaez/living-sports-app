@@ -1,5 +1,5 @@
-import { View, Text, Image } from "react-native";
-import { Heart, MessageCircle } from "lucide-react-native";
+import { View, Text, Image } from 'react-native';
+import { Heart, MessageCircle } from 'lucide-react-native';
 
 interface PostCardProps {
   user: string;
@@ -9,16 +9,9 @@ interface PostCardProps {
   text: string;
 }
 
-export default function PostCard({
-  user,
-  time,
-  avatar,
-  image,
-  text,
-}: PostCardProps) {
+export default function PostCard({ user, time, avatar, image, text }: PostCardProps) {
   return (
     <View className="mx-4 mt-3 bg-white rounded-2xl shadow overflow-hidden">
-      
       <View className="flex-row items-center px-4 py-3">
         <Image source={{ uri: avatar }} className="w-10 h-10 rounded-full" />
 
@@ -45,7 +38,6 @@ export default function PostCard({
           <Text>2</Text>
         </View>
       </View>
-
     </View>
   );
 }

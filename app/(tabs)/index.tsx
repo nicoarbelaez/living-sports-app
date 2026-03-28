@@ -1,13 +1,15 @@
-import React from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import ActivityCard from "@/components/activity-card";
-import Header from "@/components/header";
-import PostCard from "@/components/post-card";
-import { useAuth } from "@/providers/AuthProvider";
-import { supabase } from "@/lib/supabase";
+import ActivityCard from '@/components/activity-card';
+import Header from '@/components/header';
+import PostCard from '@/components/post-card';
+import { useAuth } from '@/providers/AuthProvider';
+import { supabase } from '@/lib/supabase';
 
-import { useNavbarScroll } from "@/hooks/use-navbar-scroll";
+import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
+
+import { Session } from '@supabase/supabase-js';
 
 export default function HomeScreen() {
   const { session } = useAuth();
@@ -15,11 +17,11 @@ export default function HomeScreen() {
   return <AuthenticatedHome session={session} />;
 }
 
-function AuthenticatedHome({ session }: { session: any }) {
+function AuthenticatedHome({ session }: { session: Session | null }) {
   const { onScroll } = useNavbarScroll();
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) console.error("Error signing out:", error);
+    if (error) console.error('Error signing out:', error);
   };
 
   return (
@@ -28,7 +30,7 @@ function AuthenticatedHome({ session }: { session: any }) {
 
       <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
         <View style={styles.card}>
-          <Text style={styles.emailText}>Signed in as: {session?.user?.email ?? "User"}</Text>
+          <Text style={styles.emailText}>Signed in as: {session?.user?.email ?? 'User'}</Text>
           <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
@@ -60,32 +62,32 @@ const styles = StyleSheet.create({
   headerImage: {
     width: 290,
     height: 178,
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
   },
   card: {
     marginHorizontal: 24,
     marginVertical: 16,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
   },
   emailText: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
+    fontWeight: 'bold',
+    color: '#000',
     marginBottom: 8,
   },
   signOutButton: {
-    backgroundColor: "#e5e7eb",
+    backgroundColor: '#e5e7eb',
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
   },
   signOutText: {
-    color: "#ef4444",
-    fontWeight: "600",
+    color: '#ef4444',
+    fontWeight: '600',
     fontSize: 16,
   },
   section: {
@@ -93,23 +95,23 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   linkText: {
-    color: "#2563eb",
+    color: '#2563eb',
   },
   welcomeRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
   brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   brandText: {
-    color: "#06b6d4",
-    fontWeight: "bold",
+    color: '#06b6d4',
+    fontWeight: 'bold',
     fontSize: 24,
   },
 });

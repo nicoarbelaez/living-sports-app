@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import { Search, Bell } from "lucide-react-native";
+import { View, Text } from 'react-native';
+import { Search, Bell } from 'lucide-react-native';
 
 export default function Header() {
   return (

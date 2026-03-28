@@ -1,13 +1,8 @@
 import React from 'react';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FloatingNavbar } from '@/components/floating-navbar';
 import { MaterialTopTabs } from '@/components/swipable-tabs';
 
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
-
   return (
     <MaterialTopTabs
       tabBar={(props) => <FloatingNavbar {...props} />}

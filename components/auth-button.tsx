@@ -1,20 +1,20 @@
-import React, { useState, ReactNode } from "react";
-import { Pressable, View } from "react-native";
-import { MotiView, MotiText } from "moti";
-import { useAuth } from "@/providers/AuthProvider";
+import React, { useState, ReactNode } from 'react';
+import { Pressable, View } from 'react-native';
+import { MotiView, MotiText } from 'moti';
+import { cn } from '@/lib/utils';
 
 export interface AuthButtonProps {
   icon: ReactNode;
   text: string;
   onPress: () => void;
+  loading?: boolean;
+  disabled?: boolean;
   /**
    * Additional Tailwind classes for the button container.
-   * e.g., "bg-black" for GitHub or "bg-[#F2F2F7]" for Google.
    */
   containerClassName?: string;
   /**
    * Additional Tailwind classes for the text.
-   * e.g., "text-white" for GitHub or "text-black" for Google.
    */
   textClassName?: string;
 }
@@ -23,34 +23,38 @@ export default function AuthButton({
   icon,
   text,
   onPress,
-  containerClassName = "bg-[#F2F2F7]",
-  textClassName = "text-black",
+  loading = false,
+  disabled = false,
+  containerClassName = 'bg-secondary',
+  textClassName = 'text-secondary-foreground',
 }: AuthButtonProps) {
-  const { isLoading, setIsLoading } = useAuth();
   const [isPressed, setIsPressed] = useState(false);
-  const handleOnPress = () => {
-    setIsLoading(true);
-    onPress();
-  };
 
   return (
     <MotiView
       animate={{ scale: isPressed ? 0.95 : 1 }}
       transition={{
-        type: "spring",
+        type: 'spring',
         damping: 10,
         mass: 0.5,
-      }}>
+      }}
+    >
       <Pressable
         onPressIn={() => setIsPressed(true)}
         onPressOut={() => setIsPressed(false)}
-        onPress={handleOnPress}
-        disabled={isLoading}>
+        onPress={onPress}
+        disabled={loading || disabled}
+      >
         <View
-          className={`w-full h-14 rounded-2xl flex-row items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${containerClassName}`}>
+          className={cn(
+            'h-14 w-full flex-row items-center justify-center rounded-2xl transition-opacity',
+            containerClassName,
+            loading || disabled ? 'opacity-50' : 'opacity-100'
+          )}
+        >
           <View className="mr-3">{icon}</View>
-          <MotiText className={`text-base font-semibold ${textClassName}`}>
-            {isLoading ? "Cargando..." : text}
+          <MotiText className={cn('text-base font-semibold', textClassName)}>
+            {loading ? 'Cargando...' : text}
           </MotiText>
         </View>
       </Pressable>
