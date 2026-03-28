@@ -5,6 +5,7 @@ import { Home, Users, User, Compass } from 'lucide-react-native';
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FloatingNavbar } from '@/components/floating-navbar';
 
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
@@ -12,20 +13,12 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <FloatingNavbar {...props} />}
       screenOptions={{
         headerShown: false,
-
         tabBarButton: HapticTab,
-
         tabBarActiveTintColor: theme.tint,
         tabBarInactiveTintColor: theme.icon,
-
-        tabBarStyle: {
-          backgroundColor: theme.background,
-          borderTopColor: 'transparent',
-          elevation: 0,
-          shadowOpacity: 0,
-        },
       }}
     >
       <Tabs.Screen
