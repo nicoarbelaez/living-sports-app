@@ -36,6 +36,26 @@
       "sourceType": "github",
       "computedHash": "e3ba3d760c5f4cc43b02a91fb8924f726c7818f95cc35d79d0a606ca622b72f5"
     },
+    "tailwind-best-practices": {
+      "source": "mastra-ai/mastra",
+      "sourceType": "github",
+      "computedHash": "b5720fe165b13c35122f15fa78cea523e9dda48e666fcc71daf1ba71827f0386"
+    },
+    "tailwind-design-system": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "f54f39ce967af3a4bba1f662c3600f0253467508d5fbbc7c545c67e102da2253"
+    },
+    "tailwindcss-advanced-layouts": {
+      "source": "josiahsiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "computedHash": "bf3eb96bcdcceb54cf2c0ba01daa18275c169627f37f5a861490c78e8055a5ce"
+    },
+    "tailwindcss-animations": {
+      "source": "josiahsiegel/claude-plugin-marketplace",
+      "sourceType": "github",
+      "computedHash": "49d9eb21d0046a936106389897d36c8f6c610239efa99701fba60efc59180362"
+    },
     "vercel-react-native-skills": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",

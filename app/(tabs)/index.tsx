@@ -7,6 +7,8 @@ import PostCard from "@/components/post-card";
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 
+import { useNavbarScroll } from "@/hooks/use-navbar-scroll";
+
 export default function HomeScreen() {
   const { session } = useAuth();
 
@@ -14,6 +16,7 @@ export default function HomeScreen() {
 }
 
 function AuthenticatedHome({ session }: { session: any }) {
+  const { onScroll } = useNavbarScroll();
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Error signing out:", error);
@@ -23,7 +26,7 @@ function AuthenticatedHome({ session }: { session: any }) {
     <View className="flex-1 bg-gray-100">
       <Header />
 
-      <ScrollView>
+      <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
         <View style={styles.card}>
           <Text style={styles.emailText}>Signed in as: {session?.user?.email ?? "User"}</Text>
           <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>

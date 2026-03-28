@@ -1,62 +1,43 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { Home, Users, User, Compass } from 'lucide-react-native';
-
-import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FloatingNavbar } from '@/components/floating-navbar';
+import { MaterialTopTabs } from '@/components/swipable-tabs';
 
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
 
   return (
-    <Tabs
+    <MaterialTopTabs
+      tabBar={(props) => <FloatingNavbar {...props} />}
+      tabBarPosition="bottom" // We position our floating navbar at the bottom
       screenOptions={{
-        headerShown: false,
-
-        tabBarButton: HapticTab,
-
-        tabBarActiveTintColor: theme.tint,
-        tabBarInactiveTintColor: theme.icon,
-
-        tabBarStyle: {
-          backgroundColor: theme.background,
-          borderTopColor: 'transparent',
-          elevation: 0,
-          shadowOpacity: 0,
-        },
+        // Hide the default top tab bar styling
+        tabBarShowLabel: false,
+        tabBarStyle: { height: 0, position: 'absolute', top: -100 }, // Ensure it's hidden
       }}
     >
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="index"
         options={{
           title: 'HOME',
-          tabBarIcon: ({ color, size }) => (
-            <Home color={color} size={size ?? 24} />
-          ),
         }}
       />
 
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="comunidades"
         options={{
           title: 'COMUNIDADES',
-          tabBarIcon: ({ color, size }) => (
-            <Users color={color} size={size ?? 24} />
-          ),
         }}
       />
 
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="profile"
         options={{
           title: 'PERFIL',
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={size ?? 24} />
-          ),
         }}
       />
-    </Tabs>
+    </MaterialTopTabs>
   );
 }
