@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { View } from 'react-native';
+import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { MotiPressable as OriginalMotiPressable } from 'moti/interactions';
@@ -14,7 +14,7 @@ cssInterop(OriginalMotiPressable, { className: 'style' });
 // Add TypeScript support for className
 const MotiPressable = OriginalMotiPressable as any;
 
-export type FloatingNavbarProps = BottomTabBarProps & {
+export type FloatingNavbarProps = MaterialTopTabBarProps & {
   showPlusBottom?: boolean;
 };
 
@@ -70,7 +70,7 @@ export function FloatingNavbar({
       <View 
         className="bg-white/95 dark:bg-gray-800/95 rounded-full shadow-2xl border border-gray-100 dark:border-gray-700 p-2 flex-row justify-around items-center px-6 w-full"
       >
-        {state.routes.map((route, index) => {
+        {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
           const iconName = getIconName(route.name);
 
