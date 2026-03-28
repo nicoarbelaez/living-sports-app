@@ -33,7 +33,7 @@
     "scheme": "livingsports",
     "plugins": [
       "expo-router",
-      "expo-sqlite"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
