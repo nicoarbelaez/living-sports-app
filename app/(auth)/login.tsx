@@ -7,8 +7,8 @@ import { MotiView, MotiText, AnimatePresence } from 'moti';
 import { supabase } from '@/lib/supabase';
 import AuthButton from '@/components/auth-button';
 import { Provider } from '@supabase/supabase-js';
-import { useAuth } from '@/providers/AuthProvider';
 import { makeRedirectUri } from 'expo-auth-session';
+import { cn } from '@/lib/utils';
 
 interface LoginButtonProps {
   provider: Provider;
@@ -19,7 +19,6 @@ interface LoginButtonProps {
 }
 
 const LoginScreen = () => {
-  const { session } = useAuth();
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
   const handleProviderLogin = async (provider: Provider) => {
@@ -72,8 +71,8 @@ const LoginScreen = () => {
         onPress={() => handleProviderLogin(provider)}
         loading={loadingProvider === provider}
         disabled={loadingProvider !== null && loadingProvider !== provider}
-        containerClassName={containerClassName}
-        textClassName={textClassName}
+        containerClassName={cn(containerClassName)}
+        textClassName={cn(textClassName)}
       />
     );
   };
@@ -81,12 +80,12 @@ const LoginScreen = () => {
   return (
     <LinearGradient colors={['#F7F7F7', '#FFFFFF']} className="flex-1 justify-between p-6">
       <AnimatePresence>
-        <View key="content" className="flex justify-center items-center h-full">
+        <View key="content" className="flex h-full items-center justify-center">
           <MotiText
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'spring', delay: 200 }}
-            className="text-4xl font-bold text-center mb-8"
+            className="mb-8 text-center text-4xl font-bold text-foreground"
           >
             Living Sports
           </MotiText>
@@ -95,7 +94,7 @@ const LoginScreen = () => {
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'spring', delay: 200 }}
-            className="text-lg font-semibold text-center mb-8"
+            className="mb-8 text-center text-lg font-semibold text-muted-foreground"
           >
             Inicia sesión para continuar
           </MotiText>
@@ -104,23 +103,23 @@ const LoginScreen = () => {
             from={{ opacity: 0, translateY: 40 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'spring', delay: 300 }}
-            className="w-full bg-white rounded-2xl p-6 border border-gray-200"
+            className="w-full rounded-2xl border border-border bg-card p-6 shadow-sm"
           >
             <View className="w-full gap-4">
               <LoginButton
                 provider="google"
-                icon={<Mail color="#000000" size={20} />}
+                icon={<Mail color="black" size={20} />}
                 text="Continuar con Google"
-                containerClassName="bg-[#F2F2F7]"
-                textClassName="text-black"
+                containerClassName="bg-secondary "
+                textClassName="text-secondary-foreground"
               />
 
               <LoginButton
                 provider="github"
-                icon={<Github color="#FFFFFF" size={20} />}
+                icon={<Github color="white" size={20} />}
                 text="Continuar con GitHub"
-                containerClassName="bg-black"
-                textClassName="text-white"
+                containerClassName="bg-primary shadow-sm "
+                textClassName="text-primary-foreground"
               />
             </View>
           </MotiView>

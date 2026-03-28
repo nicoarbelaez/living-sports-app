@@ -1,6 +1,7 @@
 import React, { useState, ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { MotiView, MotiText } from 'moti';
+import { cn } from '@/lib/utils';
 
 export interface AuthButtonProps {
   icon: ReactNode;
@@ -24,8 +25,8 @@ export default function AuthButton({
   onPress,
   loading = false,
   disabled = false,
-  containerClassName = 'bg-[#F2F2F7]',
-  textClassName = 'text-black',
+  containerClassName = 'bg-secondary',
+  textClassName = 'text-secondary-foreground',
 }: AuthButtonProps) {
   const [isPressed, setIsPressed] = useState(false);
 
@@ -45,10 +46,14 @@ export default function AuthButton({
         disabled={loading || disabled}
       >
         <View
-          className={`w-full h-14 rounded-2xl flex-row items-center justify-center ${containerClassName} ${loading || disabled ? 'opacity-50' : 'opacity-100'}`}
+          className={cn(
+            'h-14 w-full flex-row items-center justify-center rounded-2xl transition-opacity',
+            containerClassName,
+            loading || disabled ? 'opacity-50' : 'opacity-100'
+          )}
         >
           <View className="mr-3">{icon}</View>
-          <MotiText className={`text-base font-semibold ${textClassName}`}>
+          <MotiText className={cn('text-base font-semibold', textClassName)}>
             {loading ? 'Cargando...' : text}
           </MotiText>
         </View>

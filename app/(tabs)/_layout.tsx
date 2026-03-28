@@ -1,6 +1,4 @@
 import React from 'react';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FloatingNavbar } from '@/components/floating-navbar';
 import { MaterialTopTabs } from '@/components/swipable-tabs';
 

@@ -56,7 +56,7 @@ function RootLayoutContent() {
       // Must NOT be in auth group if logged in, redirect to home
       router.replace('/');
     }
-  }, [session, isLoading, segments]);
+  }, [session, isLoading, segments, router]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
