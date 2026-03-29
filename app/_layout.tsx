@@ -6,7 +6,6 @@ import 'react-native-reanimated';
 import * as WebBrowser from 'expo-web-browser';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { ScrollProvider } from '@/providers/scroll-context';
 import * as Linking from 'expo-linking';
@@ -59,7 +58,8 @@ function RootLayoutContent() {
   }, [session, isLoading, segments, router]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         {!session ? (
           <Stack.Screen name="(auth)" />
@@ -70,8 +70,7 @@ function RootLayoutContent() {
           </>
         )}
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </>
   );
 }
 
