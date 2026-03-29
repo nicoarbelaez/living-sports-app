@@ -44,7 +44,7 @@ export default function ThemeToggle() {
         entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(300)}
         style={animatedIconStyle}
-        className="h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-amber-100 to-orange-100 shadow-sm dark:from-slate-800 dark:to-slate-700 dark:shadow-md"
+        className="from-background to-secondary h-12 w-12 items-center justify-center rounded-full bg-linear-to-br shadow-md"
       >
         <Feather
           className="rotate-12"
