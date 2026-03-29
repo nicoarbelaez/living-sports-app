@@ -7,6 +7,7 @@ import {
   View,
   StyleProp,
   ViewStyle,
+  useColorScheme,
 } from 'react-native';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -22,7 +23,7 @@ const buttonVariants = cva(
           'bg-destructive text-white shadow-xs active:bg-destructive/90 dark:bg-destructive/60',
         outline:
           'border bg-background shadow-xs active:bg-accent active:text-accent-foreground dark:bg-input/30 dark:border-input dark:active:bg-input/50',
-        secondary: 'bg-secondary text-secondary-foreground shadow-xs active:bg-secondary/80',
+        secondary: 'bg-secondary text-secondary shadow-xs active:bg-secondary/80',
         ghost: 'active:bg-accent active:text-accent-foreground  dark:active:bg-accent/50',
         link: 'text-primary underline-offset-4 active:underline',
       },
@@ -53,21 +54,6 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'onPress' | 'style'>
     style?: StyleProp<ViewStyle>;
   };
 
-function resolveSpinnerColor(variant?: ButtonProps['variant']) {
-  switch (variant) {
-    case 'outline':
-    case 'ghost':
-    case 'link':
-      return '#111827';
-    case 'secondary':
-    case 'destructive':
-      return '#ffffff';
-    case 'default':
-    default:
-      return '#ffffff';
-  }
-}
-
 function resolveIconColor(variant?: ButtonProps['variant'], isDark = false) {
   switch (variant) {
     case 'outline':
@@ -76,7 +62,7 @@ function resolveIconColor(variant?: ButtonProps['variant'], isDark = false) {
       return isDark ? '#ffffff' : '#111827';
     case 'secondary':
     case 'destructive':
-      return '#ffffff';
+      return isDark ? '#ffffff' : '#111827';
     case 'default':
     default:
       return '#ffffff';
@@ -107,9 +93,12 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const isDisabledOrLoading = disabled || loading;
-  const spinnerColor = resolveSpinnerColor(variant);
-  const iconColor = resolveIconColor(variant);
+  const spinnerColor = resolveIconColor(variant, isDark);
+  const iconColor = resolveIconColor(variant, isDark);
 
   const handlePress = React.useCallback(
     (event: GestureResponderEvent) => {
