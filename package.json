@@ -55,6 +55,7 @@
     "@react-navigation/native": "^7.1.8",
     "@supabase/supabase-js": "^2.99.1",
     "@types/react": "~19.1.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "~54.0.33",
     "expo-auth-session": "~7.0.10",
