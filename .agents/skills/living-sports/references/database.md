@@ -464,6 +464,405 @@ LIMIT 20;
 
 ---
 
+## Query Organization & Service Layer
+
+### Philosophy: Separate by Context
+
+Instead of scattered Supabase queries throughout your Expo app, organize all database queries into service files by **context** or **domain**. This keeps code maintainable, testable, and easy to refactor.
+
+**Benefits**:
+- Single source of truth for queries
+- Easy to refactor queries without touching components
+- Reusable query logic across screens
+- Type-safe with TypeScript
+- Testable query functions
+- Clear dependencies
+
+### File Structure Pattern
+
+```
+lib/
+├── supabase.ts                  ← Supabase client initialization
+│
+└── services/                    ← Query functions organized by domain
+    ├── users/
+    │   ├── index.ts            ← Export all user queries
+    │   ├── profile.ts          ← Profile-related queries
+    │   ├── auth.ts             ← Auth-related queries
+    │   ├── follows.ts          ← Follow/social queries
+    │   └── search.ts           ← User search queries
+    │
+    ├── posts/
+    │   ├── index.ts
+    │   ├── feed.ts             ← Feed queries (list, pagination)
+    │   ├── interactions.ts     ← Like, comment queries
+    │   └── media.ts            ← Media upload queries
+    │
+    ├── competitions/
+    │   ├── index.ts
+    │   ├── leaderboard.ts      ← Leaderboard queries
+    │   ├── entries.ts          ← Entry submission queries
+    │   └── create.ts           ← Competition creation queries
+    │
+    └── workouts/
+        ├── index.ts
+        ├── sessions.ts         ← Workout session queries
+        └── history.ts          ← Training history queries
+
+utils/
+├── errors.ts                    ← Error handling utilities
+├── pagination.ts               ← Cursor-based pagination helpers
+├── transformers.ts             ← Data transformation helpers
+└── validators.ts               ← Input validation helpers
+```
+
+### Service Pattern Example: Users Domain
+
+#### users/auth.ts
+```
+Purpose: Authentication-related queries (login, signup, logout)
+
+Pattern:
+- signUpUser(email, password, display_name)
+  → Call supabase.auth.signUp()
+  → Create user profile in users table
+  → Return user object
+
+- loginUser(email, password)
+  → Call supabase.auth.signInWithPassword()
+  → Fetch user profile
+  → Return session + user
+
+- logoutUser()
+  → Call supabase.auth.signOut()
+  → Clear local cache
+  → Return success
+```
+
+#### users/profile.ts
+```
+Purpose: Profile CRUD operations
+
+Pattern:
+- getUserProfile(userId: UUID)
+  → Query users table WHERE id = userId
+  → Include denormalized counts (followers, posts)
+  → Return user profile
+
+- updateUserProfile(userId: UUID, data)
+  → Update users table
+  → Validate input (username uniqueness, length)
+  → Return updated user
+
+- getUserStats(userId: UUID)
+  → COUNT posts, COUNT followers, SUM workout_duration
+  → Return stats object
+```
+
+#### users/follows.ts
+```
+Purpose: Social following queries
+
+Pattern:
+- followUser(followerId, followingId)
+  → INSERT into followers table
+  → Increment following_count denormalized column
+  → Return success
+
+- unfollowUser(followerId, followingId)
+  → DELETE from followers table
+  → Decrement following_count
+  → Return success
+
+- getFollowers(userId)
+  → Query followers WHERE following_id = userId
+  → JON with users table for profile info
+  → Return array of follower profiles
+```
+
+#### users/search.ts
+```
+Purpose: Search users by username/name
+
+Pattern:
+- searchUsers(query: string, limit: 20)
+  → Query users WHERE search_vector matches query
+  → Order by relevance rank
+  → Return limited results
+
+- getUserSuggestions(userId)
+  → Find users not yet followed
+  → Order by mutual followers
+  → Return suggestions
+```
+
+### Service Pattern Example: Posts Domain
+
+#### posts/feed.ts
+```
+Purpose: Feed queries (initial load + pagination)
+
+Pattern:
+- getFeed(userId: UUID, limit: 20)
+  → Query posts WHERE user_id in (people user follows) OR user_id = userId
+  → Order by created_at DESC
+  → Include user info (JOIN)
+  → Include like/comment counts
+  → Return posts array + pagination cursor
+
+- getFeedPaginated(userId, cursor, limit)
+  → Query posts WHERE created_at < cursor
+  → Use cursor-based pagination
+  → Return next batch
+
+- getUserPosts(userId, limit, cursor)
+  → Query posts WHERE user_id = userId
+  → Cursor-based pagination
+  → Return user's posts
+```
+
+#### posts/interactions.ts
+```
+Purpose: Like and comment queries
+
+Pattern:
+- likePost(postId, userId)
+  → INSERT into post_likes
+  → Trigger increments posts.likes_count
+  → Return success
+
+- unlikePost(postId, userId)
+  → DELETE from post_likes
+  → Trigger decrements likes_count
+  → Return success
+
+- addComment(postId, userId, text)
+  → INSERT into comments
+  → Trigger increments posts.comments_count
+  → Return comment
+
+- getPostComments(postId, limit, cursor)
+  → Query comments WHERE post_id = postId
+  → Include user info
+  → Cursor-based pagination
+  → Return comments
+```
+
+#### posts/media.ts
+```
+Purpose: Media upload and storage queries
+
+Pattern:
+- uploadPostMedia(userId, file)
+  → Upload file to Supabase Storage (/posts/{userId}/{uuid})
+  → Get public URL
+  → Return { url, path }
+
+- createPost(userId, caption, mediaUrls, metadata)
+  → Validate input
+  → INSERT into posts with media_urls array
+  → Trigger updates user's post_count
+  → Return created post
+
+- deletePost(postId, userId)
+  → Verify ownership (RLS handles)
+  → DELETE post
+  → Trigger decrements user's post_count
+  → Return success
+```
+
+### Service Pattern Example: Competitions Domain
+
+#### competitions/leaderboard.ts
+```
+Purpose: Leaderboard queries for real-time competitions
+
+Pattern:
+- getLeaderboard(competitionId)
+  → Call PostgreSQL function get_leaderboard(competition_id)
+  → Returns ranked list with scores
+  → Include current user rank highlight
+  → Return leaderboard
+
+- subscribeToLeaderboard(competitionId)
+  → Create Supabase realtime subscription
+  → Listen to UPDATE events on competition_entries
+  → Call local state updater
+  → Return unsubscribe function
+
+- getUserCompetitionRank(competitionId, userId)
+  → Query competition_entries for user
+  → Count how many scores are higher
+  → Calculate rank
+  → Return rank
+```
+
+#### competitions/entries.ts
+```
+Purpose: Competition entry (participant) queries
+
+Pattern:
+- joinCompetition(competitionId, userId)
+  → INSERT into competition_entries
+  → Set current_score = 0, attempts = []
+  → Increment competitions.participants_count
+  → Return entry
+
+- submitScore(entryId, score)
+  → UPDATE competition_entries SET current_score = score
+  → APPEND to attempts JSONB array with timestamp
+  → Trigger may recalculate rank
+  → Realtime publishes update
+  → Return updated entry
+
+- getCompetitionEntries(competitionId)
+  → Query competition_entries WHERE competition_id = competitionId
+  → Order by current_score DESC
+  → Include user profiles
+  → Return entries
+```
+
+### Utility Helpers
+
+#### utils/pagination.ts
+```
+Purpose: Helper functions for cursor-based pagination
+
+Pattern:
+- getCursorFromItem(item)
+  → Extract created_at timestamp from item
+  → Return as cursor
+
+- buildPaginationQuery(query, cursor, limit)
+  → Add WHERE created_at < cursor clause if cursor exists
+  → Add LIMIT clause
+  → Return modified query
+
+- isLastPage(items, limit)
+  → Return items.length < limit
+  → Indicates no more data
+```
+
+#### utils/errors.ts
+```
+Purpose: Standardized error handling
+
+Pattern:
+- handleSupabaseError(error)
+  → Check error type (network, auth, RLS, validation)
+  → Map to user-friendly message
+  → Return { code, message, retry: boolean }
+
+Example errors:
+- 'auth/invalid-credentials' → "Invalid email or password"
+- 'auth/user-not-found' → "Email not registered"
+- 'permission-denied' → "You don't have access"
+- 'network-error' → "No internet connection"
+```
+
+#### utils/validators.ts
+```
+Purpose: Input validation before querying
+
+Pattern:
+- validateUsername(username)
+  → Check length 3-20 chars
+  → Check alphanumeric + underscore
+  → Return true/error message
+
+- validateEmail(email)
+  → Regex validation
+  → Return true/error message
+
+- validatePostCaption(caption)
+  → Check max 500 chars
+  → Return true/error message
+```
+
+### Component Usage Pattern
+
+Instead of:
+```
+❌ WRONG: Query in component
+
+function FeedScreen() {
+  useEffect(() => {
+    const { data } = await supabase
+      .from('posts')
+      .select('*, users(username)')
+      .order('created_at', { ascending: false })
+      .limit(20);
+  }, []);
+}
+```
+
+Do:
+```
+✅ CORRECT: Use service layer
+
+import { postService } from '../../lib/services/posts';
+
+function FeedScreen() {
+  const [feed, setFeed] = useState([]);
+  
+  useEffect(() => {
+    const loadFeed = async () => {
+      const posts = await postService.feed.getFeed(userId, 20);
+      setFeed(posts);
+    };
+    loadFeed();
+  }, [userId]);
+}
+```
+
+### Testing Service Queries
+
+Pattern: Test queries independently from components
+
+```
+Example test structure:
+- services/users/__tests__/profile.test.ts
+  → Test getUserProfile returns user object
+  → Test updateUserProfile validates input
+  → Test error handling
+  → Mock supabase client
+
+Benefits:
+- Catch query bugs before they reach components
+- Easier to refactor queries
+- Document expected behavior
+```
+
+### Service Layer Best Practices
+
+1. **One function, one responsibility**
+   - `getUserProfile()` gets user profile, doesn't modify
+   - `updateUserProfile()` only updates, doesn't fetch
+   - `followUser()` handles follow logic only
+
+2. **Consistent naming**
+   - `get*()` for queries (read)
+   - `create*()` for inserts
+   - `update*()` for updates
+   - `delete*()` for deletes
+   - `list*()` for array results
+   - `search*()` for search operations
+
+3. **Handle pagination at service level**
+   - Service knows about cursors
+   - Components don't need to understand pagination logic
+   - Easy to swap pagination strategy
+
+4. **Centralize error handling**
+   - All services throw/handle same error format
+   - Components use consistent error handling
+
+5. **Organize by domain, not operation type**
+   - `services/posts/` not `services/queries/`, `services/mutations/`
+   - Easier to find related code
+
+---
+
 ## Row-Level Security (RLS)
 
 ### Basic Setup
