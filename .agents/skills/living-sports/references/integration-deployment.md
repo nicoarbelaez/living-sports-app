@@ -1,742 +1,752 @@
 ---
-title: Integration, Real-Time & Deployment
+title: Integration, Real-time & Deployment for Expo
 version: 1.0
 ---
 
-# Integration, Real-Time & Deployment
+# Integration, Real-time & Deployment for Expo
 
 ## Table of Contents
-1. [API Integration Patterns](#api-integration-patterns)
-2. [Real-Time Features](#real-time-features)
-3. [Environment Configuration](#environment-configuration)
-4. [Error Handling & Logging](#error-handling--logging)
-5. [Deployment Workflows](#deployment-workflows)
-6. [Monitoring & Observability](#monitoring--observability)
-7. [CI/CD Pipelines](#cicd-pipelines)
+1. [Supabase Real-time Subscriptions](#supabase-real-time-subscriptions)
+2. [API Integration Patterns](#api-integration-patterns)
+3. [Media Upload & Storage](#media-upload--storage)
+4. [Environment Configuration](#environment-configuration)
+5. [EAS Build Workflow](#eas-build-workflow)
+6. [Offline Sync Strategy](#offline-sync-strategy)
+7. [Push Notifications](#push-notifications)
+8. [Monitoring & Error Handling](#monitoring--error-handling)
+9. [CI/CD for Expo](#cicd-for-expo)
+
+---
+
+## Supabase Real-time Subscriptions
+
+### What is Real-time?
+
+Real-time allows Expo app to receive live updates from PostgreSQL without polling. When data changes, subscriptions notify connected clients instantly.
+
+**Use cases in Living Sports**:
+- Feed: See new posts as they're uploaded
+- Leaderboard: Watch competition scores update live
+- Comments: See new comments on posts
+- Notifications: Get alerts for achievements
+
+### Subscription Pattern
+
+**Pattern**: Subscribe to table changes, update UI
+
+```
+Steps:
+1. Component mounts
+2. Subscribe to table (e.g., 'posts' table)
+3. Specify event type: INSERT, UPDATE, DELETE
+4. On event, receive payload and update state
+5. Component unmounts, unsubscribe
+6. Handle network reconnection
+```
+
+**Libraries**:
+- `@supabase/supabase-js`: Built-in subscription support
+
+### Feed Real-time Pattern
+
+**Pattern**: Show new posts as they're created
+
+```
+Steps:
+1. Load initial 20 posts
+2. Subscribe to INSERT events on posts table
+3. New post arrives → Prepend to feed
+4. Show "New post" indicator or auto-scroll
+5. User can dismiss or view new posts
+```
+
+**Considerations**:
+- Don't auto-scroll (annoying if user scrolling)
+- Show badge/indicator for new posts
+- Allow user to manually load new posts
+- Handle duplicate posts (user might see both in initial load and subscription)
+
+### Leaderboard Real-time Pattern
+
+**Pattern**: Live score updates during competition
+
+```
+Steps:
+1. Load leaderboard (competition_entries with scores)
+2. Subscribe to UPDATE events on competition_entries
+3. User submits score → Entry updated
+4. Subscription fires → Animate score change
+5. Recalculate ranks (PostgreSQL trigger updates rank)
+6. Other users see new ranks
+```
+
+**Considerations**:
+- Animate rank changes smoothly (react-native-reanimated)
+- Highlight row of user who just scored
+- Show "Live" indicator
+- Handle offline: Queue updates, sync when online
+
+### Subscription Cleanup Pattern
+
+**Pattern**: Unsubscribe when component unmounts
+
+```
+Steps:
+1. Component mounts
+2. Create subscription object
+3. Render component
+4. Component unmounts → Call unsubscribe()
+5. Clean up resources
+```
+
+**Libraries**:
+- `useEffect` cleanup function automatically unsubscribes
 
 ---
 
 ## API Integration Patterns
 
-### Supabase REST API
+### REST API Pattern (Supabase Client)
 
-```javascript
-// ✅ Basic CRUD operations
-// READ
-const { data, error } = await supabase
-  .from('posts')
-  .select('*')
-  .eq('user_id', userId)
-  .order('created_at', { ascending: false })
-  .limit(10);
+**Pattern**: Use Supabase client for database queries
 
-// CREATE
-const { data, error } = await supabase
-  .from('posts')
-  .insert([
-    {
-      user_id: userId,
-      title: 'My Post',
-      content: 'Content here',
-    }
-  ])
-  .select();
-
-// UPDATE
-const { data, error } = await supabase
-  .from('posts')
-  .update({ title: 'Updated Title' })
-  .eq('id', postId)
-  .select();
-
-// DELETE
-const { data, error } = await supabase
-  .from('posts')
-  .delete()
-  .eq('id', postId);
+```
+How it works:
+- Supabase client wraps PostgreSQL
+- Call .from().select() for queries
+- Automatically includes JWT in headers
+- RLS policies enforce permissions
+- Return data or error
 ```
 
-### Advanced Queries
+### Calling PostgreSQL Functions from Expo
 
-```javascript
-// ✅ Complex filtering
-const { data, error } = await supabase
-  .from('posts')
-  .select(`
-    id,
-    title,
-    created_at,
-    users(id, email),
-    comments(id, content)
-  `)
-  .eq('user_id', userId)
-  .in('status', ['published', 'scheduled']) // IN clause
-  .neq('comments_count', 0) // Not equal
-  .gte('created_at', '2024-01-01') // Greater than or equal
-  .lt('likes_count', 100) // Less than
-  .like('title', '%search%') // Pattern match
-  .order('likes_count', { ascending: false })
-  .range(0, 9); // Pagination
+**Pattern**: Call custom database functions from Expo app
 
-// ✅ Full-text search
-const { data, error } = await supabase
-  .from('posts')
-  .select('*')
-  .textSearch('title', 'my search term');
+```
+Use case:
+- Complex business logic (scoring, ranking)
+- Atomic operations (update multiple tables)
+- Server-side validation
 
-// ✅ Joins/relationships
-const { data, error } = await supabase
-  .from('posts')
-  .select(`
-    id,
-    title,
-    users:user_id (id, name, email),
-    tags (id, name)
-  `);
+Pattern:
+- Define function in PostgreSQL
+- Call with supabase.rpc('function_name', {params})
+- Function executes with user's permissions
+- Return result or error
 ```
 
-### Batch Operations
+### Error Handling Pattern
 
-```javascript
-// ✅ Insert multiple records
-const { data, error } = await supabase
-  .from('posts')
-  .insert([
-    { title: 'Post 1', content: 'Content 1' },
-    { title: 'Post 2', content: 'Content 2' },
-    { title: 'Post 3', content: 'Content 3' },
-  ])
-  .select();
+**Pattern**: Catch and handle errors gracefully
 
-// ✅ Batch update (upsert)
-const { data, error } = await supabase
-  .from('posts')
-  .upsert([
-    { id: 1, title: 'Updated 1' },
-    { id: 2, title: 'Updated 2' },
-  ])
-  .select();
+```
+Steps:
+1. Try to execute query
+2. If error:
+   - Network error: Show "No internet"
+   - Auth error: Redirect to login
+   - Permission error: Show "Access denied"
+   - Validation error: Show validation message
+3. Show error toast or modal
+4. Allow user to retry
 ```
 
-### Custom API Routes (Edge Functions)
+### Retry Logic Pattern
 
-```javascript
-// lib/api.js
-export const callEdgeFunction = async (functionName, payload) => {
-  const token = await getAuthToken();
+**Pattern**: Retry failed requests automatically
 
-  const response = await fetch(
-    `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/${functionName}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    }
-  );
+```
+Use case: Flaky network, transient server errors
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  return response.json();
-};
-
-// Usage
-const result = await callEdgeFunction('send-email', {
-  to: 'user@example.com',
-  subject: 'Welcome!',
-  body: 'Welcome to our app',
-});
+Pattern:
+- First attempt: Normal request
+- If error with retry-able code: Wait 1 second, retry
+- If still fails: Wait 2 seconds, retry (exponential backoff)
+- After 3 attempts: Show error to user
 ```
 
-### GraphQL Integration
+### Query Optimization Pattern
 
-```javascript
-// ✅ Query with GraphQL (if enabled)
-const query = `
-  query GetPosts($userId: UUID!) {
-    posts(where: { user_id: { eq: $userId } }) {
-      id
-      title
-      created_at
-      user {
-        id
-        email
-      }
-    }
-  }
-`;
+**Pattern**: Fetch only needed columns
 
-const { data, error } = await supabase.graphql({
-  query,
-  variables: { userId: 'xxx-xxx' },
-});
+```
+Bad (unnecessary data):
+SELECT * FROM posts;
+
+Good (specific columns):
+SELECT id, caption, media_urls, created_at FROM posts;
+
+Saves: Network bandwidth, faster parsing
 ```
 
 ---
 
-## Real-Time Features
+## Media Upload & Storage
 
-### Setup Real-Time Subscriptions
+### Image Upload Pattern
 
-```sql
--- Enable replication on table
-ALTER PUBLICATION supabase_realtime ADD TABLE posts;
+**Pattern**: Compress, upload to Supabase Storage, store URL in DB
 
--- Optional: publish only specific columns for security
-ALTER PUBLICATION supabase_realtime SET (publish = 'INSERT,UPDATE,DELETE') FOR TABLE posts;
-```
+**Step 1: Select Image**
+- Use `expo-image-picker` to let user pick from camera roll
+- Or `expo-camera` for live camera capture
+- Get image URI and metadata
 
-### Subscribe to Changes
+**Step 2: Compress Image**
+- Use `react-native-compressimage` or similar
+- Target dimensions: 1080px width (mobile screen size)
+- Target quality: 70-80 JPEG quality
+- Result: ~200-400KB file
 
-```javascript
-// ✅ Listen for all changes
-const subscription = supabase
-  .from('posts')
-  .on('*', payload => {
-    console.log('Change:', payload);
-  })
-  .subscribe();
+**Step 3: Upload to Supabase Storage**
+- Libraries: `@supabase/supabase-js` built-in upload
+- Bucket name: `posts` or `media`
+- File path: `/posts/{postId}/{timestamp}.jpg`
+- Show progress indicator (upload can take seconds on slow connection)
 
-// Listen to specific operations
-const subscription = supabase
-  .from('posts')
-  .on('INSERT', payload => {
-    console.log('New post:', payload.new);
-  })
-  .on('UPDATE', payload => {
-    console.log('Updated post:', payload.new);
-  })
-  .on('DELETE', payload => {
-    console.log('Deleted post:', payload.old);
-  })
-  .subscribe();
+**Step 4: Store URL in Database**
+- Get public S3 URL from Supabase
+- Store in `posts.media_urls` array
+- RLS ensures user owns post
 
-// Unsubscribe
-subscription.unsubscribe();
-```
+**Considerations**:
+- Handle upload failure: Show retry button
+- Show progress bar (% uploaded)
+- Cancel button during upload
+- Compress in background (don't block UI)
 
-### Real-Time in React
+### Video Upload Pattern
 
-```javascript
-// ✅ useEffect with real-time subscription
-const PostListRealTime = () => {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+**Pattern**: Compress, upload, store reference
 
-  useEffect(() => {
-    // Initial fetch
-    const fetchPosts = async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+**Step 1: Select Video**
+- Use `expo-media-library` to browse device videos
+- Or `expo-camera` for recording
+- Get video URI and duration
 
-      if (!error) setPosts(data);
-      setLoading(false);
-    };
+**Step 2: Compress Video**
+- Use library like `react-native-video-compress` (FFmpeg-based)
+- Target resolution: 480p (mobile playback)
+- Target bitrate: 2-5 Mbps
+- Result: < 50MB for typical workout video
+- Takes time (minutes for long videos)
 
-    fetchPosts();
+**Step 3: Upload with Progress**
+- Resume uploads if interrupted
+- Show progress (MB uploaded / total)
+- Queue offline uploads (if offline, save to AsyncStorage)
 
-    // Real-time subscription
-    const subscription = supabase
-      .from('posts')
-      .on('INSERT', payload => {
-        setPosts(prev => [payload.new, ...prev]);
-      })
-      .on('UPDATE', payload => {
-        setPosts(prev => prev.map(p => 
-          p.id === payload.new.id ? payload.new : p
-        ));
-      })
-      .on('DELETE', payload => {
-        setPosts(prev => prev.filter(p => p.id !== payload.old.id));
-      })
-      .subscribe();
+**Step 4: Create Thumbnail**
+- Extract first frame or middle frame
+- Store as JPEG in Storage
+- Display as preview before upload completes
 
-    // Cleanup
-    return () => subscription.unsubscribe();
-  }, []);
+**Considerations**:
+- Video compression happens in background
+- Show estimated time remaining
+- Allow cancel during compression/upload
+- Warn user about data usage on cellular
+- Cache thumbnails locally
 
-  if (loading) return <div>Loading...</div>;
+### Thumbnail & Progressive Image Loading
 
-  return (
-    <div className="space-y-4">
-      {posts.map(post => (
-        <Card key={post.id}>
-          <h3 className="font-bold">{post.title}</h3>
-          <p className="text-gray-600">{post.content}</p>
-        </Card>
-      ))}
-    </div>
-  );
-};
-```
+**Pattern**: Show low-res while high-res loads
 
-### Presence (Online Status)
+**Using expo-image library**:
+- Supports JPEG progressive loading
+- Auto-cache for next app launch
+- Supports blur placeholder
+- Fallback on error
 
-```javascript
-// ✅ Track who's online
-const usePresence = (channel = 'global') => {
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    const channel = supabase.channel(`presence:${channel}`, {
-      config: { broadcast: { self: true } },
-    });
-
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        setUsers(channel.presenceState());
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined:', newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left:', leftPresences);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user: getCurrentUser(),
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
-
-    return () => channel.unsubscribe();
-  }, [channel]);
-
-  return users;
-};
-
-// Usage
-const OnlineUsers = () => {
-  const users = usePresence('dashboard');
-
-  return (
-    <div className="p-4 bg-green-50 rounded">
-      <p className="font-bold">Online: {Object.keys(users).length}</p>
-      {Object.values(users).map((user, i) => (
-        <p key={i} className="text-sm text-green-700">
-          {user[0].user.email}
-        </p>
-      ))}
-    </div>
-  );
-};
-```
+**Pattern**:
+1. Decode low-res JPEG (thumbnail)
+2. Show blurred thumbnail instantly
+3. Load high-res JPEG in background
+4. Transition to high-res when ready
+5. Cache for next view
 
 ---
 
 ## Environment Configuration
 
-### Environment Variables Setup
+### Managing Secrets in Expo
 
-```bash
-# .env.local (development)
-REACT_APP_SUPABASE_URL=https://xxx.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=ey...
-REACT_APP_API_URL=http://localhost:3000
-REACT_APP_ENVIRONMENT=development
+**Pattern**: Store secrets in `.env.local` and app.json
 
-# .env.production (production)
-REACT_APP_SUPABASE_URL=https://xxx.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=ey...
-REACT_APP_API_URL=https://api.yourdomain.com
-REACT_APP_ENVIRONMENT=production
+**File structure**:
 ```
+.env.local (never commit):
+EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=xxx
 
-### Configuration Management
-
-```javascript
-// lib/config.js
-export const config = {
-  supabase: {
-    url: process.env.REACT_APP_SUPABASE_URL,
-    key: process.env.REACT_APP_SUPABASE_ANON_KEY,
-  },
-  api: {
-    baseUrl: process.env.REACT_APP_API_URL,
-  },
-  environment: process.env.REACT_APP_ENVIRONMENT || 'development',
-  isDevelopment: process.env.REACT_APP_ENVIRONMENT === 'development',
-  isProduction: process.env.REACT_APP_ENVIRONMENT === 'production',
-};
-
-// Usage
-import { config } from './lib/config';
-
-if (config.isDevelopment) {
-  console.log('Development mode');
-}
-```
-
----
-
-## Error Handling & Logging
-
-### Error Handling Pattern
-
-```javascript
-// ✅ Comprehensive error handling
-const fetchUserPosts = async (userId) => {
-  try {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) {
-      // Handle specific Supabase errors
-      if (error.code === 'PGRST116') {
-        throw new Error('Posts not found');
-      }
-      throw new Error(`Database error: ${error.message}`);
-    }
-
-    if (!data) {
-      throw new Error('No data returned');
-    }
-
-    return { success: true, data };
-
-  } catch (err) {
-    // Log error for debugging
-    console.error('Error fetching posts:', {
-      message: err.message,
-      stack: err.stack,
-      userId,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Return error to UI
-    return {
-      success: false,
-      error: err.message,
-      code: err.code,
-    };
-  }
-};
-```
-
-### Error Boundary (React)
-
-```javascript
-// components/ErrorBoundary.jsx
-import React from 'react';
-
-export class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('Error caught:', error, errorInfo);
-    // Log to error tracking service (Sentry, etc)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-4 bg-red-50 border border-red-200 rounded">
-          <h2 className="text-red-900 font-bold">Something went wrong</h2>
-          <p className="text-red-700 text-sm mt-2">{this.state.error?.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-          >
-            Reload Page
-          </button>
-        </div>
-      );
-    }
-
-    return this.props.children;
+app.json (Expo config):
+{
+  "expo": {
+    "plugins": ["./plugins/withEnv.js"]
   }
 }
-
-// Usage
-<ErrorBoundary>
-  <App />
-</ErrorBoundary>
 ```
 
-### Logging Service
+**Why EXPO_PUBLIC prefix**:
+- `EXPO_PUBLIC_*` is safe to expose to client
+- Anon key is safe (RLS enforces permissions)
+- Other secrets (service key) never exposed
 
-```javascript
-// lib/logger.js
-export const logger = {
-  debug: (message, data) => {
-    if (config.isDevelopment) {
-      console.log(`[DEBUG] ${message}`, data);
-    }
-  },
+### Environment Variables for Each Build
 
-  info: (message, data) => {
-    console.log(`[INFO] ${message}`, data);
-  },
+**Pattern**: Different config per branch/environment
 
-  warn: (message, data) => {
-    console.warn(`[WARN] ${message}`, data);
-  },
+```
+develop branch (testing):
+- Staging Supabase project
+- Allow loose RLS for testing
 
-  error: (message, error, context = {}) => {
-    console.error(`[ERROR] ${message}`, {
-      error: error.message,
-      stack: error.stack,
-      context,
-      timestamp: new Date().toISOString(),
-    });
+main branch (production):
+- Production Supabase project
+- Strict RLS policies
+- Rate limiting enabled
+- Monitoring enabled
+```
 
-    // Send to error tracking (Sentry)
-    if (config.isProduction) {
-      sendToSentry(message, error, context);
-    }
-  },
-};
+### Accessing Environment Variables in Expo
+
+```
+Pattern:
+- Access via process.env.EXPO_PUBLIC_KEY
+- At build time (EAS Build)
+- At runtime (in app)
+
+Note: Must start with EXPO_PUBLIC_ prefix
 ```
 
 ---
 
-## Deployment Workflows
+## EAS Build Workflow
 
-### Deploy to Vercel
+### What is EAS Build?
 
-```bash
-# 1. Install Vercel CLI
-npm install -g vercel
+EAS Build is Expo's managed build service. Instead of building locally (requires Mac for iOS), cloud builds on Expo servers.
 
-# 2. Login to Vercel
-vercel login
+**For Living Sports**:
+- Generates APK only (no Play Store)
+- Used for testing before releasing
+- Two branches: develop (testing), main (production)
 
-# 3. Link project
-vercel link
+### Build Triggers
 
-# 4. Set environment variables
-vercel env add REACT_APP_SUPABASE_URL
-vercel env add REACT_APP_SUPABASE_ANON_KEY
-
-# 5. Deploy
-vercel deploy --prod
-
-# Or push to git and auto-deploy
-git push origin main
+**Manual trigger**:
+```
+Steps:
+1. Commit to develop branch
+2. Run: eas build --platform android
+3. EAS builds in cloud
+4. Download APK when complete
+5. Install on test device
 ```
 
-### Deploy to Netlify
-
-```bash
-# 1. Install Netlify CLI
-npm install -g netlify-cli
-
-# 2. Login
-netlify login
-
-# 3. Initialize
-netlify init
-
-# 4. Set environment variables in netlify.toml
+**CI/CD trigger** (automated):
+```
+Steps:
+1. Commit to develop branch
+2. GitHub/GitLab action triggers
+3. Automatically runs eas build
+4. Artifact generated and available
 ```
 
-```toml
-# netlify.toml
-[build]
-  command = "npm run build"
-  publish = "dist"
+### Build Variants
 
-[env.production]
-  REACT_APP_SUPABASE_URL = "https://xxx.supabase.co"
-  REACT_APP_SUPABASE_ANON_KEY = "ey..."
+**Development APK** (from develop branch):
+- Debug symbols included
+- Slower performance
+- Used for testing features
+- No code signing
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+**Production APK** (from main branch):
+- Optimized performance
+- Stripped debug symbols
+- Code signed
+- Ready for release (but not to Play Store)
+
+### Build Configuration
+
+**File: eas.json (Expo build config)**
+
+```
+Pattern:
+- Define build profiles for develop and main branches
+- Specify environment variables per profile
+- Configure signing
+- Set release channel
 ```
 
-### Deploy with Docker
+### Common EAS Build Issues
 
-```dockerfile
-# Dockerfile
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+**Issue: Build fails with dependency error**
+- Solution: Update Expo SDK, clean cache, rebuild
 
-# Production stage
-FROM node:18-alpine
-WORKDIR /app
-RUN npm install -g serve
-COPY --from=builder /app/dist ./dist
-EXPOSE 3000
-CMD ["serve", "-s", "dist", "-l", "3000"]
-```
+**Issue: APK too large**
+- Solution: Enable code minification, tree-shaking
 
-```bash
-# Build and push
-docker build -t myapp:latest .
-docker tag myapp:latest myregistry/myapp:latest
-docker push myregistry/myapp:latest
-
-# Run
-docker run -p 3000:3000 \
-  -e REACT_APP_SUPABASE_URL=xxx \
-  -e REACT_APP_SUPABASE_ANON_KEY=xxx \
-  myregistry/myapp:latest
-```
+**Issue: Slow build**
+- Solution: Use `--local` to build on machine (Mac for iOS)
 
 ---
 
-## Monitoring & Observability
+## Offline Sync Strategy
 
-### Sentry Integration (Error Tracking)
+### Why Offline Support?
 
-```javascript
-// main.jsx
-import * as Sentry from "@sentry/react";
+Living Sports is a fitness app. Users might:
+- Go to gym with no WiFi
+- Train outdoors with poor connection
+- Lose connection temporarily
 
-Sentry.init({
-  dsn: process.env.REACT_APP_SENTRY_DSN,
-  environment: process.env.REACT_APP_ENVIRONMENT,
-  tracesSampleRate: process.env.REACT_APP_ENVIRONMENT === 'production' ? 0.1 : 1.0,
-  integrations: [
-    new Sentry.Replay({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  ],
-});
+**Offline-first architecture**:
+- Cache data locally (AsyncStorage)
+- Queue mutations offline
+- Sync when connection returns
 
-// Wrap App
-export const App = Sentry.withProfiler(AppComponent);
+### Offline Cache Pattern
+
+**Pattern**: Cache critical data locally
+
+```
+Data to cache:
+- User profile (self-updating, small)
+- Feed posts (large, refresh on view)
+- Current user's competitions (important)
+
+Cache strategy:
+- On app launch: Check if offline
+- If offline, load from AsyncStorage
+- If online, fetch fresh from server
+- Save new data to cache
+
+Libraries:
+- AsyncStorage: Simple key-value cache
+- React Query: Advanced caching
+- Zustand: State management with persistence
 ```
 
-### Analytics
+### Mutation Queue Pattern
 
-```javascript
-// lib/analytics.js
-export const trackEvent = (eventName, properties = {}) => {
-  if (window.gtag) {
-    window.gtag('event', eventName, {
-      ...properties,
-      timestamp: new Date().toISOString(),
-    });
-  }
-};
+**Pattern**: Queue actions offline, sync when online
 
-// Usage
-const LoginForm = () => {
-  const handleLogin = async () => {
-    trackEvent('user_login_attempt');
-    // ... login logic
-    trackEvent('user_login_success', { method: 'email' });
-  };
-};
+```
+Example: User creates post while offline
+
+Steps:
+1. User fills post form
+2. Taps submit
+3. App checks connection
+4. If offline: Save to local queue (AsyncStorage)
+5. Show "Saving offline..."
+6. When online: Execute queued mutations
+7. Show success/failure toast
+
+Considerations:
+- Queue structure: [{ type: 'create_post', data: {...} }, ...]
+- Retry logic: Exponential backoff
+- Conflict resolution: Server wins, notify user
+```
+
+### Connection Detection Pattern
+
+**Pattern**: Detect when user goes online/offline
+
+**Libraries**:
+- `@react-native-community/netinfo`: Check connection status
+
+**Pattern**:
+- Listen for connection changes
+- When online: Sync queued data
+- When offline: Disable create features (optional)
+- Show "Offline" indicator
+
+---
+
+## Push Notifications
+
+### Why Push Notifications?
+
+Keep users engaged with:
+- New likes/comments on posts
+- Competition updates (new scores, achievements)
+- Friend activities (new posts, followed)
+- Reminders for competitions
+
+### Push Notification Setup Pattern
+
+**Pattern**: Register device, receive notifications
+
+**Step 1: Request Permission**
+- iOS: Request user permission (required)
+- Android: Auto-granted (no prompt)
+- Show explanation: "Get updates on likes, comments, scores"
+
+**Step 2: Get Device Token**
+- Use `expo-notifications`
+- Receive unique device token
+- Send to backend (store in users table)
+
+**Step 3: Backend Sends Notification**
+- Server triggers notification via Supabase
+- Targets user's device token
+- Device receives notification
+- Notification handler fires (dismiss, tap, background)
+
+**Step 4: Handle Notification Tap**
+- If user taps notification: Deep link to relevant screen
+- Example: Notification about like → Open post detail
+- Example: Notification about competition → Open leaderboard
+
+### Local Notifications Pattern
+
+**Pattern**: App sends notifications to itself
+
+**Use case**: Offline reminders, timers, alerts
+
+**Example**:
+- User sets reminder for workout
+- App schedules local notification
+- At time, notification fires
+- User taps → Open workout screen
+
+**Libraries**:
+- `expo-notifications`: Local and push
+
+---
+
+## Monitoring & Error Handling
+
+### Error Logging Pattern
+
+**Pattern**: Log errors to service for debugging
+
+**What to log**:
+- Network errors (offline, timeout, 5xx)
+- Auth errors (session expired, permission denied)
+- App crashes (uncaught exceptions)
+- Business logic errors (validation, constraints)
+
+**Libraries**:
+- `sentry-expo`: Error tracking
+- `firebase-crashlytics`: Crash reporting
+
+**Pattern**:
+- Catch all errors
+- Log with context (user ID, action, time)
+- Send to logging service
+- Review logs in dashboard
+
+### Network Error Handling
+
+**Pattern**: Handle network failures gracefully
+
+```
+Errors:
+- No internet: Show offline message
+- Timeout: Retry, then show error
+- Server error (5xx): Show "Server busy"
+- Not found (404): Show "Item deleted"
 ```
 
 ### Performance Monitoring
 
-```javascript
-// ✅ Web Vitals
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+**Pattern**: Track app performance
 
-getCLS(console.log);
-getFID(console.log);
-getFCP(console.log);
-getLCP(console.log);
-getTTFB(console.log);
+**Metrics**:
+- Screen load time (how long does feed take to render?)
+- API response time (how fast are Supabase queries?)
+- Network latency
+- Crash rate
 
-// ✅ Custom performance marks
-performance.mark('api-call-start');
-// ... API call ...
-performance.mark('api-call-end');
-performance.measure('api-call', 'api-call-start', 'api-call-end');
+**Libraries**:
+- `expo-task-manager`: Background tasks
+- `@sentry/tracing`: Performance monitoring
+
+---
+
+## CI/CD for Expo
+
+### Automated Testing
+
+**Pattern**: Run tests on every commit
+
+```
+Tests:
+- Unit tests: Component logic
+- Integration tests: API calls
+- E2E tests: Full user flows
+
+Example flow:
+1. Commit to develop
+2. GitHub Action runs tests
+3. If pass: Proceed to build
+4. If fail: Block merge, notify developer
+```
+
+### Automated Builds
+
+**Pattern**: Build APK automatically
+
+```
+Example GitHub Actions workflow:
+1. Commit to develop → Trigger action
+2. Action runs tests
+3. If pass: Trigger eas build
+4. EAS builds APK
+5. Upload artifact to GitHub Releases
+6. Notify team: "New APK ready for testing"
+```
+
+### Staged Rollout
+
+**Pattern**: Deploy to test users first
+
+```
+Channels (Expo Over-the-Air):
+- production: Main users
+- staging: Test users
+- develop: Developers
+
+Process:
+1. Develop feature on develop branch
+2. Deploy OTA to staging channel
+3. Test users test feature
+4. If good: Deploy to production
+```
+
+### Version Management
+
+**Pattern**: Increment version on each build
+
+```
+Semantic versioning:
+- MAJOR.MINOR.PATCH (1.2.3)
+- 1.0.0: First release
+- 1.1.0: New features
+- 1.0.1: Bug fixes
+
+Update:
+- app.json: version field
+- Commit with version bump
+- Tag release in git
 ```
 
 ---
 
-## CI/CD Pipelines
+## Monitoring Production
 
-### GitHub Actions Workflow
+### Key Metrics to Track
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to Production
+**User engagement**:
+- Daily active users (DAU)
+- Session duration
+- Feature usage (feed, competitions, profile)
 
-on:
-  push:
-    branches: [main]
+**Performance**:
+- App crash rate
+- API response time
+- Network errors
+- Screen load time
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run tests
-        run: npm test -- --coverage
-      
-      - name: Build
-        env:
-          REACT_APP_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: npm run build
-      
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+**Business**:
+- User growth
+- Post creation rate
+- Competition participation
+- Retention (% return weekly)
+
+### Debugging Production Issues
+
+**Pattern**: Diagnose issues reported by users
+
+**Tools**:
+- Sentry: Crash logs, stack traces
+- Datadog: Performance metrics
+- Supabase logs: Database errors
+- Expo logs: App runtime errors
+
+**Process**:
+1. User reports issue ("Leaderboard doesn't update")
+2. Check error logs in Sentry
+3. Check Supabase logs for database errors
+4. Check network tab in DevTools
+5. Reproduce locally
+6. Fix and deploy
+
+---
+
+## Security in Production
+
+### HTTPS & API Security
+
+**Enforced by default**:
+- Supabase always uses HTTPS
+- All requests encrypted in transit
+- Domain verified (no MITM attacks)
+
+### Rate Limiting
+
+**Pattern**: Prevent abuse and DDoS
+
+```
+Examples:
+- Create max 10 posts per day
+- Like max 100 items per day
+- Create max 1 competition per day
+
+Implementation:
+- PostgreSQL trigger counts actions per day
+- If limit reached: Return error
+- Frontend shows message: "Daily limit reached"
 ```
 
-### Pre-deployment Checklist
+### Data Privacy
 
-```bash
-# Run before deploying
-npm run lint      # Check code quality
-npm run test      # Run tests
-npm run build     # Build for production
-npm run analyze   # Analyze bundle size
+**Pattern**: Respect user privacy
+
+```
+Requirements:
+- RLS policies enforce row-level access
+- Delete user data on request (GDPR)
+- Encrypt sensitive data (passwords hashed by Supabase)
+- Don't log sensitive data (passwords, tokens)
 ```
 
 ---
 
 ## Deployment Checklist
 
-- [ ] All environment variables configured
-- [ ] Tests passing
-- [ ] Build succeeds without warnings
-- [ ] Error tracking (Sentry) configured
-- [ ] Analytics configured
-- [ ] Database migrations applied
-- [ ] RLS policies enabled
+### Before Building for Production
+
+- [ ] All tests pass
+- [ ] No console.log debugging statements
+- [ ] Environment variables correct (prod Supabase)
+- [ ] Version bumped in app.json
+- [ ] RLS policies enabled on all tables
 - [ ] Rate limiting configured
-- [ ] Monitoring alerts setup
-- [ ] Backup strategy in place
-- [ ] Domain/SSL certificate configured
-- [ ] CDN configured (if needed)
-- [ ] Load balancing configured (if needed)
-- [ ] Database backups automated
-- [ ] Log retention configured  
+- [ ] Error logging configured (Sentry)
+- [ ] Push notifications configured
+- [ ] Deep linking tested
+- [ ] Performance optimized (bundle size < 40MB)
+
+### After Building
+
+- [ ] APK generated successfully
+- [ ] Test on real device (iOS/Android)
+- [ ] Test offline scenarios
+- [ ] Test slow network
+- [ ] Check error logging (no crashes)
+- [ ] Monitor user feedback
+- [ ] Have rollback plan ready
+
+### Post-Launch Monitoring
+
+- [ ] Monitor crash rate
+- [ ] Monitor API latency
+- [ ] Monitor user engagement
+- [ ] Monitor error logs for patterns
+- [ ] Collect user feedback
+- [ ] Plan next release cycle

@@ -1,214 +1,336 @@
 ---
-title: Database Design & PostgreSQL Optimization
+title: Database Design & PostgreSQL for Living Sports
 version: 1.0
 ---
 
 # Database Design & PostgreSQL with Supabase
 
+Designing PostgreSQL schemas optimized for fitness social networks, real-time features, and mobile access from Expo apps.
+
 ## Table of Contents
 1. [Schema Design Principles](#schema-design-principles)
-2. [Data Types & Constraints](#data-types--constraints)
-3. [Indexing Strategy](#indexing-strategy)
-4. [Performance Optimization](#performance-optimization)
-5. [Row-Level Security (RLS)](#row-level-security-rls)
-6. [Migrations & Versioning](#migrations--versioning)
-7. [Supabase-Specific Features](#supabase-specific-features)
+2. [Living Sports Core Tables](#living-sports-core-tables)
+3. [Data Types & Constraints](#data-types--constraints)
+4. [Indexing Strategy](#indexing-strategy)
+5. [Performance Optimization](#performance-optimization)
+6. [Row-Level Security (RLS)](#row-level-security-rls)
+7. [Migrations & Versioning](#migrations--versioning)
+8. [Real-Time Subscriptions](#real-time-subscriptions)
+9. [Schema Evolution Patterns](#schema-evolution-patterns)
+10. [Supabase-Specific Features](#supabase-specific-features)
 
 ---
 
 ## Schema Design Principles
 
-### 1. Normalization vs Denormalization
+### Normalization vs Denormalization
 
-**Normalized approach** (3NF):
-- Reduces data redundancy
-- Easier to maintain
-- May require JOINs (slightly slower)
-- Best for: Transactional systems, complex relationships
+**Normalized approach** (recommended for Live Sports):
+- Reduces redundancy (single source of truth for user info)
+- Easier maintenance (update username once, reflected everywhere)
+- JOIN queries handle relationships
+- Best for transactional systems with frequent writes
+
+Example: User info in `users` table, referenced by ID in `posts`, `competitions`, etc.
+
+**Denormalized approach** (use sparingly with JSONB):
+- Faster reads (no JOINs needed)
+- Requires cache invalidation (triggers)
+- Use for computed fields (like count, score, etc.)
+- Best for read-heavy analytics or semi-structured data
+
+Example: Store user's current competition score in JSONB `user_metadata` instead of querying leaderboard each time.
+
+**Best practice**: Start normalized, denormalize only proven bottlenecks. Use JSONB for flexibility.
+
+### Primary Key Strategy
+
+**UUIDs** (recommended):
+- Perfect for distributed systems (Supabase)
+- Works with mobile (no sequential IDs from server)
+- Good for privacy (IDs aren't predictable)
+
+**BIGINT auto-increment**:
+- Simpler for some use cases
+- Sequential (exposes data volume)
+- Less suitable for distributed systems
+
+**For Living Sports**: Use UUIDs for all tables except internal tracking.
+
+### Timestamp Best Practices
+
+Always include `created_at` and `updated_at` for auditing and sorting:
+- `created_at`: Set once, never changes
+- `updated_at`: Auto-updates on any change (via trigger)
+- Use `TIMESTAMP WITH TIME ZONE` for UTC
+- Use for feed sorting (newest first), pagination, etc.
+
+---
+
+## Living Sports Core Tables
+
+### 1. Users Profile
 
 ```sql
--- ✅ Normalized
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT NOT NULL UNIQUE,
+  display_name TEXT,
+  bio TEXT,
+  avatar_url TEXT,
+  
+  -- Semi-structured: Training level, preferences, achievements, stats
+  profile_data JSONB DEFAULT '{}',  -- { level: 'beginner', favoriteExercises: [...], badges: [...] }
+  
+  -- Settings stored as JSON (notifications, privacy, theme)
+  settings JSONB DEFAULT '{}',
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_created ON users(created_at DESC);
+```
+
+**Why JSONB for profile_data?**
+- Add new fields without migration (e.g., "favoriteExercises", "achievements")
+- Track achievements as they're earned
+- Store training level history
+- Flexible without schema changes
+
+### 2. Feed Posts
+
+```sql
 CREATE TABLE posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  content TEXT,
-  created_at TIMESTAMP DEFAULT now()
+  
+  caption TEXT,
+  
+  -- Store URLs of media uploaded to Supabase Storage
+  media_urls TEXT[] DEFAULT '{}',
+  
+  -- Meta: tags, exercises, location, intensity
+  metadata JSONB DEFAULT '{}',  -- { exercises: ['running', 'burpees'], intensity: 'high', location: 'gym' }
+  
+  likes_count INT DEFAULT 0,  -- Denormalized for speed
+  comments_count INT DEFAULT 0,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE tags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT UNIQUE NOT NULL
-);
-
-CREATE TABLE post_tags (
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
-  PRIMARY KEY (post_id, tag_id)
-);
+-- Indexes for feed queries (user's posts, recent posts)
+CREATE INDEX idx_posts_user_created ON posts(user_id, created_at DESC);
+CREATE INDEX idx_posts_created ON posts(created_at DESC);
+CREATE INDEX idx_posts_updated ON posts(updated_at DESC);  -- For "what's new"
 ```
 
-**Denormalized approach**:
-- Stores computed data explicitly
-- Faster reads
-- Requires careful cache invalidation
-- Best for: Read-heavy analytics, denormalization at scale
+**Performance notes**:
+- `likes_count` and `comments_count` are denormalized (cached). Use triggers to update.
+- `media_urls` array for multiple photos per post
+- `metadata` JSONB for flexible exercise tagging
+
+### 3. Likes & Interactions
 
 ```sql
--- ⚠️ Denormalized (use triggers to keep in sync)
-CREATE TABLE posts_with_metadata (
+CREATE TABLE post_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  title TEXT NOT NULL,
-  tag_count INT DEFAULT 0,  -- Denormalized
-  view_count INT DEFAULT 0,  -- Denormalized
-  updated_at TIMESTAMP DEFAULT now()
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  
+  UNIQUE(post_id, user_id)  -- User can't like same post twice
 );
+
+CREATE INDEX idx_post_likes_user ON post_likes(user_id, created_at DESC);
+CREATE INDEX idx_post_likes_post ON post_likes(post_id);
 ```
 
-**Best practice**: Start normalized, denormalize only if profiling shows it's necessary.
+**When user likes a post**:
+- Insert into `post_likes`
+- Trigger increments `posts.likes_count`
+- Realtime subscription notifies post owner
 
----
-
-### 2. Primary Key Strategy
-
-```sql
--- ✅ UUIDs (recommended for Supabase/distributed systems)
-CREATE TABLE items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  ...
-);
-
--- ✅ BIGINT auto-increment (good for simple apps)
-CREATE TABLE items (
-  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  ...
-);
-
--- ✅ ULID (trendy, sortable, non-random)
--- Requires pgcrypto or custom function
-CREATE TABLE items (
-  id TEXT PRIMARY KEY DEFAULT gen_ulid(),
-  ...
-);
-
--- ❌ Avoid: String keys unless necessary
--- ❌ Avoid: Natural keys (email as PK) - they change
-```
-
----
-
-### 3. Timestamp Best Practices
+### 4. Comments
 
 ```sql
--- ✅ Current setup (UTC, immutable)
-CREATE TABLE posts (
+CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  
+  content TEXT NOT NULL,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- ⚠️ Missing timezone (assume UTC in documentation)
-CREATE TABLE posts (
-  created_at TIMESTAMP DEFAULT now()
-);
+CREATE INDEX idx_comments_post_created ON comments(post_id, created_at DESC);
+CREATE INDEX idx_comments_user ON comments(user_id);
 
--- Auto-update trigger for updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Trigger to update post's comments_count
+CREATE OR REPLACE FUNCTION update_post_comments_count()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_at = CURRENT_TIMESTAMP;
-  RETURN NEW;
+  IF TG_OP = 'INSERT' THEN
+    UPDATE posts SET comments_count = comments_count + 1 WHERE id = NEW.post_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE posts SET comments_count = comments_count - 1 WHERE id = OLD.post_id;
+  END IF;
+  RETURN COALESCE(NEW, OLD);
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_posts_updated_at
-  BEFORE UPDATE ON posts
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trigger_comment_count
+AFTER INSERT OR DELETE ON comments
+FOR EACH ROW EXECUTE FUNCTION update_post_comments_count();
+```
+
+### 5. Competitions
+
+```sql
+CREATE TABLE competitions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  
+  name TEXT NOT NULL,
+  description TEXT,
+  
+  exercise_type TEXT NOT NULL,  -- 'running_distance', 'pushups', 'burpees', etc.
+  
+  start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  
+  -- Scoring rules stored as JSON
+  rules JSONB DEFAULT '{}',  -- { type: 'highest_score', unit: 'kilometers', target: 10 }
+  
+  is_public BOOLEAN DEFAULT true,  -- Private competitions for friend groups
+  
+  participants_count INT DEFAULT 1,  -- Denormalized
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE INDEX idx_competitions_dates ON competitions(start_date, end_date);
+CREATE INDEX idx_competitions_creator ON competitions(creator_id);
+CREATE INDEX idx_competitions_public ON competitions(is_public) WHERE is_public = true;
+```
+
+### 6. Competition Entries (Participant Scores)
+
+```sql
+CREATE TABLE competition_entries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  competition_id UUID NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  
+  current_score INT DEFAULT 0,  -- Latest/best score
+  
+  -- All attempts with timestamps (flexible storage)
+  attempts JSONB NOT NULL DEFAULT '[]',  -- [{ timestamp: '2024-04-01T10:00Z', value: 5.2, unit: 'km' }, ...]
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  
+  UNIQUE(competition_id, user_id)  -- User participates once per competition
+);
+
+-- Leaderboard query: ORDER BY current_score DESC
+CREATE INDEX idx_competition_leaderboard ON competition_entries(competition_id, current_score DESC);
+CREATE INDEX idx_competition_user ON competition_entries(user_id);
+```
+
+**Why JSONB for attempts?**
+- Store full history (timestamp, value, notes, device info)
+- Flexible structure per competition type
+- No need for separate `attempts` table
+- Easy to query latest N attempts
+
+### 7. Workouts & Training
+
+```sql
+CREATE TABLE workout_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  
+  name TEXT,  -- "Upper Body", "5K Run", etc.
+  
+  -- Exercises stored as JSON (flexible structure)
+  exercises JSONB NOT NULL DEFAULT '[]',  -- [{ name: 'pushups', sets: 3, reps: 10, weight: null }, ...]
+  
+  duration_minutes INT,
+  intensity_level TEXT,  -- 'low', 'moderate', 'high'
+  
+  metadata JSONB DEFAULT '{}',  -- { location: 'gym', weather: 'sunny', mood: 'energized' }
+  
+  completed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Query user's workouts chronologically
+CREATE INDEX idx_workout_user_date ON workout_sessions(user_id, completed_at DESC);
+CREATE INDEX idx_workout_completed ON workout_sessions(completed_at DESC);
+```
+
+### 8. Followers / Social Graph
+
+```sql
+CREATE TABLE followers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  
+  UNIQUE(follower_id, following_id),  -- User can't follow same person twice
+  CHECK (follower_id != following_id)  -- Can't follow yourself
+);
+
+-- Query: "Who does user X follow?" / "Who follows user Y?"
+CREATE INDEX idx_followers_follower ON followers(follower_id);
+CREATE INDEX idx_followers_following ON followers(following_id);
 ```
 
 ---
 
 ## Data Types & Constraints
 
-### Recommended Data Types
+### Key Data Types for Fitness App
 
 ```sql
--- ✅ Strings
-CREATE TABLE posts (
-  title VARCHAR(255) NOT NULL,  -- Limited length, good for titles
-  content TEXT NOT NULL,         -- Unlimited, good for content
-  slug VARCHAR(255) UNIQUE,      -- For URLs
-  description VARCHAR(500)       -- Bio/summary
-);
+-- UUID for IDs
+id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 
--- ✅ Numbers
-CREATE TABLE products (
-  price NUMERIC(10, 2) NOT NULL,  -- Precise decimals (NOT float)
-  stock INT NOT NULL DEFAULT 0,
-  rating DECIMAL(3, 2)             -- 0-99.99
-);
+-- Strings with length constraints
+username VARCHAR(50) NOT NULL UNIQUE  -- Reasonable limit
+bio VARCHAR(500)                      -- Bio with max length
 
--- ✅ Booleans
-CREATE TABLE users (
-  is_active BOOLEAN DEFAULT true,
-  is_admin BOOLEAN DEFAULT false
-);
+-- Numbers
+duration_minutes INT CHECK (duration_minutes > 0)  -- Must be positive
+current_score INT DEFAULT 0           -- Scores can't be negative
 
--- ✅ JSON
-CREATE TABLE user_metadata (
-  id UUID PRIMARY KEY,
-  profile_data JSONB NOT NULL,     -- Better indexing than JSON
-  settings JSONB DEFAULT '{}'::JSONB
-);
+-- JSONB for flexible data
+attempts JSONB DEFAULT '[]'           -- Array of attempts with varying structure
+profile_data JSONB DEFAULT '{}'       -- Flexible user data
 
--- ✅ Arrays
-CREATE TABLE categories (
-  id UUID PRIMARY KEY,
-  tags TEXT[] DEFAULT '{}'::TEXT[],
-  scores INT[] NOT NULL
-);
+-- Arrays for simple lists
+media_urls TEXT[] DEFAULT '{}'        -- List of image/video URLs
+tags TEXT[] DEFAULT '{}'              -- List of tag strings
 
--- ✅ Enums (smaller, faster than strings)
-CREATE TYPE user_role AS ENUM ('admin', 'moderator', 'user');
-CREATE TABLE users (
-  role user_role DEFAULT 'user'
-);
+-- Enums for fixed values
+CREATE TYPE intensity_level AS ENUM ('low', 'moderate', 'high');
+intensity intensity_level DEFAULT 'moderate'  -- Smaller, faster than TEXT
 
--- ✅ UUID
-CREATE TABLE items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid()
-);
-```
+-- Timestamps
+created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 
-### Constraints to Use
-
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT NOT NULL UNIQUE,
-  username VARCHAR(50) NOT NULL UNIQUE,
-  age INT CHECK (age >= 0 AND age <= 150),
-  created_at TIMESTAMP NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP NOT NULL DEFAULT now(),
-  
-  -- Foreign key with cascade
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE
-);
-
--- ✅ Constraint naming (important for migrations)
-CREATE TABLE posts (
-  id UUID PRIMARY KEY,
-  user_id UUID NOT NULL,
-  CONSTRAINT fk_posts_user FOREIGN KEY (user_id) REFERENCES users(id)
-);
+-- Booleans for flags
+is_public BOOLEAN DEFAULT true
+is_active BOOLEAN DEFAULT true
 ```
 
 ---
@@ -218,146 +340,148 @@ CREATE TABLE posts (
 ### When to Index
 
 ```sql
--- ✅ Index on frequently filtered columns
-CREATE INDEX idx_posts_user_id ON posts(user_id);
-CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
-
--- ✅ Composite index for common queries
+-- ✅ Frequently filtered columns
 CREATE INDEX idx_posts_user_created ON posts(user_id, created_at DESC);
+CREATE INDEX idx_comments_post ON comments(post_id);
 
--- ✅ Index for LIKE/search (use gin for full-text)
-CREATE INDEX idx_posts_title ON posts USING gin(title gin_trgm_ops);
+-- ✅ Pagination queries (sorted columns)
+CREATE INDEX idx_workouts_user_date ON workout_sessions(user_id, completed_at DESC);
 
--- ✅ Index on JSON keys
-CREATE INDEX idx_metadata_type ON items USING gin(profile_data);
+-- ✅ Leaderboard / top N queries
+CREATE INDEX idx_competition_leaderboard ON competition_entries(competition_id, current_score DESC);
 
--- ✅ Partial index (only active users)
-CREATE INDEX idx_active_users ON users(id) WHERE is_active = true;
+-- ✅ Partial index (only public competitions)
+CREATE INDEX idx_competitions_public ON competitions(is_public) WHERE is_public = true;
 
--- ❌ Don't index low-cardinality columns (gender, country)
--- ❌ Don't index every column
--- ❌ Don't index columns that are rarely queried
+-- ✅ JSONB key searches (if querying frequently)
+CREATE INDEX idx_posts_exercise ON posts USING gin(metadata);
+
+-- ❌ Don't index: Low-cardinality (is_public = 95% true), rarely-used columns, foreign keys already indexed
 ```
 
-### Index Naming Convention
+### Naming Convention
+
+Pattern: `idx_[table]_[columns]`
 
 ```sql
--- Table: posts
--- Pattern: idx_[table]_[columns]
-
-CREATE INDEX idx_posts_user_id ON posts(user_id);
-CREATE INDEX idx_posts_created_at ON posts(created_at);
-CREATE INDEX idx_posts_user_created ON posts(user_id, created_at);
-
--- For unique constraints
-CREATE UNIQUE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_posts_user_created ON posts(user_id, created_at DESC);
+CREATE INDEX idx_post_likes_post ON post_likes(post_id);
+CREATE INDEX idx_competition_leaderboard ON competition_entries(competition_id, current_score DESC);
 ```
 
 ---
 
 ## Performance Optimization
 
-### 1. Query Optimization
+### Query Optimization: N+1 Problem
 
-```sql
--- ❌ N+1 Problem (avoid!)
--- In app: for each user { SELECT * FROM posts WHERE user_id = ... }
+❌ **Avoid**: App loads 20 posts, then for each post fetches user info (21 queries)
 
--- ✅ JOIN instead
-SELECT u.id, u.name, p.title, p.created_at
-FROM users u
-LEFT JOIN posts p ON u.id = p.user_id
-ORDER BY u.id, p.created_at DESC;
+✅ **Do**: Fetch posts with user info in one query via JOIN or Supabase `select` with relations
 
--- ✅ Use EXPLAIN ANALYZE to check query plan
-EXPLAIN ANALYZE
-SELECT * FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10;
+Example Supabase pattern:
+```javascript
+const { data } = await supabase
+  .from('posts')
+  .select('*, users(username, avatar_url)')  // Join users info
+  .order('created_at', { ascending: false })
+  .limit(20);
 ```
 
-### 2. Pagination
+### Pagination Strategy
+
+**Offset-based** (inefficient for large datasets):
+- Query: `OFFSET 100 LIMIT 20` (skip 100, take 20)
+- Problem: Slow with large offsets, unstable if data changes
+- Acceptable for small datasets only
+
+**Cursor-based** (recommended for feeds):
+- Query: `WHERE created_at < ${lastPostTimestamp} LIMIT 20`
+- Efficient: Constant performance regardless of position
+- Stable: New posts don't affect pagination
+- Better for mobile (unpredictable network drops)
+
+Implementation in Expo app:
+- Store `lastCreatedAt` timestamp in state
+- On "load more", query `WHERE created_at < :lastCreatedAt ORDER BY created_at DESC LIMIT 20`
+- Append results to feed
+- Update `lastCreatedAt` to new batch's oldest timestamp
+
+### Aggregation Caching
+
+❌ **Avoid**: Recalculate `COUNT(*)` every time
+
+✅ **Do**: Denormalize with trigger
 
 ```sql
--- ✅ OFFSET/LIMIT (simple but slow for large offsets)
-SELECT * FROM posts ORDER BY created_at DESC LIMIT 20 OFFSET 40;
+-- Store count in posts table
+ALTER TABLE posts ADD COLUMN likes_count INT DEFAULT 0;
 
--- ✅✅ Cursor-based pagination (best)
-SELECT * FROM posts 
-WHERE created_at < (SELECT created_at FROM posts WHERE id = $1)
-ORDER BY created_at DESC
-LIMIT 20;
-
--- ✅ Keyset pagination (for large tables)
-SELECT * FROM posts 
-WHERE (created_at, id) < ($1, $2)
-ORDER BY created_at DESC, id DESC
-LIMIT 20;
-```
-
-### 3. Aggregation Optimization
-
-```sql
--- ❌ Recalculate every time
-SELECT COUNT(*) FROM posts WHERE user_id = $1;
-
--- ✅ Cache with denormalization + trigger
-ALTER TABLE users ADD COLUMN post_count INT DEFAULT 0;
-
-CREATE OR REPLACE FUNCTION increment_post_count()
+-- Trigger to keep in sync
+CREATE OR REPLACE FUNCTION increment_likes_count()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE users SET post_count = post_count + 1 WHERE id = NEW.user_id;
+  UPDATE posts SET likes_count = likes_count + 1 WHERE id = NEW.post_id;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER post_insert_count
-AFTER INSERT ON posts
-FOR EACH ROW
-EXECUTE FUNCTION increment_post_count();
+CREATE TRIGGER increment_post_likes
+AFTER INSERT ON post_likes
+FOR EACH ROW EXECUTE FUNCTION increment_likes_count();
 ```
 
-### 4. Full-Text Search
+### Full-Text Search (Finding Exercises, Users)
+
+For searching by username, exercise type, or post content:
 
 ```sql
--- ✅ GiST index for full-text search
-ALTER TABLE posts ADD COLUMN search_vector tsvector;
+-- Add tsvector column for fast text search
+ALTER TABLE users ADD COLUMN search_vector tsvector;
 
-CREATE INDEX idx_posts_search ON posts USING gist(search_vector);
-
--- Create trigger to auto-update
-CREATE OR REPLACE FUNCTION posts_search_update()
+-- Trigger to auto-update
+CREATE OR REPLACE FUNCTION update_user_search()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.search_vector := to_tsvector('english', NEW.title || ' ' || COALESCE(NEW.content, ''));
+  NEW.search_vector := to_tsvector('english', NEW.username || ' ' || COALESCE(NEW.display_name, ''));
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER posts_search_trigger
-BEFORE INSERT OR UPDATE ON posts
-FOR EACH ROW
-EXECUTE FUNCTION posts_search_update();
+CREATE TRIGGER user_search_update
+BEFORE INSERT OR UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION update_user_search();
 
--- Query
-SELECT * FROM posts 
-WHERE search_vector @@ plainto_tsquery('english', 'my search term')
-ORDER BY ts_rank(search_vector, plainto_tsquery('english', 'my search term')) DESC;
+-- Index for fast queries
+CREATE INDEX idx_users_search ON users USING gist(search_vector);
+
+-- Query: Find users matching "john"
+SELECT * FROM users 
+WHERE search_vector @@ plainto_tsquery('english', 'john')
+ORDER BY ts_rank(search_vector, plainto_tsquery('english', 'john')) DESC
+LIMIT 20;
 ```
 
 ---
 
 ## Row-Level Security (RLS)
 
-### Basic RLS Setup
+### Basic Setup
 
 ```sql
--- Enable RLS on table
+-- Enable RLS on sensitive tables
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE competition_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- ✅ Users can only see their own posts
-CREATE POLICY select_own_posts ON posts
+-- ✅ Users see their own posts and public posts
+CREATE POLICY view_posts ON posts
   FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (
+    user_id = auth.uid() OR
+    is_public = true  -- If posts have is_public flag
+  );
 
 -- ✅ Users can only insert posts for themselves
 CREATE POLICY insert_own_posts ON posts
@@ -376,47 +500,54 @@ CREATE POLICY delete_own_posts ON posts
   USING (auth.uid() = user_id);
 ```
 
-### Advanced RLS Patterns
+### Advanced RLS: Competition Entries
 
 ```sql
--- RLS with team/organization
-ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE competition_entries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY team_access_posts ON posts
+-- ✅ Public competitions: Anyone can view leaderboard
+-- ✅ Private competitions: Only participants can view
+CREATE POLICY view_competition_entries ON competition_entries
   FOR SELECT
   USING (
-    user_id = auth.uid() OR
-    team_id IN (SELECT team_id FROM team_members WHERE user_id = auth.uid())
+    -- View own entries
+    auth.uid() = user_id OR
+    -- View public competition leaderboard
+    EXISTS (
+      SELECT 1 FROM competitions c
+      WHERE c.id = competition_entries.competition_id
+      AND c.is_public = true
+    ) OR
+    -- View private competition only if participant
+    EXISTS (
+      SELECT 1 FROM competition_entries ce
+      WHERE ce.competition_id = competition_entries.competition_id
+      AND ce.user_id = auth.uid()
+    )
   );
 
--- RLS with admin override
-CREATE POLICY admin_all_posts ON posts
-  FOR ALL
-  USING (
-    user_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
-  );
+-- ✅ Users can only enter/update their own entries
+CREATE POLICY insert_competition_entry ON competition_entries
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
 
--- RLS with published status (mix public + private)
-CREATE POLICY view_posts ON posts
-  FOR SELECT
-  USING (
-    is_published = true OR
-    user_id = auth.uid()
-  );
+CREATE POLICY update_competition_entry ON competition_entries
+  FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 ```
 
 ### Testing RLS
 
-```sql
--- Test as specific user
-SET "request.jwt.claims" = json_build_object('sub', 'user-id-here')::text;
+In Supabase dashboard or with Supabase client:
+```javascript
+// Simulate as specific user
+const { data } = await supabase
+  .from('posts')
+  .select('*');
+// Will only return user's own posts or public posts
 
--- View should respect RLS
-SELECT * FROM posts;
-
--- Reset
-RESET "request.jwt.claims";
+// Switch user context to verify policies
 ```
 
 ---
@@ -426,118 +557,226 @@ RESET "request.jwt.claims";
 ### Migration File Structure
 
 ```
-supabase/migrations/
-├── 001_initial_schema.sql
-├── 002_add_posts_table.sql
-├── 003_add_rls_policies.sql
-├── 004_create_indexes.sql
-└── 005_add_search_vector.sql
+migrations/
+├── 001_create_users_table.sql
+├── 002_create_posts_table.sql
+├── 003_create_likes_table.sql
+├── 004_create_competitions_table.sql
+├── 005_add_rls_policies.sql
+├── 006_create_triggers_for_counts.sql
+├── 007_add_search_index.sql
+└── 008_add_offline_sync_columns.sql
 ```
 
-### Safe Migration Pattern
+### Safe Migration Patterns
+
+**Adding new columns** (safe):
+```sql
+ALTER TABLE users ADD COLUMN badges JSONB DEFAULT '{}';
+```
+
+**Adding JSONB for flexibility** (safe):
+```sql
+ALTER TABLE posts ADD COLUMN exercise_metadata JSONB DEFAULT '{}'
+-- Future: No need to migrate to add new exercise fields
+```
+
+**Renaming columns** (safe but careful):
+```sql
+ALTER TABLE users RENAME COLUMN old_name TO new_name;
+```
+
+**Deleting columns** (use with care):
+- May break existing apps if they try to query deleted column
+- Deprecate first: Rename to `_deprecated`, communicate with clients
+- Delete in later migration after clients updated
+
+**Creating indexes** (safe, improves performance):
+```sql
+CREATE INDEX idx_posts_created ON posts(created_at DESC);
+```
+
+### Supabase CLI Workflow
+
+```bash
+# Generate empty migration file
+supabase migration new add_new_table
+
+# Edit migration file with SQL
+
+# Test locally
+supabase migration up
+
+# Rollback if needed
+supabase migration down
+
+# Deploy to Supabase cloud
+supabase db push
+```
+
+---
+
+## Real-Time Subscriptions
+
+### Enable Realtime on Tables
 
 ```sql
--- ✅ 001_create_users_table.sql
+-- Tell Supabase to stream changes on these tables
+ALTER PUBLICATION supabase_realtime ADD TABLE posts;
+ALTER PUBLICATION supabase_realtime ADD TABLE competition_entries;
+ALTER PUBLICATION supabase_realtime ADD TABLE post_likes;
+
+-- (optional) Limit events to INSERT/UPDATE only (no DELETE)
+ALTER PUBLICATION supabase_realtime 
+SET (publish = 'INSERT,UPDATE') 
+FOR TABLE posts;
+```
+
+### Using in Expo App
+
+Pattern: Subscribe to competition leaderboard for real-time updates
+
+Implementation approach:
+- Set up Supabase Realtime listener in component (useEffect)
+- Subscribe to `competition_entries` table where competition_id matches
+- On INSERT/UPDATE, update local state
+- Unsubscribe on component unmount
+- Handle network disconnects (listener auto-reconnects)
+- Show "live" indicator when connected
+
+No literal code—use Supabase JS client's `on('*', callback)` pattern.
+
+---
+
+## Schema Evolution Patterns
+
+### Problem: Schema Changes Break Apps
+
+When you change schema (add column, new table), running apps might:
+- Crash if they expect old structure
+- Fail silently if they don't handle missing fields
+- Need careful migration strategy
+
+### Solution: JSONB for Flexibility
+
+Instead of creating new tables constantly, use JSONB:
+
+```sql
+-- Instead of: profile_headline, profile_bio, profile_level (3 columns)
+-- Use:
 CREATE TABLE users (
+  profile_data JSONB DEFAULT '{}',
+  -- Can hold any structure:
+  -- { headline: "Marathon runner", bio: "...", level: "advanced", achievements: [...] }
+);
+```
+
+**Migration-free evolution**:
+```javascript
+// App v1: stores { bio: "...", level: "..." }
+// App v1.1: adds { headline: "...", achievements: [...] }
+// No database migration needed—both versions work
+```
+
+### Strategy: Versioned Migrations
+
+For structural changes that need migration:
+
+```sql
+-- migrations/009_add_training_routines.sql
+-- Version: 2024-04-01
+-- Breaking changes: None (additive only)
+
+CREATE TABLE training_routines (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT UNIQUE NOT NULL,
+  user_id UUID NOT NULL REFERENCES users(id),
+  name TEXT NOT NULL,
+  exercises JSONB NOT NULL DEFAULT '[]',
   created_at TIMESTAMP DEFAULT now()
 );
 
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_training_routines_user ON training_routines(user_id);
 
--- ✅ 002_add_profile_field.sql (backward compatible)
-ALTER TABLE users ADD COLUMN profile_data JSONB DEFAULT '{}'::JSONB;
-
--- ❌ Avoid: Direct column deletion (breaks existing apps)
--- ALTER TABLE users DROP COLUMN email;
-
--- ✅ Better: Deprecate first, then remove in later migration
-ALTER TABLE users RENAME COLUMN email TO email_deprecated;
-
--- ✅ 003_add_new_email_field.sql
-ALTER TABLE users ADD COLUMN email_new TEXT;
-UPDATE users SET email_new = email_deprecated WHERE email_deprecated IS NOT NULL;
-ALTER TABLE users DROP COLUMN email_deprecated;
-ALTER TABLE users RENAME COLUMN email_new TO email;
+-- Track schema version
+INSERT INTO schema_versions (version, applied_at, description)
+VALUES (9, now(), 'Add training_routines table');
 ```
 
-### Supabase Migrations CLI
+### Backward Compatibility Checklist
 
-```bash
-# Generate migration
-supabase migration new add_posts_table
-
-# Apply migrations
-supabase migration up
-
-# Rollback
-supabase migration down
-```
+- [ ] New columns have defaults or are nullable
+- [ ] Don't delete columns (deprecate with `_deprecated` suffix first)
+- [ ] New tables are optional (don't require changes in app code)
+- [ ] RLS policies handle both old and new data
+- [ ] Migrations are reversible (keep `DOWN` scripts)
+- [ ] Test with older app versions accessing new schema
 
 ---
 
 ## Supabase-Specific Features
 
-### 1. Real-Time Subscriptions
+### Vector Embeddings (AI Search)
 
-```sql
--- Tables must have replication enabled
-ALTER PUBLICATION supabase_realtime ADD TABLE posts;
-
--- Only specific columns (optional, for security)
-ALTER PUBLICATION supabase_realtime SET (publish = 'INSERT,UPDATE,DELETE') FOR TABLE posts;
-```
-
-```javascript
-// Client-side subscription
-const subscription = supabase
-  .from('posts')
-  .on('*', payload => {
-    console.log('Change received!', payload)
-  })
-  .subscribe()
-```
-
-### 2. Vector/Embedding Support
+For semantic search ("find workouts similar to this one"):
 
 ```sql
 -- Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Add vector column
+-- Add embedding column
 ALTER TABLE posts ADD COLUMN embedding vector(1536);
 
--- Index for similarity search
+-- Index for fast similarity search
 CREATE INDEX idx_posts_embedding ON posts USING ivfflat (embedding vector_cosine_ops);
 
 -- Query similar posts
-SELECT id, title,
+SELECT id, caption,
   1 - (embedding <=> $1::vector) as similarity
 FROM posts
 ORDER BY embedding <=> $1::vector
 LIMIT 10;
 ```
 
-### 3. Postgres Functions (as APIs)
+In Expo app: Generate embeddings via Edge Function, send to DB, query for recommendations.
+
+### PostgreSQL Functions as APIs
+
+Define functions that apps call directly:
 
 ```sql
--- Simple function
-CREATE OR REPLACE FUNCTION hello_world()
-RETURNS TEXT AS $$
-  SELECT 'Hello World';
+-- Function: Get leaderboard for a competition
+CREATE OR REPLACE FUNCTION get_leaderboard(competition_id UUID)
+RETURNS TABLE (
+  user_id UUID,
+  username TEXT,
+  score INT,
+  rank INT
+) AS $$
+  SELECT 
+    ce.user_id,
+    u.username,
+    ce.current_score,
+    ROW_NUMBER() OVER (ORDER BY ce.current_score DESC) as rank
+  FROM competition_entries ce
+  JOIN users u ON ce.user_id = u.id
+  WHERE ce.competition_id = get_leaderboard.competition_id
+  ORDER BY ce.current_score DESC;
 $$ LANGUAGE sql;
 
--- With parameters
-CREATE OR REPLACE FUNCTION get_user_posts(user_id UUID)
-RETURNS TABLE (id UUID, title TEXT, created_at TIMESTAMP) AS $$
-  SELECT id, title, created_at FROM posts WHERE posts.user_id = user_id;
-$$ LANGUAGE sql;
-
--- Call from client
-const { data, error } = await supabase
-  .rpc('get_user_posts', { user_id: 'xxx' })
+-- Call from Expo app:
+-- const { data } = await supabase.rpc('get_leaderboard', { competition_id: 'xxx' })
 ```
+
+### Database Webhooks
+
+Trigger external actions on data changes:
+
+Example: When user joins competition, send push notification to friends.
+
+Setup in Supabase dashboard:
+- Create webhook on `competition_entries` INSERT
+- POST to your backend
+- Backend queries DB and sends notifications
 
 ---
 
@@ -545,26 +784,28 @@ const { data, error } = await supabase
 
 | Issue | Problem | Solution |
 |-------|---------|----------|
-| N+1 queries | App makes 1+N queries | Use JOIN or batch queries |
+| N+1 queries | App fetches 20 posts, then 20 user queries | Use JOIN/relations in Supabase select |
 | No indexes | Slow WHERE/ORDER BY | Index filtered/sorted columns |
-| OFFSET pagination | Slow for large offsets | Use cursor-based pagination |
-| Missing constraints | Data corruption | Add NOT NULL, UNIQUE, FK |
-| DECIMAL as FLOAT | Rounding errors | Use NUMERIC for money |
-| Missing RLS | Data leaks | Enable RLS on sensitive tables |
-| Text as ENUM | Slow filtering | Use ENUM type |
-| JSON over JSONB | Slower queries | Use JSONB for indexing |
+| Offset pagination | Slow for large offsets (skip 10000 rows) | Use cursor-based pagination |
+| Missing RLS | Data leaks between users | Enable RLS on sensitive tables |
+| DECIMAL as TEXT | Sorting/math fails | Use INT for cents or NUMERIC(10,2) |
+| Denormalized without triggers | Counts go out of sync | Use triggers to auto-update |
+| JSON instead of JSONB | Slower queries on JSON data | Use JSONB for indexing |
+| Too many triggers | Database becomes slow | Batch updates, use efficient trigger logic |
 
 ---
 
 ## Quick Checklist
 
-- [ ] Use UUID or BIGINT for primary keys
-- [ ] Always add `created_at` and `updated_at` timestamps
-- [ ] Create indexes on frequently filtered columns
-- [ ] Use NUMERIC for money, not FLOAT
-- [ ] Use ENUM for fixed values (role, status)
-- [ ] Use JSONB for semi-structured data
-- [ ] Enable RLS on sensitive tables
-- [ ] Set up CASCADE deletes for orphaned records
-- [ ] Test queries with EXPLAIN ANALYZE
-- [ ] Denormalize only when necessary and proven by profiling
+- [ ] All tables have UUID primary keys
+- [ ] All tables have `created_at` and `updated_at` timestamps
+- [ ] Foreign keys set `ON DELETE CASCADE` for cleanup
+- [ ] Indexes on frequently filtered/sorted columns
+- [ ] RLS enabled on sensitive tables (posts, competition_entries, users)
+- [ ] Denormalized counts use triggers to stay in sync
+- [ ] JSONB used for flexible/semi-structured data
+- [ ] Migrations are versioned and reversible
+- [ ] Real-time publication enabled for live features
+- [ ] Full-text search indexed for user/post search
+- [ ] Tested pagination with realistic data volume
+- [ ] Performance profiled with EXPLAIN ANALYZE

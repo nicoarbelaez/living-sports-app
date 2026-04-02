@@ -1,519 +1,312 @@
 ---
-title: Authentication, Security & Authorization
+title: Authentication, Security & Mobile Permissions
 version: 1.0
 ---
 
-# Authentication, Security & Authorization
+# Authentication, Security & Mobile Permissions
+
+Securing Expo apps with Supabase Auth, managing tokens on mobile, handling permissions, and protecting user data.
 
 ## Table of Contents
-1. [Supabase Auth Flows](#supabase-auth-flows)
+1. [Supabase Auth Architecture](#supabase-auth-architecture)
 2. [Email/Password Authentication](#emailpassword-authentication)
-3. [OAuth Providers](#oauth-providers)
-4. [Multi-Factor Authentication (MFA)](#multi-factor-authentication-mfa)
-5. [JWT & Token Management](#jwt--token-management)
-6. [Authorization & Permissions](#authorization--permissions)
-7. [Security Best Practices](#security-best-practices)
-8. [Session Management](#session-management)
+3. [OAuth Providers (Google, Apple)](#oauth-providers-google-apple)
+4. [Token & Session Management](#token--session-management)
+5. [Biometric Authentication](#biometric-authentication)
+6. [Mobile Permissions](#mobile-permissions)
+7. [Authorization & RLS](#authorization--rls)
+8. [Security Best Practices](#security-best-practices)
+9. [Error Handling & User Feedback](#error-handling--user-feedback)
 
 ---
 
-## Supabase Auth Flows
+## Supabase Auth Architecture
 
-### Architecture Overview
+### How Auth Works in Expo
 
 ```
-┌─────────────┐         ┌──────────────┐         ┌──────────────┐
-│   Client    │◄──────► │  Supabase    │◄──────► │  PostgreSQL  │
-│  (React)    │         │   Auth API   │         │    (RLS)     │
-└─────────────┘         └──────────────┘         └──────────────┘
-     JWT Token    JWT JWT         JWT Token       Enforces
-  Stored locally  Verify/Refresh  in headers      Policies
+┌─────────────────┐         ┌──────────────┐         ┌──────────────┐
+│  Expo App       │         │  Supabase    │         │  PostgreSQL  │
+│  (React Native) │◄───────►│  Auth        │◄───────►│  + RLS       │
+└─────────────────┘         └──────────────┘         └──────────────┘
+   JWT Token           Exchange credentials    Enforces row-level
+   AsyncStorage        Issue/refresh token     security policies
 ```
 
-### Auth Initialization
+### Initialization
 
-```javascript
-// lib/supabase.js
-import { createClient } from '@supabase/supabase-js';
+Create Supabase client for React Native with proper storage:
 
-export const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY,
-  {
-    auth: {
-      persistSession: true, // Store session in localStorage
-      autoRefreshToken: true, // Auto-refresh expired tokens
-      detectSessionInUrl: true, // Detect session from URL
-    },
-  }
-);
-```
+Pattern: Initialize Supabase with `AsyncStorage` for token persistence (not localStorage, which doesn't exist in React Native).
+
+Libraries: `@supabase/supabase-js`, `@react-native-async-storage/async-storage`
+
+Implementation approach:
+- Create `supabase.ts` file exporting Supabase client
+- Configure with AsyncStorage for token persistence
+- Set up auth state listener to track login/logout
+- Handle session restoration on app launch
+- Refresh tokens automatically before expiry
+
+No literal code—use Supabase docs for setup, ensuring AsyncStorage is configured.
 
 ---
 
 ## Email/Password Authentication
 
-### Registration
+### Sign Up (Registration)
 
-```javascript
-// ✅ Sign up with email/password
-const signUp = async (email, password) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
-      data: {
-        display_name: email.split('@')[0],
-      },
-    },
-  });
+Pattern: User enters email/password → Supabase sends confirmation email → User confirms → Account active
 
-  if (error) throw new Error(error.message);
-  
-  // Return confirmation needed message
-  return {
-    success: true,
-    message: 'Check your email to confirm registration',
-  };
-};
+Implementation approach:
+- Create form with TextInput for email, password
+- Validate email format and password strength (min 8 chars, uppercase, number)
+- Call Supabase `signUp()` with email, password, and optional metadata
+- Show success message: "Check your email to confirm your account"
+- Handle error cases (email already registered, weak password, network error)
+- Optional: Auto-redirect to login after signup
+- Test with real email (required by Supabase)
 
-// Usage in component
-const SignUpForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+### Login (Sign In)
 
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await signUp(email, password);
-      // Redirect to confirmation page
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+Pattern: User enters email/password → Supabase verifies → Returns JWT token → App stores token
 
-  return (
-    <form onSubmit={handleSignUp} className="max-w-md mx-auto">
-      <Input
-        label="Email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        error={error}
-        required
-      />
-      <Input
-        label="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        error={error}
-        required
-      />
-      <Button type="submit" disabled={loading}>
-        {loading ? 'Signing up...' : 'Sign Up'}
-      </Button>
-    </form>
-  );
-};
-```
-
-### Login
-
-```javascript
-// ✅ Sign in with email/password
-const signIn = async (email, password) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) throw new Error(error.message);
-  return data.session;
-};
-
-// ✅ Check if user is logged in
-const checkAuth = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw new Error(error.message);
-  return data.session;
-};
-
-// ✅ Get current user
-const getCurrentUser = async () => {
-  const { data, error } = await supabase.auth.getUser();
-  if (error) throw new Error(error.message);
-  return data.user;
-};
-```
+Implementation approach:
+- Create form with email and password inputs
+- Show "loading" state during sign-in
+- Call Supabase `signInWithPassword()`
+- On success: Store session in state, navigate to home screen
+- On error: Show error message (account doesn't exist, wrong password, not confirmed)
+- Add "Forgot Password?" link
+- Optional: Remember email (store locally for convenience, not password)
+- Test with both confirmed and unconfirmed accounts
 
 ### Password Reset
 
-```javascript
-// ✅ Request password reset
-const requestPasswordReset = async (email) => {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
-  });
+Pattern: User clicks "Forgot password" → Enters email → Supabase sends reset link → User clicks link in email → New password set
 
-  if (error) throw new Error(error.message);
-  return { success: true, message: 'Check your email' };
-};
-
-// ✅ Confirm password reset with new password
-const updatePassword = async (newPassword) => {
-  const { error } = await supabase.auth.updateUser({
-    password: newPassword,
-  });
-
-  if (error) throw new Error(error.message);
-  return { success: true };
-};
-```
+Implementation approach:
+- Create "Forgot Password" screen with email input
+- Call Supabase `resetPasswordForEmail(email, { redirectTo: '...' })`
+- Show message: "Check your email for reset link"
+- Handle reset callback (extract token from URL, set new password)
+- For mobile: Use deep linking to handle reset link taps
+- Show password strength requirements
+- Confirm new password (two fields, must match)
 
 ---
 
-## OAuth Providers
+## OAuth Providers (Google, Apple)
 
 ### Google OAuth
 
-```javascript
-// ✅ Sign in with Google
-const signInWithGoogle = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+Pattern: User taps "Sign in with Google" → Google login → Return to app authenticated
 
-  if (error) throw new Error(error.message);
-  // Browser redirects to Google login automatically
-};
+Libraries: `expo-auth-session`, `expo-web-browser`, Supabase OAuth config
 
-// Usage in component
-const GoogleLoginButton = () => (
-  <Button onClick={signInWithGoogle} variant="secondary">
-    Sign in with Google
-  </Button>
-);
-```
+Implementation approach:
+- Configure Google OAuth in Supabase dashboard (get Client ID)
+- Use `expo-auth-session` to handle OAuth flow
+- User taps button → Opens browser → Google login → Redirects back to app
+- Extract auth code from redirect
+- Exchange for JWT with Supabase
+- Store token in AsyncStorage
+- Create user profile on first login (if user table doesn't exist)
+- Test on both simulator and real device
 
-### GitHub OAuth
+### Apple OAuth
 
-```javascript
-const signInWithGitHub = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+Pattern: Same as Google, but Apple's sign-in (required on iOS)
 
-  if (error) throw new Error(error.message);
-};
-```
+Libraries: `expo-auth-session`, `expo-apple-authentication`
 
-### Callback Handler
+Implementation approach:
+- Similar to Google OAuth setup
+- Use `expo-apple-authentication` for native feel on iOS
+- Fall back to OAuth flow on Android (Apple doesn't support native Android auth)
+- Collect email/name on first login (Apple doesn't always provide)
+- Handle privacy (Apple hides email from app)
+- Test on both iOS and Android
 
-```javascript
-// pages/AuthCallback.jsx - Handle OAuth redirect
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+### OAuth Callback Handling
 
-export const AuthCallback = () => {
-  const navigate = useNavigate();
+After OAuth redirect, handle the response:
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        navigate('/login', { state: { error: error.message } });
-      } else if (data.session) {
-        // Create user profile if first time
-        await createUserProfile(data.session.user);
-        navigate('/dashboard');
-      }
-    };
+Pattern: OAuth returns auth code → App exchanges for JWT → Stores token → Navigates to home
 
-    handleAuthCallback();
-  }, []);
-
-  return <div className="p-4">Loading...</div>;
-};
-```
+Implementation approach:
+- Set up linking configuration in Expo Router
+- Define scheme (e.g., `living-sports://auth-callback`)
+- Listen for deep link in auth context
+- Parse response for auth code/error
+- If success: Exchange token, store session, navigate home
+- If error: Show error message, stay on login screen
+- No manual navigation—let linking handle it
 
 ---
 
-## Multi-Factor Authentication (MFA)
+## Token & Session Management
 
-### Setup MFA (TOTP)
+### JWT Tokens in React Native
 
-```javascript
-// ✅ Enroll user in MFA
-const enrollMFA = async () => {
-  const { data, error } = await supabase.auth.mfa.enroll({
-    factorType: 'totp', // Time-based one-time password
-  });
+Unlike web (localStorage), React Native must store tokens in `AsyncStorage` (encrypted on-device storage).
 
-  if (error) throw new Error(error.message);
+Pattern: Token persisted → App restores session on launch → Automatic refresh before expiry
 
-  // Show QR code to user for scanning
-  return {
-    id: data.id,
-    totp: {
-      qr_code: data.totp.qr_code, // Base64 QR code image
-    },
-  };
-};
+Implementation approach:
+- Supabase client auto-persists token to AsyncStorage (if configured)
+- On app launch, call `getSession()` to restore logged-in state
+- Set up auth state listener to track login/logout
+- Automatically refresh token before expiry (Supabase handles this)
+- On app foreground, validate token and refresh if needed
+- On app background, don't clear token (persists across sessions)
+- Logout: Call `signOut()` which clears token and session
 
-// QR Code display component
-import QRCode from 'qrcode.react';
+### Handling Token Expiry
 
-const MFASetup = () => {
-  const [mfaData, setMfaData] = useState(null);
+Tokens expire after ~1 hour. Supabase auto-refreshes, but handle edge cases:
 
-  useEffect(() => {
-    const setup = async () => {
-      const data = await enrollMFA();
-      setMfaData(data);
-    };
-    setup();
-  }, []);
+Pattern: Token expired → Auto-refresh → Retry failed request → Or force re-login if refresh fails
 
-  return (
-    <div className="text-center">
-      <p>Scan with your authenticator app:</p>
-      {mfaData && <QRCode value={mfaData.totp.qr_code} size={256} />}
-    </div>
-  );
-};
-```
+Implementation approach:
+- Supabase auto-refreshes tokens via `onAuthStateChange`
+- If request fails with 401 (unauthorized), auto-refresh and retry
+- If refresh fails (network down, user logged out elsewhere), redirect to login
+- Show "session expired, please log in again" message
+- Test by logging in, waiting >1 hour (or manually clear token), making request
 
-### Verify MFA Code
+### Session Listeners
 
-```javascript
-// ✅ Verify TOTP code and confirm enrollment
-const verifyMFAEnrollment = async (factorId, code) => {
-  const { data, error } = await supabase.auth.mfa.verifyFactorChallenge({
-    factorId,
-    challengeId: code, // This is simplified - see docs for actual flow
-    code,
-  });
+Monitor auth state changes (login, logout, token refresh):
 
-  if (error) throw new Error(error.message);
-  return { success: true };
-};
+Libraries: Supabase `onAuthStateChange` method
 
-// ✅ Login with MFA
-const loginWithMFA = async (email, password, totpCode) => {
-  // Step 1: Initial login
-  const { data: signInData, error: signInError } = 
-    await supabase.auth.signInWithPassword({ email, password });
-
-  if (signInError) throw new Error(signInError.message);
-
-  // Step 2: If MFA is enrolled, need to verify
-  if (signInData.session?.user?.user_metadata?.mfa_enabled) {
-    // Implement MFA verification flow
-    // This is complex - refer to Supabase docs
-  }
-
-  return signInData.session;
-};
-```
+Implementation approach:
+- Set up listener in auth context or top-level provider
+- Listen for `SIGNED_IN`, `SIGNED_OUT`, `TOKEN_REFRESHED` events
+- Update local state with current user and session
+- Unsubscribe listener on component unmount
+- Use listener for navigation (if no session, show login screen)
+- Test: Sign in, sign out, kill app and restore session
 
 ---
 
-## JWT & Token Management
+## Biometric Authentication
 
-### Token Structure
+### Fingerprint / Face ID Login
 
-```javascript
-// JWT Token payload
-{
-  "sub": "user-id-uuid",
-  "aud": "authenticated",
-  "role": "authenticated",
-  "iat": 1670000000,
-  "exp": 1670003600,
-  "email": "user@example.com",
-  "email_confirmed_at": "2024-01-01T00:00:00Z",
-  "iss": "https://xxx.supabase.co/auth/v1",
-  "phone_verified": false,
-  "app_metadata": { "provider": "email" },
-  "user_metadata": { "display_name": "John" }
-}
-```
+Pattern: User's first login with email/password → Enable biometric → Later: Biometric login
 
-### Token Refresh
+Libraries: `expo-local-authentication`
 
-```javascript
-// ✅ Automatic refresh (Supabase handles this)
-// When token expires, Supabase automatically refreshes using refresh token
-
-// ✅ Manual refresh if needed
-const refreshSession = async () => {
-  const { data, error } = await supabase.auth.refreshSession();
-
-  if (error) throw new Error(error.message);
-  return data.session;
-};
-
-// ✅ Get current token
-const getAuthToken = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  
-  if (error || !data.session) {
-    throw new Error('Not authenticated');
-  }
-
-  return data.session.access_token;
-};
-
-// Usage in API calls
-const fetchWithAuth = async (url, options = {}) => {
-  const token = await getAuthToken();
-
-  return fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-};
-```
-
-### Custom Claims in Token
-
-```sql
--- Add custom claims to JWT (PostgreSQL)
-CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
-RETURNS jsonb LANGUAGE plpgsql STABLE AS $$
-DECLARE
-  claims jsonb;
-  user_role text;
-BEGIN
-  SELECT role INTO user_role FROM public.users 
-  WHERE id = event->>'user_id';
-
-  claims := event->'claims';
-  claims := jsonb_set(claims, '{user_role}', to_jsonb(user_role));
-  
-  event := jsonb_set(event, '{claims}', claims);
-  RETURN event;
-END;
-$$;
-```
+Implementation approach:
+- After successful email/password login, ask "Enable fingerprint login?"
+- Check if device supports biometric (iOS: Face ID, Touch ID; Android: Fingerprint)
+- Store encrypted token locally with biometric protection
+- On next app launch, offer "Use fingerprint to sign in"
+- Call `LocalAuthentication.authenticateAsync()` to trigger prompt
+- If biometric succeeds, retrieve stored token and restore session
+- If fails (wrong fingerprint), fall back to email/password login
+- Add option to disable biometric in settings
+- Test on device (simulator may not have biometric)
 
 ---
 
-## Authorization & Permissions
+## Mobile Permissions
 
-### Role-Based Access Control (RBAC)
+### Camera Permission
 
-```sql
--- Create roles table
-CREATE TABLE roles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
-);
+Pattern: User taps "Take photo" → Permission prompt → Camera opens or denied
 
--- Create user_roles junction table
-CREATE TABLE user_roles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT now(),
-  UNIQUE(user_id, role_id)
-);
+Libraries: `expo-camera` (built-in)
 
--- RLS: Users can only access data they have permission for
-ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+Implementation approach:
+- Before opening camera, request permission with `useCameraPermissions()`
+- Show prompt only on first use (Android) or each time (iOS)
+- User grants/denies → App stores result
+- If granted: Open camera, capture photo, save to app storage or upload
+- If denied: Show message "Camera access required" with link to settings
+- Handle permission revocation (user changes settings mid-session)
+- Test on both Android and iOS
 
-CREATE POLICY select_user_roles ON user_roles
-  FOR SELECT
-  USING (user_id = auth.uid());
-```
+### Photo Library Permission
 
-### Permission Model
+Pattern: User taps "Choose from gallery" → Permission prompt → Photo picker opens
 
-```sql
--- Create permissions table
-CREATE TABLE permissions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT UNIQUE NOT NULL,
-  description TEXT,
-  created_at TIMESTAMP DEFAULT now()
-);
+Libraries: `react-native-image-crop-picker` or `expo-image-picker`
 
--- Create role_permissions junction table
-CREATE TABLE role_permissions (
-  id UUID PRIMARY KEY DEFAULT gen_random_UUID(),
-  role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-  permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT now(),
-  UNIQUE(role_id, permission_id)
-);
+Implementation approach:
+- Request library permission with `requestPermissions()`
+- Show permission prompt
+- If granted: Open image picker, allow select/crop/rotate
+- If denied: Show message with link to settings
+- Handle permission changes mid-session
+- Test on both iOS and Android (permissions differ)
 
--- Function to check if user has permission
-CREATE OR REPLACE FUNCTION has_permission(user_id UUID, permission_name TEXT)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1
-    FROM role_permissions rp
-    JOIN user_roles ur ON rp.role_id = ur.role_id
-    JOIN permissions p ON rp.permission_id = p.id
-    WHERE ur.user_id = has_permission.user_id
-      AND p.name = has_permission.permission_name
-  );
-END;
-$$ LANGUAGE plpgsql;
-```
+### Notification Permission
 
-### API Authorization
+Pattern: App sends push notifications → Permission prompt → User grants → Notifications appear
 
-```javascript
-// ✅ Check permission in React
-const ProtectedAction = () => {
-  const [hasPermission, setHasPermission] = useState(false);
-  const { user } = useAuth();
+Libraries: `expo-notifications`
 
-  useEffect(() => {
-    const checkPermission = async () => {
-      const { data, error } = await supabase.rpc(
-        'has_permission',
-        {
-          user_id: user.id,
-          permission_name: 'edit_posts',
-        }
-      );
+Implementation approach:
+- On app launch or settings screen, request notification permission
+- Call `Notifications.requestPermissionsAsync()`
+- User grants/denies
+- If granted: Store device push token, send to database
+- If denied: Show message "Enable notifications for live updates"
+- Ask again on next app launch (if persistently disabled, stop asking)
+- Test with actual device (simulator notifications limited)
 
-      if (!error) setHasPermission(data);
-    };
+### Location Permission (Optional)
 
-    checkPermission();
-  }, [user]);
+Pattern: User logs workout → App records location → Shows on map
 
-  if (!hasPermission) {
-    return <p className="text-red-500">Access denied</p>;
-  }
+Libraries: `expo-location`
 
-  return <Button>Delete Post</Button>;
-};
-```
+Implementation approach:
+- Request foreground/background location when needed
+- Foreground: Only while app in focus (workout in progress)
+- Background: Continue tracking even if app backgrounded (background task)
+- Show privacy message ("We use your location to map your routes")
+- Allow opt-out (skip recording location)
+- Clear location data option in settings
+- Test on device with GPS
+
+---
+
+## Authorization & RLS
+
+### Row-Level Security (RLS)
+
+RLS enforces database-level permissions. Even if user somehow bypasses frontend auth, RLS protects data.
+
+Pattern: User queries database → RLS checks `auth.uid()` → Returns only user's data or public data
+
+RLS setup in PostgreSQL (example):
+- Enable RLS on sensitive tables
+- Create policies checking `auth.uid() = user_id`
+- Only data matching policy is returned
+
+In Expo app:
+- You don't set RLS policies in the app code
+- Policies are in database migrations
+- Just trust that RLS is enforced
+- Test by querying as different users and verifying data isolation
+
+### Using Auth Context
+
+Pattern: App has current user → Pass down via context → Components check user for permissions
+
+Implementation approach:
+- Create AuthContext with `user`, `session`, `loading` state
+- Set up listener to populate context on app launch
+- Wrap app with AuthProvider
+- Use `useAuth()` hook in components to access user
+- Check permissions before showing UI (e.g., only show "Delete" button if user owns post)
+- Navigate to login if no user
+
+Libraries: React Context (built-in), or state management (Zustand, Redux)
 
 ---
 
@@ -521,224 +314,196 @@ const ProtectedAction = () => {
 
 ### Environment Variables
 
-```bash
-# .env.local (NEVER commit to git!)
-REACT_APP_SUPABASE_URL=https://xxx.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=your-anon-key
-# Note: Using ANON_KEY is safe in browser - RLS protects data
-```
+Pattern: API keys, Supabase URL stored in `.env`, not in code
 
-```javascript
-// ✅ Never include secrets in frontend
-// The public ANON_KEY is safe because:
-// 1. RLS policies enforce database-level security
-// 2. Postman/tools can't query without valid JWT
-// 3. JWT is issued by Supabase auth only
-```
+Implementation approach:
+- Create `.env.local` (don't commit to git)
+- Store `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- Prefix with `EXPO_PUBLIC_` so Expo includes in app
+- Access with `process.env.EXPO_PUBLIC_SUPABASE_URL`
+- Use `.env.production` for production values
+- On CI/CD (EAS Build), set env vars in build secrets (not in code)
 
-### Input Validation & Sanitization
+Note: `ANON_KEY` is public (safe). RLS policies protect data. Don't include `SERVICE_ROLE_KEY` in app.
 
-```javascript
-// ✅ Validate on client
-const validateEmail = (email) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-};
+### Input Validation
 
-const validatePassword = (password) => {
-  return password.length >= 8 &&
-         /[A-Z]/.test(password) &&
-         /[0-9]/.test(password);
-};
+Pattern: Validate email format, password strength, username length before sending to server
 
-// ✅ Server-side validation (SQL)
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT NOT NULL UNIQUE CHECK (email LIKE '%@%.%'),
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
-);
-```
+Libraries: `zod`, `yup` (schema validation), `react-hook-form` (form state)
 
-### SQL Injection Prevention
+Implementation approach:
+- Define schema for each form (login, signup, profile)
+- Validate on client side (user feedback)
+- Server also validates (defense in depth)
+- Email: Valid format, not already registered
+- Password: Min 8 chars, uppercase, number, no common patterns
+- Username: 3-50 chars, alphanumeric + underscore, unique
+- Show specific error messages (e.g., "Username already taken")
 
-```javascript
-// ❌ WRONG - String interpolation
-const query = `SELECT * FROM users WHERE email = '${email}'`;
+### API Security
 
-// ✅ RIGHT - Parameterized query (Supabase uses this)
-const { data, error } = await supabase
-  .from('users')
-  .select('*')
-  .eq('email', email); // Parameterized
+Pattern: Always use HTTPS, validate responses, handle errors safely
 
-// ✅ RIGHT - RPC with parameters
-const { data, error } = await supabase.rpc('login_user', {
-  email: email, // Safe
-  password: password,
-});
-```
+Implementation approach:
+- Supabase enforces HTTPS (no hardcoded HTTP)
+- Validate API responses (check for expected fields)
+- Handle 401 (unauthorized) by clearing session and redirecting to login
+- Handle 403 (forbidden) by showing "Access denied" message
+- Never log sensitive data (tokens, passwords)
+- Use Supabase's parameterized queries (prevents SQL injection)
 
-### HTTPS & CORS
+### No Sensitive Data in AsyncStorage
 
-```javascript
-// ✅ Ensure HTTPS in production
-// Supabase automatically serves over HTTPS
+❌ Never store: Passwords, credit cards, medical data
+✅ Safe to store: JWT tokens (encrypted by OS), user ID, username
 
-// ✅ Configure CORS headers
-// Supabase automatically handles CORS
-// For custom APIs, configure:
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://yourdomain.com',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-};
-```
+Pattern: Tokens auto-encrypted by AsyncStorage
 
-### Rate Limiting
+Implementation approach:
+- Supabase tokens stored securely (Android: Encrypted Shared Preferences, iOS: Keychain)
+- Don't manually store passwords or secrets
+- For extra sensitivity (medical data), encrypt locally with `expo-crypto`
+- Test: Inspect device storage with DevTools (tokens should be unreadable)
 
-```javascript
-// ✅ Client-side rate limiting (basic protection)
-const useRateLimit = (delayMs = 1000) => {
-  const [lastCall, setLastCall] = useState(0);
+### Deep Linking Security
 
-  const execute = async (fn) => {
-    const now = Date.now();
-    if (now - lastCall < delayMs) {
-      throw new Error('Please wait before trying again');
-    }
-    setLastCall(now);
-    return fn();
-  };
+Pattern: Notification taps → Deep link → Malicious links from browser
 
-  return execute;
-};
-
-// ✅ Server-side rate limiting (essential)
-// Configure in Supabase dashboard or use middleware like express-rate-limit
-```
+Implementation approach:
+- Validate deep link origin (only accept links from your domain)
+- Whitelist allowed paths in linking configuration
+- Don't pass sensitive data in URLs (use route params instead)
+- Validate token in JWT (Supabase does this automatically)
+- Test with malicious URLs (e.g., `myapp://steal-token?token=xxx`)
 
 ---
 
-## Session Management
+## Error Handling & User Feedback
 
-### useAuth Hook
+### Auth Error Types
 
-```javascript
-import { useEffect, useState, useContext, createContext } from 'react';
-import { supabase } from '../lib/supabase';
+Pattern: Different errors (network, invalid credentials, unconfirmed) need different messages
 
-const AuthContext = createContext();
+Error handling approach:
+- Network error: "No internet connection. Check your network and try again."
+- Invalid credentials: "Email or password is incorrect."
+- Email not confirmed: "Check your email for confirmation link."
+- Email already registered: "This email is already in use."
+- Weak password: "Password must be at least 8 characters..."
+- Rate limited: "Too many login attempts. Try again in 15 minutes."
+- Server error: "Something went wrong. Please try again later."
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+Show user-friendly messages, not technical error codes.
 
-  useEffect(() => {
-    // Check current session
-    const getSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user || null);
-      setLoading(false);
-    };
+### Loading States
 
-    getSession();
+Pattern: Show spinner/skeleton while auth request in progress
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user || null);
-      }
-    );
+Implementation approach:
+- Set `loading = true` before API call
+- Show spinner or disabled button during load
+- Show error or success message on response
+- Set `loading = false`
+- Prevent double-submit (disable button while loading)
 
-    return () => subscription?.unsubscribe();
-  }, []);
+### Session Restoration
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-  };
+Pattern: App launches → Check if user logged in → Restore session → Show home or login
 
-  return (
-    <AuthContext.Provider value={{ user, session, loading, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be within AuthProvider');
-  return context;
-};
-```
-
-### Protected Routes
-
-```javascript
-// components/ProtectedRoute.jsx
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-
-export const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div className="p-4">Loading...</div>;
-  
-  if (!user) return <Navigate to="/login" replace />;
-
-  return children;
-};
-
-// Usage in routing
-<Routes>
-  <Route path="/login" element={<LoginPage />} />
-  <Route
-    path="/dashboard"
-    element={
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    }
-  />
-</Routes>
-```
+Implementation approach:
+- Show splash screen while checking auth state
+- Call `getSession()` on app launch
+- If session found: Restore user state, navigate to home
+- If no session: Navigate to login
+- Handle "checking" state (show splash/blank screen)
+- Don't show flash of login screen then home (confusing)
 
 ### Logout
 
-```javascript
-// ✅ Sign out
-const handleLogout = async () => {
-  const { error } = await supabase.auth.signOut();
+Pattern: User taps logout → Clear session → Show login screen
 
-  if (error) {
-    console.error('Logout error:', error);
-  } else {
-    // Redirect to login
-    navigate('/login');
-  }
-};
-```
+Implementation approach:
+- Call Supabase `signOut()`
+- Clear user state
+- Clear any cached data (optional, can keep some)
+- Navigate to login screen
+- Optional: Show message "Successfully logged out"
+- Don't keep login history visible
 
 ---
 
-## Security Checklist
+## Permissions Checklist
 
-- [ ] Enable HTTPS everywhere
-- [ ] Use environment variables for secrets
-- [ ] Enable RLS on all sensitive tables
-- [ ] Validate input on both client and server
-- [ ] Use parameterized queries (not string interpolation)
-- [ ] Implement rate limiting
-- [ ] Set up MFA for admin accounts
-- [ ] Rotate secrets regularly
-- [ ] Use CORS to restrict origins
-- [ ] Implement session timeouts
-- [ ] Log authentication events
-- [ ] Keep dependencies updated
-- [ ] Use strong password requirements
-- [ ] Implement account lockout after failed attempts
+### iOS (Info.plist)
+
+- [ ] Camera: `NSCameraUsageDescription`
+- [ ] Photo Library: `NSPhotoLibraryUsageDescription`
+- [ ] Notifications: Handled by Expo
+- [ ] Location: `NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`
+- [ ] Microphone: `NSMicrophoneUsageDescription` (if recording audio)
+
+### Android (AndroidManifest.xml)
+
+- [ ] Camera: `android.permission.CAMERA`
+- [ ] Photo Library: `android.permission.READ_EXTERNAL_STORAGE`
+- [ ] Notifications: Handled by Expo
+- [ ] Location: `android.permission.ACCESS_FINE_LOCATION`, `android.permission.ACCESS_COARSE_LOCATION`
+- [ ] Internet: `android.permission.INTERNET` (required)
+
+These are auto-configured by Expo, but verify in `app.json` or native files.
+
+---
+
+## Testing Auth Flows
+
+### Manual Testing Checklist
+
+- [ ] Signup with valid email/password
+- [ ] Signup with weak password (shows error)
+- [ ] Signup with existing email (shows error)
+- [ ] Confirm email link works
+- [ ] Login with correct credentials
+- [ ] Login with wrong password (shows error)
+- [ ] Forgot password flow
+- [ ] OAuth (Google/Apple) flow on real device
+- [ ] Biometric setup and login
+- [ ] Token refresh (wait >1 hour or mock time)
+- [ ] Logout clears session
+- [ ] App restart restores session (if logged in)
+- [ ] Permissions requested on first use
+- [ ] Deep linking from notifications
+- [ ] RLS prevents unauthorized data access
+
+### Automated Testing
+
+Libraries: `@testing-library/react-native`, `jest`
+
+Pattern: Mock Supabase, test auth flows without network
+
+Implementation approach:
+- Mock `supabase-js` client in tests
+- Test signup/login/logout flows
+- Test permission requests
+- Test RLS policies (server-side, harder to test)
+- Test error handling
+- Use `@testing-library/react-native` for component testing
+
+---
+
+## Security Audit Checklist
+
+- [ ] All sensitive endpoints use HTTPS
+- [ ] Tokens stored securely (AsyncStorage, Keychain)
+- [ ] RLS enabled on sensitive tables
+- [ ] Input validation on all forms
+- [ ] No secrets in code (env vars only)
+- [ ] API keys not logged or exposed
+- [ ] Deep links validated
+- [ ] Permissions requested with context
+- [ ] Session timeouts implemented
+- [ ] Logout clears all sensitive data
+- [ ] Error messages don't leak info (no SQL errors to user)
+- [ ] Rate limiting on auth endpoints (server-side)
+- [ ] CORS configured (if external API)
+- [ ] Dependencies kept up-to-date (`expo upgrade`)

@@ -1,99 +1,72 @@
 ---
-title: Frontend Design with React Native & NativeWind v5
+title: Frontend Design with React Native & Expo
 version: 1.0
 ---
 
-# Frontend Design with React Native & NativeWind v5
+# Frontend Design with React Native & Expo
+
+Building fitness social network UI with native mobile performance, natural gestures, and responsive design.
 
 ## Table of Contents
-1. [NativeWind v5 Fundamentals](#nativewind-v5-fundamentals)
-2. [Global.css Styling System](#globalcss-styling-system)
+1. [React Native Fundamentals](#react-native-fundamentals)
+2. [NativeWind v5 & Styling System](#nativewind-v5--styling-system)
 3. [Component Architecture](#component-architecture)
-4. [Responsive Design Patterns](#responsive-design-patterns)
-5. [Media Handling (Video/Image Upload)](#media-handling-videimage-upload)
-6. [Forms & Input Handling](#forms--input-handling)
-7. [State Management](#state-management)
-8. [Performance Optimization](#performance-optimization)
-9. [Accessibility (a11y) for Mobile](#accessibility-a11y-for-mobile)
-10. [Common Component Patterns](#common-component-patterns)
+4. [Navigation Patterns](#navigation-patterns)
+5. [Touch Gestures & Interactions](#touch-gestures--interactions)
+6. [Media Handling](#media-handling)
+7. [Feed & List Optimization](#feed--list-optimization)
+8. [Forms & Input](#forms--input)
+9. [Animations & Transitions](#animations--transitions)
+10. [Accessibility for Mobile](#accessibility-for-mobile)
+11. [Common Component Patterns](#common-component-patterns)
 
 ---
 
-## NativeWind v5 Fundamentals
+## React Native Fundamentals
 
 ### Core Concepts
 
-**Utility-first approach for React Native**: Apply Tailwind utilities directly to native components
+React Native uses **native iOS and Android components** instead of DOM elements. No HTML, no CSS—just JavaScript managing native views.
 
 ```jsx
-// ❌ Traditional StyleSheet
-const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: '#fff' },
-});
-<View style={styles.container}>Content</View>
+// ❌ Web React (won't work in Expo)
+<div className="p-4 bg-blue-500">
+  <h1>Title</h1>
+  <p>Content</p>
+</div>
 
-// ✅ NativeWind v5 (utility-first)
+// ✅ React Native (Expo compatible)
 import { View, Text } from 'react-native';
 
-<View className="p-4 bg-color-background">
-  <Text className="text-color-text-primary">Content</Text>
+<View className="p-4 bg-blue-500">
+  <Text className="text-xl font-bold">Title</Text>
+  <Text>Content</Text>
 </View>
 ```
 
-### NativeWind Utility Classes Quick Reference
+### Key Native Components
 
-```jsx
-// Spacing (padding, margin)
-// p-{size}: padding, m-{size}: margin
-// pt/pb/pl/pr: top, bottom, left, right
-<View className="p-4 m-2">Padded with margin</View>
-
-// Colors (use CSS variables from global.css)
-<View className="bg-color-background">Light background</View>
-<View className="dark:bg-color-surface">Dark mode surface</View>
-<Text className="text-color-text-primary">Primary text</Text>
-
-// Sizing
-<View className="w-32 h-32">Box (128x128)</View>
-<View className="w-full h-1/2">Full width, half height</View>
-
-// Flexbox (default for React Native)
-<View className="flex justify-center items-center gap-4">
-  <View>Item 1</View>
-  <View>Item 2</View>
-</View>
-
-// Borders & Shadows
-<View className="border border-color-border rounded-lg shadow-lg">Card</View>
-
-// Typography
-<Text className="text-3xl font-bold text-color-text-primary">Heading</Text>
-<Text className="text-sm text-color-text-secondary">Subtext</Text>
-
-// Opacity
-<View className="opacity-75">Slightly transparent</View>
-
-// Responsive (mobile-first)
-// The framework handles single-screen layouts, but use conditionals for tablet
-<View className="p-4 md:p-8">{/* not typical for mobile */}</View>
-```
+| Component | Purpose | Equivalent |
+|-----------|---------|-----------|
+| `View` | Container, layout | `<div>` |
+| `Text` | Text content (must wrap text) | `<span>`, `<p>` |
+| `ScrollView` | Scrollable container | `<div overflow-y>` |
+| `FlatList` | Large lists, infinite scroll | `<ul>` with virtualization |
+| `Image` | Display images | `<img>` |
+| `TextInput` | Text input field | `<input>`, `<textarea>` |
+| `TouchableOpacity` | Pressable button with opacity feedback | `<button>` with hover |
+| `Modal` | Modal dialog (overlay) | `<dialog>` |
+| `SafeAreaView` | Respects notches, safe areas | CSS safe-area |
+| `ScrollView` | Scrollable container | `<div overflow-y>` |
+| `FlatList` | Large lists with virtualization | Virtualized list |
 
 ---
 
-## Global.css Styling System
+## NativeWind v5 & Styling System
 
-### Architecture Overview
+### Architecture
 
-In Living Sports, **all styling configuration happens in `global.css`**. The `tailwind.config.js` is **NOT modified** and remains generic. This approach provides:
-
-- **Single source of truth** for colors and theme variables
-- **Easy dark mode** with OKLch color space
-- **Consistent design system** across all components
-- **Easy theme updates** without touching component code
-
-### Variable Declaration Pattern
-
-Variables are declared in `@theme inline` and defined in `:root` (light) and `@media (prefers-color-scheme: dark)` (dark):
+**All styling configuration is in `global.css`**. No modifications to `tailwind.config.js`.
 
 ```css
 /* global.css */
@@ -101,7 +74,6 @@ Variables are declared in `@theme inline` and defined in `:root` (light) and `@m
 @theme inline {
   --color-electric: var(--electric);
   --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-text-primary: var(--text-primary);
@@ -133,19 +105,15 @@ Variables are declared in `@theme inline` and defined in `:root` (light) and `@m
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Living Sports Neon Green - Dark Mode */
+    /* Dark mode values */
     --electric: oklch(48.616% 0.26687 270.727);
-    
-    /* Neutral Colors - Dark */
     --primary: oklch(60% 0.15 251);
-    --secondary: oklch(50% 0.08 251);
     --background: oklch(12% 0.001 0);
     --surface: oklch(18% 0.001 0);
     --text-primary: oklch(95% 0.01 0);
     --text-secondary: oklch(70% 0.01 0);
     --border: oklch(25% 0.002 0);
     
-    /* Semantic Colors */
     --success: oklch(65% 0.15 142);
     --warning: oklch(75% 0.15 70);
     --error: oklch(60% 0.15 25);
@@ -153,48 +121,66 @@ Variables are declared in `@theme inline` and defined in `:root` (light) and `@m
 }
 ```
 
-### Adding New Variables
-
-When adding custom colors:
-
-1. Define the Tailwind-friendly name in `@theme inline`
-2. Add light mode value in `:root`
-3. Add dark mode value in `@media (prefers-color-scheme: dark)`
-4. Use OKLch color space for perceptually uniform colors
-
-```css
-/* Example: Adding a new fitness-specific color */
-@theme inline {
-  --color-intensity: var(--intensity);
-}
-
-:root {
-  --intensity: oklch(52% 0.18 20); /* Orange for intensity */
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --intensity: oklch(60% 0.22 20); /* Brighter in dark mode */
-  }
-}
-```
-
-### Using Variables in Components
+### Using Styles in Components
 
 ```jsx
 import { View, Text } from 'react-native';
 
-// ❌ Don't hardcode colors
-<View className="bg-black text-white" />
-
-// ✅ Do use variable classes
-<View className="bg-color-background">
-  <Text className="text-color-text-primary">Content</Text>
+// ✅ Use variable classes
+<View className="bg-color-background p-4">
+  <Text className="text-color-text-primary text-lg font-bold">Title</Text>
+  <Text className="text-color-text-secondary text-sm mt-2">Subtitle</Text>
 </View>
 
-// ✅ Or use dynamic variables directly in style
+// ✅ Or use inline style with CSS variables
 <View style={{ backgroundColor: `var(--surface)` }}>
   <Text style={{ color: `var(--text-primary)` }}>Content</Text>
+</View>
+
+// ✅ Responsive with breakpoints (for tablet)
+<View className="p-4 sm:p-6 md:p-8">
+  Adjusts padding on larger screens
+</View>
+```
+
+### NativeWind Utility Classes for React Native
+
+```jsx
+// Spacing
+<View className="p-4 m-2 pt-6 mb-3">Padding and margin</View>
+
+// Colors
+<View className="bg-color-background">
+  <Text className="text-color-text-primary">Text</Text>
+</View>
+
+// Sizing
+<View className="w-20 h-20">100% of width/height (40x40 units)</View>
+<View className="w-full">Full width</View>
+
+// Flexbox (default for View)
+<View className="flex flex-row justify-between items-center gap-4">
+  <View>Item 1</View>
+  <View>Item 2</View>
+</View>
+
+// Borders
+<View className="border border-color-border rounded-lg p-4">
+  Card with border
+</View>
+
+// Shadow (platform-specific)
+<View className="shadow-lg">Shadow</View>
+
+// Opacity
+<View className="opacity-50">50% transparent</View>
+
+// Text alignment
+<Text className="text-center text-lg font-bold">Centered heading</Text>
+
+// Conditional classes (NativeWind v5)
+<View className={`p-4 ${isActive ? 'bg-color-electric' : 'bg-color-surface'}`}>
+  Conditional styling
 </View>
 ```
 
@@ -205,699 +191,498 @@ import { View, Text } from 'react-native';
 ### File Structure
 
 ```
-src/
-├── components/
-│   ├── common/
-│   │   ├── Button.jsx
-│   │   ├── Card.jsx
-│   │   ├── Modal.jsx
-│   │   └── Navigation.jsx
-│   ├── forms/
-│   │   ├── Input.jsx
-│   │   ├── Select.jsx
-│   │   └── FormGroup.jsx
-│   ├── layout/
-│   │   ├── Header.jsx
-│   │   ├── Sidebar.jsx
-│   │   └── Footer.jsx
-│   └── features/
-│       ├── UserProfile.jsx
-│       ├── PostList.jsx
-│       └── PostForm.jsx
-├── hooks/
-│   ├── useAuth.js
-│   ├── useFetch.js
-│   └── useForm.js
-├── lib/
-│   ├── supabase.js
-│   └── utils.js
-├── pages/
-│   ├── Home.jsx
-│   ├── Dashboard.jsx
-│   └── NotFound.jsx
-└── App.jsx
+components/
+├── common/
+│   ├── Button.tsx              # Touchable, handles press feedback
+│   ├── Card.tsx                # Surface with border/shadow
+│   ├── Input.tsx               # TextInput with validation
+│   ├── Icon.tsx                # Vector icons (react-native-vector-icons)
+│   └── SafeArea.tsx            # SafeAreaView wrapper
+├── feed/
+│   ├── FeedList.tsx            # FlatList with infinite scroll
+│   ├── PostCard.tsx            # Individual post with image/video
+│   ├── PostActions.tsx         # Like, comment, share buttons
+│   └── PostMedia.tsx           # Image/video display with loading
+├── competition/
+│   ├── CompetitionCard.tsx     # Competition preview
+│   ├── Leaderboard.tsx         # FlatList-based leaderboard
+│   ├── ScoreEntry.tsx          # Form to log scores
+│   └── CompetitionModal.tsx    # Bottom sheet (BottomSheetModal)
+├── profile/
+│   ├── ProfileHeader.tsx       # User info, avatar, stats
+│   ├── WorkoutHistory.tsx      # List of past workouts
+│   ├── AchievementBadges.tsx   # Grid of badges
+│   └── EditProfile.tsx         # Profile update form
+└── auth/
+    ├── LoginForm.tsx           # Email/password login
+    ├── SignupForm.tsx          # Registration form
+    └── OAuthButton.tsx         # Sign in with Google/Apple
 ```
 
-### Base Component Pattern
+### Button Component Pattern
 
-```jsx
-// ✅ Reusable Button component
-export const Button = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md',
-  disabled = false,
-  className = '',
-  ...props 
-}) => {
-  const baseStyles = 'font-medium rounded transition-colors focus:outline-none';
-  
-  const variants = {
-    primary: 'bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-400',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-100',
-    danger: 'bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-400',
-  };
-  
-  const sizes = {
-    sm: 'px-3 py-1 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  };
-  
-  return (
-    <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
+Buttons in React Native need proper feedback (no hover—use press states instead):
 
-// Usage
-<Button variant="primary" size="lg">Submit</Button>
-<Button variant="danger" disabled>Delete</Button>
-```
+**Pattern**: Use `TouchableOpacity` or `Pressable` with ripple effect on Android.
+
+Libraries: `react-native-gesture-handler` for better tap detection, press animation feedback.
+
+Implementation approach:
+- Wrap content in `Pressable` or `TouchableOpacity`
+- Add `activeOpacity` (0.6-0.8) for visual feedback
+- Handle `onPress` callback
+- Show loading state during async operations
+- Use NativeWind for styling variants (primary, secondary, disabled)
+
+**No literal code here**—use the library's documentation for implementation.
 
 ### Card Component Pattern
 
-```jsx
-export const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
-    {children}
-  </div>
-);
+Cards are containers with elevation, borders, or shadows.
 
-export const CardHeader = ({ children, className = '' }) => (
-  <div className={`border-b pb-4 mb-4 ${className}`}>
-    {children}
-  </div>
-);
+**Pattern**: `View` with NativeWind border/shadow, padding, rounded corners.
 
-export const CardBody = ({ children, className = '' }) => (
-  <div className={className}>
-    {children}
-  </div>
-);
+Libraries: None required (native styles handle this).
 
-// Usage
-<Card>
-  <CardHeader>
-    <h2 className="text-xl font-bold">Title</h2>
-  </CardHeader>
-  <CardBody>
-    <p>Content here</p>
-  </CardBody>
-</Card>
-```
+Implementation approach:
+- Use `View` with `className="bg-color-surface border border-color-border rounded-lg p-4 shadow-md"`
+- Add padding inside for content
+- Optional: Use `Pressable` wrapper for tap feedback on entire card
+- Apply margin between cards in lists
 
 ---
 
-## Responsive Design Patterns
+## Navigation Patterns
 
-### Mobile-First Approach
+### Stack Navigation (Auth Flow)
 
-```jsx
-// ✅ Mobile-first (base styles are mobile, then scale up)
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  <Card>Item 1</Card>
-  <Card>Item 2</Card>
-  <Card>Item 3</Card>
-</div>
+Pattern for auth screens: Login → Signup → Password Reset → App
 
-// Breakdown:
-// - Base (mobile): 1 column
-// - md (≥768px): 2 columns
-// - lg (≥1024px): 3 columns
-```
+Library: `@react-navigation/stack`
 
-### Common Breakpoints
+Implementation approach:
+- Create "auth" stack with Login, Signup, ForgotPassword screens
+- Create "app" stack with main tabs (Feed, Competitions, Profile)
+- Switch between stacks based on auth state (from Supabase session)
+- Use `linking` configuration for deep linking (notifications)
+- Handle back button on Android
 
-```jsx
-// Tailwind breakpoints
-// sm: 640px
-// md: 768px
-// lg: 1024px
-// xl: 1280px
-// 2xl: 1536px
+### Tab Navigation (Main App)
 
-// Examples
-<div className="w-full md:w-1/2 lg:w-1/3">
-  Dynamic width
-</div>
+Pattern: Bottom tab bar with Feed, Competitions, Inbox, Profile
 
-<nav className="hidden md:flex">
-  Desktop navigation
-</nav>
+Library: `@react-navigation/bottom-tabs`
 
-<nav className="md:hidden">
-  Mobile navigation
-</nav>
+Implementation approach:
+- Create tab navigator with 4-5 tabs
+- Each tab is its own stack (allows nested navigation)
+- Show badge notifications on Inbox/Notifications tab
+- Icons from `react-native-vector-icons` (Feather, MaterialCommunityIcons)
+- Use `screenOptions` to customize active/inactive colors with CSS variables
+- Handle tab transitions smoothly
 
-<h1 className="text-2xl md:text-3xl lg:text-4xl">
-  Responsive heading
-</h1>
-```
+### Drawer Navigation (Menu)
 
-### Responsive Grid Layout
+Pattern: Side drawer for Settings, Help, Sign Out
 
-```jsx
-const ProductGrid = ({ products }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    {products.map(product => (
-      <Card key={product.id}>
-        <img src={product.image} alt={product.name} className="w-full h-48 object-cover rounded" />
-        <h3 className="mt-2 font-semibold">{product.name}</h3>
-        <p className="text-gray-600">${product.price}</p>
-      </Card>
-    ))}
-  </div>
-);
-```
+Library: `@react-navigation/drawer`
+
+Implementation approach:
+- Optional drawer navigator at top level
+- Combine with tab navigator (drawer contains tabs)
+- Custom drawer content component (view profile, settings options)
+- Close drawer on item press
+- Add gesture from left edge to open (automatic with library)
+
+### Deep Linking
+
+Pattern: Tapping notification → Opens specific screen with data
+
+Implementation approach:
+- Define linking configuration in navigation container
+- Handle URL patterns for feed posts, competitions, profiles
+- Use `expo-linking` to open URLs from notifications
+- Pass parameters through route.params
+- Test with `npx expo start` and custom URL schemes
 
 ---
 
-## Forms & Input Handling
+## Touch Gestures & Interactions
 
-### Controlled Input Components
+### Tap & Long Press
 
-```jsx
-// ✅ Reusable Input component
-export const Input = ({ 
-  label, 
-  error, 
-  required = false,
-  ...props 
-}) => {
-  return (
-    <div className="mb-4">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-          {required && <span className="text-red-500">*</span>}
-        </label>
-      )}
-      <input
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2
-          ${error 
-            ? 'border-red-500 focus:ring-red-500' 
-            : 'border-gray-300 focus:ring-blue-500'
-          }`}
-        {...props}
-      />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-    </div>
-  );
-};
+Pattern: Tap to navigate, long-press for context menu
 
-// Usage
-const [email, setEmail] = useState('');
-const [error, setError] = useState('');
+Library: `react-native-gesture-handler` + `@react-navigation/native`
 
-<Input
-  label="Email"
-  type="email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  error={error}
-  required
-/>
-```
+Implementation approach:
+- Wrap interactive elements in `Pressable` (simpler) or `GestureDetector` (complex)
+- Use `onLongPress` for context menus (long-press post → Edit/Delete options)
+- Show visual feedback (opacity change or highlight)
+- Cancel press if swipe detected (prevent accidental taps)
 
-### Form Submission Pattern
+### Swipe Gestures
 
-```jsx
-export const LoginForm = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+Pattern: Swipe down to close modal, swipe left for actions (delete post)
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+Library: `react-native-gesture-handler` + `react-native-reanimated`
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-    
-    setLoading(true);
-    try {
-      // API call
-      const result = await loginUser(formData);
-      // Handle success
-    } catch (err) {
-      setErrors({ submit: err.message });
-    } finally {
-      setLoading(false);
-    }
-  };
+Implementation approach:
+- Use `PanGestureHandler` for swipe detection
+- Animate view position based on swipe delta with Reanimated
+- Snap to open/closed state when user releases
+- Add threshold (min distance) before triggering action
+- Test on both iOS and Android (different swipe sensitivities)
 
-  return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-      <Input
-        label="Email"
-        type="email"
-        value={formData.email}
-        onChange={(e) => setFormData({...formData, email: e.target.value})}
-        error={errors.email}
-        required
-      />
-      <Input
-        label="Password"
-        type="password"
-        value={formData.password}
-        onChange={(e) => setFormData({...formData, password: e.target.value})}
-        error={errors.password}
-        required
-      />
-      {errors.submit && <p className="text-red-500 mb-4">{errors.submit}</p>}
-      <Button
-        type="submit"
-        variant="primary"
-        disabled={loading}
-        className="w-full"
-      >
-        {loading ? 'Logging in...' : 'Login'}
-      </Button>
-    </form>
-  );
-};
-```
+### Scroll Listeners
+
+Pattern: Change header opacity based on scroll position, load more on scroll end
+
+Library: Built-in `FlatList` callbacks + `react-native-reanimated` (for animations)
+
+Implementation approach:
+- Use `onScroll` prop on `FlatList` or `ScrollView` for position tracking
+- Implement `onEndReached` for infinite scroll (load next page of feed)
+- Add `onEndReachedThreshold` (load when 80% scrolled)
+- Animate header fade/slide based on scroll offset
+- Implement refresh control (pull-to-refresh) with `RefreshControl`
 
 ---
 
-## State Management
+## Media Handling
 
-### Local State (useState)
+### Image Upload & Compression
 
-```jsx
-// ✅ For simple, isolated state
-const Counter = () => {
-  const [count, setCount] = useState(0);
-  
-  return (
-    <div className="p-4">
-      <p className="text-lg">Count: {count}</p>
-      <Button onClick={() => setCount(count + 1)}>Increment</Button>
-    </div>
-  );
-};
-```
+Pattern: User picks image from gallery → Compress → Upload to Supabase Storage
 
-### Context for Global State
+Libraries: `react-native-image-crop-picker` (gallery/camera) + `expo-image-manipulator` (compression)
 
-```jsx
-// Create context
-const AuthContext = createContext();
+Implementation approach:
+- Trigger image picker on button press
+- Allow crop/rotate before selection
+- Get image URI locally
+- Compress using `expo-image-manipulator` (resize to max width 800px, quality 0.7)
+- Upload to Supabase Storage with progress tracking
+- Store URL in database
+- Handle upload cancellation and errors
+- Show progress indicator during upload
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  
-  const login = async (email, password) => {
-    // Auth logic
-  };
-  
-  const logout = () => {
-    setUser(null);
-  };
-  
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+### Video Handling
 
-// Custom hook
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-};
+Pattern: Upload short workout video, display with thumbnail, allow playback
 
-// Usage
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-  
-  return (
-    <div>
-      <h1>Welcome, {user.name}</h1>
-      <Button onClick={logout}>Logout</Button>
-    </div>
-  );
-};
-```
+Libraries: `react-native-video` (playback) + `expo-av` (recording, optional)
 
-### Async Data Fetching Pattern
+Implementation approach:
+- Capture or pick video from gallery
+- Generate thumbnail (first frame or custom timestamp)
+- Compress/transcode using `expo-av` or native tools
+- Upload to Supabase Storage (may need custom server for video processing)
+- Store video URL and thumbnail URL in database
+- Display with play button overlay on thumbnail
+- Stream video with pause/resume/progress controls
+- Handle different video codecs (H.264, VP9, etc.)
 
-```jsx
-const useFetch = (url) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+### Image Caching & Lazy Loading
 
-  useEffect(() => {
-    let isMounted = true;
+Pattern: Feed shows 20+ images, only load visible ones, cache for reuse
 
-    const fetchData = async () => {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const json = await response.json();
-        if (isMounted) setData(json);
-      } catch (err) {
-        if (isMounted) setError(err.message);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
+Libraries: `expo-image` (built into Expo, handles caching automatically) or `react-native-fast-image`
 
-    fetchData();
-
-    return () => { isMounted = false; }; // Cleanup
-  }, [url]);
-
-  return { data, loading, error };
-};
-
-// Usage
-const PostList = () => {
-  const { data: posts, loading, error } = useFetch('/api/posts');
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">Error: {error}</p>;
-
-  return (
-    <div className="space-y-4">
-      {posts.map(post => (
-        <Card key={post.id}>
-          <h3 className="font-bold">{post.title}</h3>
-          <p className="text-gray-600">{post.content}</p>
-        </Card>
-      ))}
-    </div>
-  );
-};
-```
+Implementation approach:
+- Use `Image` or `expo-image` component
+- Set image URI from database
+- Let Expo handle disk caching automatically
+- In `FlatList`, use `initialNumToRender={10}` to render only visible items
+- Use `removeClippedSubviews={true}` for Android performance
+- Add loading placeholder while image loads
+- Handle image load errors gracefully (show placeholder)
 
 ---
 
-## Performance Optimization
+## Feed & List Optimization
 
-### Code Splitting & Lazy Loading
+### Infinite Scroll Feed
 
-```jsx
-import { lazy, Suspense } from 'react';
+Pattern: Show 10 posts → User scrolls to bottom → Load 10 more automatically
 
-// Lazy load components
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Settings = lazy(() => import('./pages/Settings'));
+Library: `FlatList` (built-in React Native)
 
-export const App = () => (
-  <Suspense fallback={<div>Loading...</div>}>
-    <Routes>
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/settings" element={<Settings />} />
-    </Routes>
-  </Suspense>
-);
-```
+Implementation approach:
+- Query posts with `LIMIT 10 OFFSET 0` initially
+- In `FlatList` `onEndReached` callback, increment offset and fetch next page
+- Append new posts to state array (don't replace)
+- Use `onEndReachedThreshold={0.8}` to trigger fetch at 80% scroll
+- Show loading indicator during fetch (append to list or center on screen)
+- Handle duplicate posts (track cursor ID instead of offset, or deduplicate)
+- Show "no more posts" message at end
+- Add pull-to-refresh to reset feed
 
-### Memoization
+### Post Card Component
 
-```jsx
-// Prevent unnecessary re-renders
-const PostCard = memo(({ post, onDelete }) => {
-  return (
-    <Card>
-      <h3>{post.title}</h3>
-      <Button onClick={() => onDelete(post.id)}>Delete</Button>
-    </Card>
-  );
-});
+Pattern: Display post with image, user info, caption, action buttons
 
-// useCallback for stable function references
-const PostList = ({ posts }) => {
-  const handleDelete = useCallback((id) => {
-    deletePost(id);
-  }, []);
+Implementation approach:
+- Use `View` container with NativeWind for layout
+- Display user avatar (small circular image), username, timestamp
+- Show image/video with aspect ratio container
+- Display caption text with expand/collapse if too long
+- Action row: Like button (heart icon), Comment, Share, More options (three dots)
+- Like button animates on press (Reanimated for scale/heart animation)
+- Tap to navigate to comment screen or full post view
+- Long-press for context menu (delete if owner, report, etc.)
 
-  return posts.map(post => (
-    <PostCard key={post.id} post={post} onDelete={handleDelete} />
-  ));
-};
-```
+### Pagination Patterns
 
-### Image Optimization
+**Offset-based** (simple, inefficient for large datasets):
+- Use `LIMIT 10 OFFSET 20`
+- Problem: Inefficient if data changes frequently
 
-```jsx
-// ✅ Lazy load images with native HTML
-<img
-  src="image.jpg"
-  alt="Description"
-  loading="lazy"
-  className="w-full h-auto"
-/>
+**Cursor-based** (efficient, stable):
+- Query with `created_at < ${lastPostTimestamp}`
+- Use `created_at DESC` to maintain order
+- Better for social feeds (new posts don't shift older ones)
+- Recommended for Living Sports
 
-// ✅ Use next/image for automatic optimization (Next.js)
-import Image from 'next/image';
-
-<Image
-  src="/image.jpg"
-  alt="Description"
-  width={800}
-  height={600}
-  loading="lazy"
-/>
-
-// ✅ Responsive images with srcset
-<img
-  src="image.jpg"
-  srcSet="image-small.jpg 640w, image-medium.jpg 1024w, image-large.jpg 1536w"
-  sizes="(max-width: 640px) 640px, (max-width: 1024px) 1024px, 1536px"
-  alt="Description"
-  className="w-full"
-/>
-```
+Implementation approach:
+- Store last post's `created_at` timestamp in state
+- On "load more", query where `created_at < :lastTimestamp`
+- Deduplicate results (track post IDs in Set)
+- Detect "no more posts" when result count < limit
 
 ---
 
-## Accessibility (a11y)
+## Forms & Input
 
-### Semantic HTML
+### Form Validation Pattern
 
-```jsx
-// ✅ Use semantic elements
-<header className="bg-blue-600 text-white p-4">
-  <h1>Site Title</h1>
-</header>
+Libraries: `react-hook-form` (state management) + `zod` or `yup` (schema validation)
 
-<nav className="bg-gray-200 p-4">
-  <ul className="flex gap-4">
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-  </ul>
-</nav>
+Implementation approach:
+- Define schema with field types, required/optional, length, pattern rules
+- Use `react-hook-form` to manage state and validation
+- Show real-time validation errors as user types
+- Disable submit button if form has errors
+- Show error message below each field
+- Handle async validation (check username availability)
+- Submit handler validates schema before API call
 
-<main className="p-4">
-  <section>
-    <h2>Section Title</h2>
-    <p>Content</p>
-  </section>
-</main>
+### TextInput Component
 
-<footer className="bg-gray-800 text-white p-4">
-  <p>&copy; 2024</p>
-</footer>
-```
+Pattern: Single input field with validation, placeholder, error display
 
-### ARIA Labels & Descriptions
+Implementation approach:
+- Use native `TextInput` component
+- Style with NativeWind classes (`p-3 border border-color-border rounded-lg`)
+- Change border color to red on error
+- Show error text below input
+- Use `keyboardType` prop for mobile keyboard (email, number, etc.)
+- Add `secureTextEntry` for password fields
+- Use `onChangeText` for value updates
+- Handle keyboard dismiss on submit
+- Multi-line for longer inputs (textarea equivalent)
 
-```jsx
-// ✅ Accessible button with title
-<button
-  aria-label="Close menu"
-  className="p-2"
-  onClick={closeMenu}
->
-  ✕
-</button>
+---
 
-// ✅ Accessible form with descriptions
-<div>
-  <label htmlFor="password">Password</label>
-  <input
-    id="password"
-    type="password"
-    aria-describedby="pwd-hint"
-  />
-  <p id="pwd-hint" className="text-sm text-gray-600">
-    Must be 8+ characters
-  </p>
-</div>
+## Animations & Transitions
 
-// ✅ Accessible modal
-<div role="dialog" aria-labelledby="modal-title" aria-modal="true">
-  <h2 id="modal-title">Confirm Action</h2>
-  <p>Are you sure?</p>
-</div>
-```
+### Screen Transitions
 
-### Keyboard Navigation
+Library: `@react-navigation/native` (built-in animations) or `react-native-reanimated` (custom)
 
-```jsx
-// ✅ Ensure focus is visible
-<style>{`
-  button:focus, a:focus, input:focus {
-    outline: 2px solid blue;
-    outline-offset: 2px;
-  }
-`}</style>
+Implementation approach:
+- Navigation automatically animates screen entrance/exit
+- Customize with `screenOptions.cardStyle` (slide, fade)
+- No literal animation code needed—use navigation library's API
 
-// ✅ Use onKeyDown for keyboard events
-const handleKeyDown = (e) => {
-  if (e.key === 'Escape') closeModal();
-  if (e.key === 'Enter') submitForm();
-};
+### Button Press Feedback
 
-<input onKeyDown={handleKeyDown} />
-```
+Pattern: Scale down and back up when pressed
+
+Library: `react-native-reanimated` (or native `Animated` API)
+
+Implementation approach:
+- Use `Pressable` with `android_ripple` for Android (ripple effect)
+- Use `Animated.Value` to scale button on `onPressIn`/`onPressOut`
+- Or use `TouchableOpacity` with `activeOpacity` for simpler fade effect
+- Keep animation under 150ms for snappy feel
+
+### List Item Animations
+
+Pattern: New post animates in from top, deleted post animates out
+
+Library: `react-native-reanimated`
+
+Implementation approach:
+- Use `FlatList` with `ListHeaderComponent` for new posts
+- Animate new item entrance with Reanimated
+- On delete, animate item slide out + fade, then remove from list
+- Keep animations brief (200-300ms) for responsive feel
+
+### Bottom Sheet Modal
+
+Pattern: Pop up from bottom (like Instagram story replies)
+
+Library: `@react-native-menu/bottom-sheet` or `react-native-modal-bottom-sheet`
+
+Implementation approach:
+- Create modal component that slides up from bottom
+- Handle swipe down to close (Reanimated + GestureHandler)
+- Fill screen height with scrollable content if tall
+- Blur background (use `react-native-blur`)
+- Close on outside tap
+- Test on both iOS (native gestures) and Android
+
+---
+
+## Accessibility for Mobile
+
+### Screen Reader Support
+
+Pattern: Describe buttons and images for visually impaired users
+
+Implementation approach:
+- Add `accessibilityLabel` to all interactive elements
+- Describe images with `accessible={true}` + `accessibilityLabel`
+- Use semantic component names (Button, not custom View)
+- Test with screen reader enabled (iOS VoiceOver, Android TalkBack)
+
+### Color Contrast
+
+Pattern: Ensure text is readable on its background
+
+Implementation approach:
+- Use `--text-primary` for default text (already high contrast)
+- Check color combinations against WCAG AA standards
+- Test with color blindness simulator
+- Use light/dark mode toggle to maintain contrast
+
+### Touch Target Size
+
+Pattern: Buttons must be at least 48x48 points for comfortable pressing
+
+Implementation approach:
+- Use `minHeight: 48` and `minWidth: 48` for buttons
+- Add padding inside buttons for larger tap area
+- Avoid small, hard-to-tap elements
+- Space related buttons appropriately (not clustered)
+
+### Focus Management
+
+Pattern: Keyboard navigation in forms (Tab key on Android/iOS)
+
+Implementation approach:
+- Set `accessible={true}` on interactive elements
+- Use `nextFocusDown`/`nextFocusRight` for manual focus flow
+- Test with keyboard navigation enabled
+- Announce form validation errors with `accessibilityLiveRegion`
 
 ---
 
 ## Common Component Patterns
 
-### Modal/Dialog Component
+### Header Component
 
-```jsx
-export const Modal = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
+Used on every screen to show title, back button, action buttons.
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-md w-full mx-4">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-};
-```
+Pattern:
+- `View` with fixed height (60-70 points)
+- Left: Back button (or menu icon)
+- Center: Screen title
+- Right: Action button (settings icon, etc.)
+- Safe area inset at top
+- Sticky position (stays at top on scroll)
 
-### Dropdown Menu
+### FloatingActionButton (FAB)
 
-```jsx
-export const Dropdown = ({ trigger, items }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
+Pattern: Round button in bottom-right corner for primary action (New Post, New Competition)
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!ref.current?.contains(e.target)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+Implementation approach:
+- Absolute positioned `View` with `position: absolute bottom-4 right-4`
+- Use `TouchableOpacity` with circular shape (`w-14 h-14 rounded-full`)
+- Add icon in center
+- Show `+` icon or action-specific icon
+- Optional: Show label tooltip on long-press
+- Press to open action sheet (create post, competition, etc.)
 
-  return (
-    <div ref={ref} className="relative inline-block">
-      <button onClick={() => setIsOpen(!isOpen)}>
-        {trigger}
-      </button>
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white border rounded shadow-lg">
-          {items.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                item.onClick();
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-```
+### Loading Skeleton
+
+Pattern: Gray placeholder while content loads
+
+Implementation approach:
+- Create repeated `View` elements with gray background
+- Animate opacity/shimmer effect with Reanimated (optional)
+- Replace with real content once loaded
+- Improves perceived performance (user sees something loading)
+
+### Empty State
+
+Pattern: Show message when list is empty (no posts, no competitions)
+
+Implementation approach:
+- Check if array is empty
+- Show centered `View` with icon, message, and action button
+- Example: "No workouts yet. Create one to get started!" with button
+- Use encouraging copy and illustrations
+
+### Pull-to-Refresh
+
+Pattern: Swipe down from top to reload feed
+
+Implementation approach:
+- Use `RefreshControl` component with `FlatList`
+- Show loading spinner while refreshing
+- Disable scroll during refresh
+- Automatically hide after refresh completes
+- Maintain scroll position (don't jump to top)
 
 ### Toast Notifications
 
-```jsx
-const useToast = () => {
-  const [toasts, setToasts] = useState([]);
+Pattern: Small message at bottom (post published, error, etc.)
 
-  const showToast = (message, type = 'info', duration = 3000) => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, duration);
-  };
+Libraries: `react-native-toast-message` or simple custom implementation
 
-  return { toasts, showToast };
-};
+Implementation approach:
+- Show brief notification on action (no modal, not blocking)
+- Auto-dismiss after 3 seconds
+- Different colors for success/error/info
+- Stack multiple toasts or replace last one
+- Bottom position (above FAB)
 
-// Usage
-const MyComponent = () => {
-  const { toasts, showToast } = useToast();
+### Snackbar (for errors)
 
-  return (
-    <>
-      <Button onClick={() => showToast('Success!', 'success')}>
-        Show Toast
-      </Button>
-      <div className="fixed bottom-4 right-4 space-y-2">
-        {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className={`p-4 rounded text-white ${
-              toast.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-            }`}
-          >
-            {toast.message}
-          </div>
-        ))}
-      </div>
-    </>
-  );
-};
-```
+Pattern: Error message at bottom with action button (retry, dismiss)
+
+Implementation approach:
+- Similar to toast but with optional action button
+- Stays visible longer or until dismissed
+- Use for important messages (upload failed, connection lost)
+- Position above keyboard if input visible
 
 ---
 
-## Quick Checklist
+## Performance Tips
 
-- [ ] Use mobile-first responsive design
-- [ ] Create reusable component library
-- [ ] Implement error boundaries
-- [ ] Add loading states for async operations
-- [ ] Use Tailwind utility classes consistently
-- [ ] Memoize expensive components
-- [ ] Lazy load routes and large components
-- [ ] Optimize images with lazy loading
-- [ ] Test keyboard navigation
-- [ ] Add ARIA labels for accessibility
-- [ ] Validate forms before submission
-- [ ] Handle network errors gracefully
+1. **Use `FlatList` for long lists**, not `ScrollView` with nested `View`
+2. **Memoize components** that don't need frequent re-renders (`React.memo`)
+3. **Lazy load images** (Expo handles this automatically with disk cache)
+4. **Compress media** before upload (images: max 800px width; videos: transcode to H.264)
+5. **Pagination/infinite scroll** instead of loading all at once
+6. **Use `keyExtractor`** in `FlatList` to prevent re-rendering all items on data change
+7. **Avoid inline functions** in render (define outside component)
+8. **Profile with Expo Debugger** to identify bottlenecks
+9. **Remove unused libraries** (check bundle size with `eas build --local`)
+10. **Use `useCallback`** for handlers passed to memoized children
+
+---
+
+## Debugging Tips
+
+- **Reload app**: Shake device (Expo) or `r` in terminal
+- **Toggle inspector**: Shake device and tap "Toggle Element Inspector"
+- **Network requests**: Use Chrome DevTools with Expo (`expo start --localhost`)
+- **Performance**: Use React Profiler in DevTools
+- **Video playback issues**: Check codec support on target devices
+- **Image aspect ratio**: Always set explicit width/height on images
+- **Gesture issues**: Check `react-native-gesture-handler` is configured in app.json
+- **Styling not applied**: Verify NativeWind is installed and global.css is imported
