@@ -370,6 +370,8 @@ Sleek has its own AI that plans screen content, visual style, and layout. Pass t
 
 Create a project with `POST /api/v1/projects` if one doesn't exist yet. Ask the user for a name, or derive one from the request.
 
+Each project has its own theme, style, and design system. If the user wants multiple design variations, create a separate project for each variation.
+
 ### 2. Send a chat message
 
 Describe what to build using `POST /api/v1/projects/:id/chat/messages`. You can use the user's words directly — Sleek's AI interprets natural language. You do not need to decompose the request into screens; send the full intent as a single message and let Sleek decide what screens to create.
@@ -380,7 +382,7 @@ Chat messages are async by default — you get a `runId` and poll for completion
 
 **Editing a specific screen**: use `target.screenId` to direct changes to the right screen (uses the screen ID from operations, not the component ID).
 
-**One run at a time**: only one active run is allowed per project. If you get `409 CONFLICT`, wait for the current run to complete before sending the next message.
+**One run at a time**: only one active run is allowed per project. If you get `409 CONFLICT`, wait for the current run to complete before sending the next message. Messages to different projects can run in parallel — use async polling (not `?wait=true`) when running multiple projects concurrently.
 
 **Safe retries**: add an `idempotency-key` header (≤255 chars) to replay-safe re-sends. The server returns the existing run rather than creating a duplicate.
 
