@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import { Heart, MessageCircle } from "lucide-react-native";
-import CommentsSheet from "./comments-sheet";
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { Heart, MessageCircle } from 'lucide-react-native';
+import CommentsSheet from './comments-sheet';
 
 interface PostCardProps {
   user: string;
@@ -11,20 +11,13 @@ interface PostCardProps {
   text: string;
 }
 
-export default function PostCard({
-  user,
-  time,
-  avatar,
-  image,
-  text,
-}: PostCardProps) {
+export default function PostCard({ user, time, avatar, image, text }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
 
   return (
-    <View className="mx-4 mt-3 bg-white rounded-2xl shadow overflow-hidden">
-      
+    <View className="mx-4 mt-3 overflow-hidden rounded-2xl bg-white shadow">
       <View className="flex-row items-center px-4 py-3">
-        <Image source={{ uri: avatar }} className="w-10 h-10 rounded-full" />
+        <Image source={{ uri: avatar }} className="h-10 w-10 rounded-full" />
 
         <View className="ml-3">
           <Text className="font-semibold">{user}</Text>
@@ -32,7 +25,7 @@ export default function PostCard({
         </View>
       </View>
 
-      <Image source={{ uri: image }} className="w-full h-48" />
+      <Image source={{ uri: image }} className="h-48 w-full" />
 
       <View className="px-4 py-3">
         <Text className="text-gray-700">{text}</Text>
@@ -44,7 +37,7 @@ export default function PostCard({
           <Text>34</Text>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           className="flex-row items-center gap-1"
           onPress={() => setShowComments(true)}
         >
@@ -53,10 +46,7 @@ export default function PostCard({
         </TouchableOpacity>
       </View>
 
-      <CommentsSheet 
-        isVisible={showComments} 
-        onClose={() => setShowComments(false)} 
-      />
+      <CommentsSheet isVisible={showComments} onClose={() => setShowComments(false)} />
     </View>
   );
 }
