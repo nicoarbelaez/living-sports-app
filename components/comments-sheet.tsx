@@ -24,6 +24,10 @@ const CURRENT_USER = {
 interface CommentsSheetProps {
   isVisible: boolean;
   onClose: () => void;
+  postUser?: string;
+  postAvatar?: string;
+  postImage?: string;
+  postCaption?: string;
 }
 
 const DUMMY_COMMENTS: Comment[] = [
@@ -55,7 +59,14 @@ const DUMMY_COMMENTS: Comment[] = [
   },
 ];
 
-export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps) {
+export default function CommentsSheet({
+  isVisible,
+  onClose,
+  postUser,
+  postAvatar,
+  postImage,
+  postCaption,
+}: CommentsSheetProps) {
   const [comments, setComments] = useState<Comment[]>(DUMMY_COMMENTS);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<{ user: string; id: string } | null>(null);
@@ -177,6 +188,26 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
               <X size={24} color="#000" />
             </TouchableOpacity>
           </View>
+
+          {/* Post Preview estilo Instagram */}
+          {(postImage || postCaption) && (
+            <View className="border-b border-gray-100">
+              {postImage && (
+                <Image source={{ uri: postImage }} className="h-48 w-full" resizeMode="cover" />
+              )}
+              {(postUser || postCaption) && (
+                <View className="flex-row items-start px-4 py-2">
+                  {postAvatar && (
+                    <Image source={{ uri: postAvatar }} className="mr-2 h-7 w-7 rounded-full" />
+                  )}
+                  <Text className="flex-1 text-sm">
+                    <Text className="font-bold text-gray-900">{postUser} </Text>
+                    <Text className="text-gray-700">{postCaption}</Text>
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Comments List */}
           <FlatList
