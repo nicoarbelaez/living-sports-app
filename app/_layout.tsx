@@ -60,7 +60,7 @@ function RootLayoutContent() {
   return (
     <>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: true }}>
         {!session ? (
           <Stack.Screen name="(auth)" />
         ) : (
