@@ -24,7 +24,7 @@ export default function CommentItem({ comment, level = 0, onReply, onLike }: Com
   const isReply = level > 0;
 
   return (
-    <View className={`mt-4 ${isReply ? 'ml-10' : 'px-4'}`}>
+    <View className={`mt-4 ${isReply ? 'ml-6' : 'px-4'}`}>
       <View className="flex-row">
         <Image
           source={{ uri: comment.avatar }}
