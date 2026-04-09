@@ -1,47 +1,38 @@
-import { Tabs } from "expo-router";
-import { Home, Users, User } from "lucide-react-native";
-import HeaderActions from "@/components/header";
+import React from 'react';
+import { FloatingNavbar } from '@/components/floating-navbar';
+import { MaterialTopTabs } from '@/components/swipable-tabs';
 
-export default function TabLayout() {
+export default function TabsLayout() {
   return (
-    <Tabs
+    <MaterialTopTabs
+      tabBar={(props) => <FloatingNavbar {...props} />}
+      tabBarPosition="bottom" // We position our floating navbar at the bottom
       screenOptions={{
-        headerShown: true,
-        tabBarActiveTintColor: "#2563eb",
+        // Hide the default top tab bar styling
+        tabBarShowLabel: false,
+        tabBarStyle: { height: 0, position: 'absolute', top: -100 }, // Ensure it's hidden
       }}
     >
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="index"
-        options={{  
-          title: "HOME",
-          tabBarIcon: ({ color, size }) => (
-            <Home size={size} color={color} />
-          ),
-          headerRight: () => <HeaderActions screen="home" />,
+        options={{
+          title: 'HOME',
         }}
       />
 
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="comunidades"
         options={{
-          title: "COMUNIDADES",
-          tabBarIcon: ({ color, size }) => (
-            <Users size={size} color={color} />
-          ),
-          headerRight: () => <HeaderActions screen="comunidades" />,
+          title: 'COMUNIDADES',
         }}
       />
 
-      <Tabs.Screen
+      <MaterialTopTabs.Screen
         name="profile"
         options={{
-          title: "PERFIL",
-          tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
-          ),
-          headerRight: () => <HeaderActions screen="profile" />,
+          title: 'PERFIL',
         }}
       />
-    </Tabs>
+    </MaterialTopTabs>
   );
 }

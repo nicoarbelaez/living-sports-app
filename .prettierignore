@@ -1,0 +1,14 @@
+# Ignore all configuration files and hidden folders
+.agents/
+.husky/
+.expo/
+node_modules/
+dist/
+build/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+*.config.js
+*.json
+app.json
+tsconfig.json
