@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { X } from 'lucide-react-native';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommentItem, { Comment } from './comment-item';
 
 const STORAGE_KEY = 'post_comments';
@@ -65,7 +65,7 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
   React.useEffect(() => {
     const loadComments = async () => {
       try {
-        const saved = await SecureStore.getItemAsync(STORAGE_KEY);
+        const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (saved) {
           setComments(JSON.parse(saved));
         }
@@ -81,7 +81,7 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
   // Save comments to persistence
   const saveComments = async (updatedComments: Comment[]) => {
     try {
-      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(updatedComments));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedComments));
     } catch (e) {
       console.error('Failed to save comments', e);
     }
@@ -144,12 +144,19 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
   const handleLike = (commentId: string) => {
     const updatedComments = comments.map((c) => {
       if (c.id === commentId) {
-        return { ...c, likes: c.likes + 1 };
+        const newIsLiked = !c.isLiked;
+        return { ...c, likes: c.likes + (newIsLiked ? 1 : -1), isLiked: newIsLiked };
       }
       if (c.replies) {
         return {
           ...c,
-          replies: c.replies.map((r) => (r.id === commentId ? { ...r, likes: r.likes + 1 } : r)),
+          replies: c.replies.map((r) => {
+            if (r.id === commentId) {
+              const newIsLiked = !r.isLiked;
+              return { ...r, likes: r.likes + (newIsLiked ? 1 : -1), isLiked: newIsLiked };
+            }
+            return r;
+          }),
         };
       }
       return c;
@@ -176,11 +183,7 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
             data={comments}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <CommentItem
-                comment={item}
-                onReply={handleReply}
-                onLike={() => handleLike(item.id)}
-              />
+              <CommentItem comment={item} onReply={handleReply} onLike={handleLike} />
             )}
             contentContainerStyle={{ paddingBottom: 20 }}
           />
