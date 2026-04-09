@@ -54,13 +54,20 @@ export default function CommentItem({ comment, level = 0, onReply, onLike }: Com
               </View>
             </View>
 
-            {/* Columna dedicada exclusivamente al corazón anclada a la derecha */}
+            {/* Columna del corazón con contador debajo */}
             <TouchableOpacity className="mt-1 items-center pl-2" onPress={() => onLike(comment.id)}>
               <Heart
                 size={14}
                 color={comment.isLiked ? '#ef4444' : '#6b7280'}
                 fill={comment.isLiked ? '#ef4444' : 'transparent'}
               />
+              {comment.likes > 0 && (
+                <Text
+                  className={`mt-0.5 text-[10px] ${comment.isLiked ? 'text-red-500' : 'text-gray-500'}`}
+                >
+                  {comment.likes}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
