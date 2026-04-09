@@ -4,36 +4,37 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FloatingNavbar } from '@/components/floating-navbar';
 import { MaterialTopTabs } from '@/components/swipable-tabs';
 import HeaderActions from '@/components/header';
+import { useSegments } from 'expo-router';
 
 export default function TabsLayout() {
+  const segments = useSegments();
+  const current = segments[segments.length - 1];
+
+  const screen =
+    current === 'comunidades' ? 'comunidades' : current === 'profile' ? 'profile' : 'home';
+
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView>
-        <View
-          style={{
-            height: 60,
-            justifyContent: 'center',
-            alignItems: 'flex-end',
-            paddingHorizontal: 16,
-            borderBottomWidth: 0.5,
-            borderColor: '#e5e7eb',
-          }}
-        >
-          <HeaderActions screen="home" />
+    <View className="flex-1 bg-gray-50">
+      <SafeAreaView edges={['top']} className="bg-white">
+        <View className="h-14 flex-row items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm">
+          <View />
+          <HeaderActions screen={screen} />
         </View>
       </SafeAreaView>
-      <MaterialTopTabs
-        tabBar={(props) => <FloatingNavbar {...props} />}
-        tabBarPosition="bottom"
-        screenOptions={{
-          tabBarShowLabel: false,
-          tabBarStyle: { height: 0, position: 'absolute', top: -100 },
-        }}
-      >
-        <MaterialTopTabs.Screen name="index" options={{ title: 'HOME' }} />
-        <MaterialTopTabs.Screen name="comunidades" options={{ title: 'COMUNIDADES' }} />
-        <MaterialTopTabs.Screen name="profile" options={{ title: 'PERFIL' }} />
-      </MaterialTopTabs>
+
+      <View className="flex-1 bg-gray-100">
+        <MaterialTopTabs
+          tabBar={(props) => <FloatingNavbar {...props} />}
+          screenOptions={{
+            tabBarShowLabel: false,
+            tabBarStyle: { height: 0, position: 'absolute', top: -100 },
+          }}
+        >
+          <MaterialTopTabs.Screen name="index" />
+          <MaterialTopTabs.Screen name="comunidades" />
+          <MaterialTopTabs.Screen name="profile" />
+        </MaterialTopTabs>
+      </View>
     </View>
   );
 }
