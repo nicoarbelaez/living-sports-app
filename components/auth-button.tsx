@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MotiText, MotiView } from 'moti';
-import Button, { type ButtonProps } from './ui/button';
+import { Button, type ButtonProps } from './ui/button';
 import { LucideIcon } from '@/types/icons';
 import { cn } from '@/lib/utils';
 

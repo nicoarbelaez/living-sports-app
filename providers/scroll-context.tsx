@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 
-type ScrollDirection = 'up' | 'down' | 'none';
-
 interface ScrollContextType {
   shouldHideNavbar: boolean;
   handleScroll: (offset: number) => void;
