@@ -46,7 +46,14 @@ export default function PostCard({ user, time, avatar, image, text }: PostCardPr
         </TouchableOpacity>
       </View>
 
-      <CommentsSheet isVisible={showComments} onClose={() => setShowComments(false)} />
+      <CommentsSheet
+        isVisible={showComments}
+        onClose={() => setShowComments(false)}
+        postUser={user}
+        postAvatar={avatar}
+        postImage={image}
+        postCaption={text}
+      />
     </View>
   );
 }
