@@ -1,15 +1,50 @@
-import { View, Text } from 'react-native';
-import { Search, Bell } from 'lucide-react-native';
+import React from 'react';
+import { View, Pressable } from 'react-native';
+import { Search, Bell, Settings } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
-export default function Header() {
+type Props = {
+  screen: 'home' | 'comunidades' | 'profile';
+};
+
+export default function HeaderActions({ screen }: Props) {
+  const router = useRouter();
+
   return (
-    <View className="flex-row items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
-      <Text className="text-xl font-bold text-black">Living Sport</Text>
+    <View className="flex-row items-center">
+      {screen === 'home' && (
+        <>
+          <Pressable onPress={() => router.push('/modal')}>
+            <Search size={22} color="#374151" />
+          </Pressable>
 
-      <View className="flex-row gap-5">
-        <Search size={22} color="#374151" />
-        <Bell size={22} color="#374151" />
-      </View>
+          <View className="w-4" />
+
+          <Pressable>
+            <Bell size={22} color="#374151" />
+          </Pressable>
+        </>
+      )}
+
+      {screen === 'comunidades' && (
+        <>
+          <Pressable>
+            <Search size={22} color="#374151" />
+          </Pressable>
+
+          <View className="w-4" />
+
+          <Pressable>
+            <Bell size={22} color="#374151" />
+          </Pressable>
+        </>
+      )}
+
+      {screen === 'profile' && (
+        <Pressable onPress={() => router.push('/modal')}>
+          <Settings size={22} color="#374151" />
+        </Pressable>
+      )}
     </View>
   );
 }

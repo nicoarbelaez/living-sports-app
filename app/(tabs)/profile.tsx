@@ -1,5 +1,4 @@
 import { View, Text, ScrollView } from 'react-native';
-import Header from '@/components/header';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
 
 export default function Perfil() {
@@ -7,8 +6,6 @@ export default function Perfil() {
 
   return (
     <View className="flex-1 bg-gray-100">
-      <Header />
-
       <ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
