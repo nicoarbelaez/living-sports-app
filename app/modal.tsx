@@ -8,20 +8,16 @@ export default function ModalScreen() {
 
   return (
     <View className="flex-1 bg-gray-100 px-4 pt-6 dark:bg-black">
-      <View className="mb-3 items-center">
-        <View className="h-1.5 w-10 rounded-full bg-gray-400 opacity-60" />
-      </View>
-
-      <View className="mb-6 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()} className="p-2">
+      <View className="mb-6 flex-row items-center">
+        <Pressable onPress={() => router.back()} className="z-10 p-2">
           <ArrowLeft size={22} color="#3B82F6" />
         </Pressable>
 
-        <View className="absolute right-0 left-0 items-center">
+        <View className="flex-1 items-center">
           <Text className="text-lg font-semibold text-black dark:text-white">Configuración</Text>
         </View>
 
-        <View className="w-8" />
+        <View className="w-10" />
       </View>
 
       <View className="mt-2">
