@@ -1,34 +1,49 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Search, Bell, Users, Settings } from 'lucide-react-native';
+import { View, Pressable } from 'react-native';
+import { Search, Bell, Settings } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 type Props = {
   screen: 'home' | 'comunidades' | 'profile';
 };
 
 export default function HeaderActions({ screen }: Props) {
+  const router = useRouter();
+
   return (
     <View className="flex-row items-center">
       {screen === 'home' && (
         <>
-          <Search size={22} color="#374151" />
+          <Pressable onPress={() => router.push('/modal')}>
+            <Search size={22} color="#374151" />
+          </Pressable>
+
           <View className="w-4" />
-          <Bell size={22} color="#374151" />
+
+          <Pressable>
+            <Bell size={22} color="#374151" />
+          </Pressable>
         </>
       )}
 
       {screen === 'comunidades' && (
         <>
-          <Search size={22} color="#374151" />
+          <Pressable>
+            <Search size={22} color="#374151" />
+          </Pressable>
+
           <View className="w-4" />
-          <Bell size={22} color="#374151" />
+
+          <Pressable>
+            <Bell size={22} color="#374151" />
+          </Pressable>
         </>
       )}
 
       {screen === 'profile' && (
-        <>
+        <Pressable onPress={() => router.push('/modal')}>
           <Settings size={22} color="#374151" />
-        </>
+        </Pressable>
       )}
     </View>
   );
