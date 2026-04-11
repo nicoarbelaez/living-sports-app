@@ -24,18 +24,14 @@ export default function EditProfile() {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [user]);
 
   const fetchProfile = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', user.id)
-      .single();
+    const { data } = await supabase.from('profiles').select('username').eq('id', user.id).single();
 
-    if (data) {
+    if (data?.username) {
       setUsername(data.username);
     }
   };
@@ -45,7 +41,10 @@ export default function EditProfile() {
 
     setLoading(true);
 
-    const { error } = await supabase.from('profiles').update({ username }).eq('id', user.id);
+    const { error } = await supabase.from('profiles').upsert({
+      id: user.id,
+      username,
+    });
 
     setLoading(false);
 
@@ -59,7 +58,6 @@ export default function EditProfile() {
 
   return (
     <View className="flex-1 bg-gray-100 px-4 pt-6 dark:bg-black">
-      {/* HEADER */}
       <View className="mb-6 flex-row items-center">
         <Pressable onPress={() => router.back()} className="p-2">
           <ArrowLeft size={22} color={isDark ? '#fff' : '#000'} />
@@ -72,12 +70,10 @@ export default function EditProfile() {
         <View className="w-10" />
       </View>
 
-      {/* AVATAR */}
       <View className="mb-6 items-center">
         <Image source={{ uri: avatar }} className="h-28 w-28 rounded-full" />
       </View>
 
-      {/* INPUT */}
       <View className="mb-4">
         <Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">Nombre de usuario</Text>
 
@@ -90,7 +86,6 @@ export default function EditProfile() {
         />
       </View>
 
-      {/* BOTÓN */}
       <Pressable
         onPress={handleSave}
         disabled={loading}
