@@ -18,6 +18,7 @@ export default function EditProfile() {
   const [username, setUsername] = useState('');
   const [originalUsername, setOriginalUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [originalAvatar, setOriginalAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -28,6 +29,8 @@ export default function EditProfile() {
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
     'https://ui-avatars.com/api/?name=User';
+
+  const hasChanges = username !== originalUsername || avatarUrl !== originalAvatar;
 
   useEffect(() => {
     fetchProfile();
@@ -60,7 +63,10 @@ export default function EditProfile() {
       setOriginalUsername(data.username);
     }
 
-    if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+    if (data?.avatar_url) {
+      setAvatarUrl(data.avatar_url);
+      setOriginalAvatar(data.avatar_url);
+    }
   };
 
   const checkUsername = async (value: string) => {
@@ -225,13 +231,13 @@ export default function EditProfile() {
 
       <Pressable
         onPress={handleSave}
-        disabled={loading || isAvailable === false}
+        disabled={loading || isAvailable === false || !hasChanges}
         className={`mt-6 rounded-2xl py-4 shadow-md ${
-          loading || isAvailable === false ? 'bg-gray-400' : 'bg-blue-500'
+          loading || isAvailable === false || !hasChanges ? 'bg-gray-400' : 'bg-blue-500'
         }`}
       >
         <Text className="text-center text-base font-semibold text-white">
-          {loading ? 'Guardando...' : 'Guardar cambios'}
+          {loading ? 'Guardando...' : !hasChanges ? 'Guardar cambios' : 'Guardar cambios'}
         </Text>
       </Pressable>
     </View>
