@@ -18,6 +18,7 @@ export default function EditProfile() {
   const [username, setUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const fallbackAvatar =
     user?.user_metadata?.avatar_url ||
@@ -147,22 +148,41 @@ export default function EditProfile() {
         </Pressable>
       </View>
 
-      {/* INPUT */}
-      <View className="mb-2">
-        <Text className="text-sm text-gray-500 dark:text-gray-400">Nombre de usuario</Text>
+      <Text
+        className={`mb-2 text-sm ${focused ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}
+      >
+        Nombre de usuario
+      </Text>
+
+      <View
+        className={`rounded-2xl border px-4 py-3 ${
+          focused
+            ? 'border-blue-500 bg-white dark:bg-gray-800'
+            : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+        }`}
+      >
+        <TextInput
+          value={username}
+          onChangeText={setUsername}
+          placeholder="Tu nombre de usuario"
+          placeholderTextColor="#9ca3af"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            fontSize: 16,
+            color: isDark ? 'white' : 'black',
+            paddingVertical: 2,
+          }}
+        />
       </View>
 
-      <TextInput
-        value={username}
-        onChangeText={setUsername}
-        placeholder="Tu nombre"
-        placeholderTextColor="#9ca3af"
-        className="mb-6 rounded-xl bg-white px-4 py-3 text-black dark:bg-gray-800 dark:text-white"
-      />
-
       {/* BUTTON */}
-      <Pressable onPress={handleSave} disabled={loading} className="rounded-xl bg-blue-500 py-4">
-        <Text className="text-center font-semibold text-white">
+      <Pressable
+        onPress={handleSave}
+        disabled={loading}
+        className="mt-6 rounded-2xl bg-blue-500 py-4 shadow-md active:opacity-80"
+      >
+        <Text className="text-center text-base font-semibold text-white">
           {loading ? 'Guardando...' : 'Guardar cambios'}
         </Text>
       </Pressable>
