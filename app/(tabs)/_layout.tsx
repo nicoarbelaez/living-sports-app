@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, useColorScheme } from 'react-native';
+import { View } from 'react-native';
+import { useTheme } from '@/providers/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FloatingNavbar } from '@/components/floating-navbar';
 import { MaterialTopTabs } from '@/components/swipable-tabs';
@@ -10,8 +11,8 @@ export default function TabsLayout() {
   const segments = useSegments();
   const current = segments[segments.length - 1];
 
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const screen =
     current === 'comunidades' ? 'comunidades' : current === 'profile' ? 'profile' : 'home';

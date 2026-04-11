@@ -10,7 +10,7 @@ import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { ScrollProvider } from '@/providers/scroll-context';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
-
+import { ThemeProvider } from '@/providers/theme';
 WebBrowser.maybeCompleteAuthSession();
 
 function RootLayoutContent() {
@@ -79,10 +79,12 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <ScrollProvider>
-      <AuthProvider>
-        <RootLayoutContent />
-      </AuthProvider>
-    </ScrollProvider>
+    <ThemeProvider>
+      <ScrollProvider>
+        <AuthProvider>
+          <RootLayoutContent />
+        </AuthProvider>
+      </ScrollProvider>
+    </ThemeProvider>
   );
 }
