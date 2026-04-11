@@ -16,7 +16,7 @@ export default function ProfileScreen() {
     user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Usuario';
 
   return (
-    <View className="flex-1 items-center justify-center bg-gray-100 px-4 dark:bg-black">
+    <View className="flex-1 items-center bg-gray-100 px-4 pt-20 dark:bg-black">
       <Image source={{ uri: avatar }} className="mb-4 h-32 w-32 rounded-full" />
 
       <Text className="text-xl font-semibold text-black dark:text-white">{name}</Text>
