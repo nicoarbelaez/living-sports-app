@@ -6,8 +6,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  Easing,
-  withTiming,
 } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 
