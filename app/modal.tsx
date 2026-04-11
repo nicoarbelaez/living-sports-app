@@ -16,26 +16,25 @@ export default function ModalScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-100 px-4 pt-6 dark:bg-black">
-      {/* HEADER */}
-      <View className="mb-6 flex-row items-center">
-        <Pressable onPress={() => router.back()} className="z-10 p-2">
+    <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
+      <View className="mb-8 flex-row items-center justify-between">
+        <Pressable
+          onPress={() => router.back()}
+          className="rounded-full bg-white p-2 shadow-sm dark:bg-gray-800"
+        >
           <ArrowLeft size={22} color={isDark ? '#fff' : '#000'} />
         </Pressable>
 
-        <View className="flex-1 items-center">
-          <Text className="text-lg font-semibold text-black dark:text-white">Configuración</Text>
-        </View>
+        <Text className="text-lg font-bold text-black dark:text-white">Configuración</Text>
 
-        <View className="w-10" />
+        <View className="w-8" />
       </View>
 
-      {/* APARIENCIA */}
       <View className="mt-2">
         <Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">APARIENCIA</Text>
 
         <View className="rounded-2xl bg-gray-200 p-1 dark:bg-gray-900">
-          <View className="flex-row items-center justify-between rounded-2xl bg-white px-4 py-4 dark:bg-gray-800">
+          <View className="flex-row items-center justify-between rounded-2xl bg-white px-4 py-4 shadow-sm dark:bg-gray-800">
             <Text className="text-base text-black dark:text-white">Modo oscuro</Text>
 
             <ThemeToggle />
@@ -43,14 +42,13 @@ export default function ModalScreen() {
         </View>
       </View>
 
-      {/* LOGOUT */}
       <View className="mt-6">
         <Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">CUENTA</Text>
 
         <View className="rounded-2xl bg-gray-200 p-1 dark:bg-gray-900">
           <Pressable
             onPress={handleSignOut}
-            className="rounded-2xl bg-white px-4 py-4 dark:bg-gray-800"
+            className="rounded-2xl bg-white px-4 py-4 shadow-sm dark:bg-gray-800"
           >
             <Text className="text-base font-semibold text-red-500">Cerrar sesión</Text>
           </Pressable>
