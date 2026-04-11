@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Camera } from 'lucide-react-native';
 import { useTheme } from '@/providers/theme';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -69,8 +69,6 @@ export default function EditProfile() {
       let uploadedUrl = avatarUrl;
 
       if (avatarUrl && avatarUrl.startsWith('file://')) {
-        console.log('Subiendo imagen:', avatarUrl);
-
         const fileName = `${user.id}-${Date.now()}.jpg`;
 
         const file = {
@@ -90,8 +88,6 @@ export default function EditProfile() {
           });
 
         if (uploadError) {
-          console.log('UPLOAD ERROR:', uploadError);
-          setLoading(false);
           Alert.alert('Error', 'No se pudo subir la imagen');
           return;
         }
@@ -108,7 +104,6 @@ export default function EditProfile() {
       });
 
       if (error) {
-        console.log('PROFILE ERROR:', error);
         Alert.alert('Error', 'No se pudo actualizar');
         return;
       }
@@ -116,51 +111,58 @@ export default function EditProfile() {
       Alert.alert('Listo', 'Perfil actualizado');
       router.back();
     } catch (err) {
-      console.log('CATCH ERROR:', err);
-      Alert.alert('Error', 'Error inesperado al guardar');
+      Alert.alert('Error', 'Error inesperado');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View className="flex-1 bg-gray-100 px-4 pt-6 dark:bg-black">
-      <View className="mb-6 flex-row items-center">
-        <Pressable onPress={() => router.back()} className="p-2">
+    <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
+      {/* HEADER */}
+      <View className="mb-8 flex-row items-center justify-between">
+        <Pressable
+          onPress={() => router.back()}
+          className="rounded-full bg-white p-2 dark:bg-gray-800"
+        >
           <ArrowLeft size={22} color={isDark ? '#fff' : '#000'} />
         </Pressable>
 
-        <View className="flex-1 items-center">
-          <Text className="text-lg font-semibold text-black dark:text-white">Editar perfil</Text>
-        </View>
+        <Text className="text-lg font-bold text-black dark:text-white">Editar perfil</Text>
 
-        <View className="w-10" />
+        <View className="w-8" />
       </View>
 
-      <View className="mb-6 items-center">
-        <Pressable onPress={pickImage}>
-          <Image source={{ uri: avatarUrl || fallbackAvatar }} className="h-28 w-28 rounded-full" />
+      {/* AVATAR */}
+      <View className="mb-8 items-center">
+        <Pressable onPress={pickImage} className="relative">
+          <Image
+            source={{ uri: avatarUrl || fallbackAvatar }}
+            className="h-32 w-32 rounded-full border-4 border-white dark:border-gray-800"
+          />
+
+          <View className="absolute right-0 bottom-0 rounded-full bg-blue-500 p-2">
+            <Camera size={16} color="white" />
+          </View>
         </Pressable>
       </View>
 
-      <View className="mb-4">
-        <Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">Nombre de usuario</Text>
-
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Tu nombre"
-          placeholderTextColor="#9ca3af"
-          className="rounded-xl bg-white px-4 py-3 text-black dark:bg-gray-800 dark:text-white"
-        />
+      {/* INPUT */}
+      <View className="mb-2">
+        <Text className="text-sm text-gray-500 dark:text-gray-400">Nombre de usuario</Text>
       </View>
 
-      <Pressable
-        onPress={handleSave}
-        disabled={loading}
-        className="mt-4 items-center rounded-xl bg-blue-500 py-4"
-      >
-        <Text className="font-semibold text-white">
+      <TextInput
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Tu nombre"
+        placeholderTextColor="#9ca3af"
+        className="mb-6 rounded-xl bg-white px-4 py-3 text-black dark:bg-gray-800 dark:text-white"
+      />
+
+      {/* BUTTON */}
+      <Pressable onPress={handleSave} disabled={loading} className="rounded-xl bg-blue-500 py-4">
+        <Text className="text-center font-semibold text-white">
           {loading ? 'Guardando...' : 'Guardar cambios'}
         </Text>
       </Pressable>
