@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
-import { Search, Bell, Settings, ArrowLeft } from 'lucide-react-native';
+import { Search, Bell, Settings, ArrowLeft, Pencil } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 type Props = {
@@ -62,9 +62,17 @@ export default function HeaderActions({ screen }: Props) {
       )}
 
       {screen === 'profile' && (
-        <Pressable onPress={() => router.push('/modal')}>
-          <Settings size={22} color="#374151" />
-        </Pressable>
+        <>
+          <Pressable onPress={() => router.push('/edit-profile')}>
+            <Pencil size={22} color="#374151" />
+          </Pressable>
+
+          <View className="w-4" />
+
+          <Pressable onPress={() => router.push('/modal')}>
+            <Settings size={22} color="#374151" />
+          </Pressable>
+        </>
       )}
     </View>
   );
