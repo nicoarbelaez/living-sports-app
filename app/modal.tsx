@@ -3,9 +3,12 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import ThemeToggle from '@/components/theme-toggle';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from '@/providers/theme';
 
 export default function ModalScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -17,7 +20,7 @@ export default function ModalScreen() {
       {/* HEADER */}
       <View className="mb-6 flex-row items-center">
         <Pressable onPress={() => router.back()} className="z-10 p-2">
-          <ArrowLeft size={22} color="#3B82F6" />
+          <ArrowLeft size={22} color={isDark ? '#fff' : '#000'} />
         </Pressable>
 
         <View className="flex-1 items-center">
