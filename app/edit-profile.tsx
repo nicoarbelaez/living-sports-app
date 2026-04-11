@@ -16,6 +16,7 @@ export default function EditProfile() {
   const user = session?.user;
 
   const [username, setUsername] = useState('');
+  const [originalUsername, setOriginalUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -34,6 +35,11 @@ export default function EditProfile() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
+      if (username === originalUsername) {
+        setIsAvailable(null);
+        setIsChecking(false);
+        return;
+      }
       checkUsername(username);
     }, 500);
 
@@ -49,7 +55,11 @@ export default function EditProfile() {
       .eq('id', user.id)
       .single();
 
-    if (data?.username) setUsername(data.username);
+    if (data?.username) {
+      setUsername(data.username);
+      setOriginalUsername(data.username);
+    }
+
     if (data?.avatar_url) setAvatarUrl(data.avatar_url);
   };
 
