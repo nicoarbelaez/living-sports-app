@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/providers/theme';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -15,25 +16,48 @@ export default function EditProfile() {
   const user = session?.user;
 
   const [username, setUsername] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const avatar =
+  const fallbackAvatar =
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
     'https://ui-avatars.com/api/?name=User';
 
   useEffect(() => {
     fetchProfile();
-  }, [user]);
+  }, []);
 
   const fetchProfile = async () => {
     if (!user) return;
 
-    const { data } = await supabase.from('profiles').select('username').eq('id', user.id).single();
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, avatar_url')
+      .eq('id', user.id)
+      .single();
 
-    if (data?.username) {
-      setUsername(data.username);
+    if (data?.username) setUsername(data.username);
+    if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+  };
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert('Permiso requerido', 'Debes permitir acceso a la galería');
+      return;
     }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (result.canceled) return;
+
+    const image = result.assets[0];
+    setAvatarUrl(image.uri);
   };
 
   const handleSave = async () => {
@@ -44,14 +68,15 @@ export default function EditProfile() {
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
       username,
+      avatar_url: avatarUrl,
     });
 
     setLoading(false);
 
     if (error) {
-      Alert.alert('Error', 'No se pudo actualizar el nombre');
+      Alert.alert('Error', 'No se pudo actualizar');
     } else {
-      Alert.alert('Listo', 'Nombre actualizado');
+      Alert.alert('Listo', 'Perfil actualizado');
       router.back();
     }
   };
@@ -71,7 +96,9 @@ export default function EditProfile() {
       </View>
 
       <View className="mb-6 items-center">
-        <Image source={{ uri: avatar }} className="h-28 w-28 rounded-full" />
+        <Pressable onPress={pickImage}>
+          <Image source={{ uri: avatarUrl || fallbackAvatar }} className="h-28 w-28 rounded-full" />
+        </Pressable>
       </View>
 
       <View className="mb-4">

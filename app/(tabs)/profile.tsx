@@ -9,11 +9,7 @@ export default function ProfileScreen() {
   const user = session?.user;
 
   const [username, setUsername] = useState('');
-
-  const avatar =
-    user?.user_metadata?.avatar_url ||
-    user?.user_metadata?.picture ||
-    'https://ui-avatars.com/api/?name=User';
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   const fallbackName =
     user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Usuario';
@@ -21,10 +17,15 @@ export default function ProfileScreen() {
   const fetchProfile = async () => {
     if (!user) return;
 
-    const { data } = await supabase.from('profiles').select('username').eq('id', user.id).single();
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, avatar_url')
+      .eq('id', user.id)
+      .single();
 
-    if (data?.username) {
-      setUsername(data.username);
+    if (data) {
+      if (data.username) setUsername(data.username);
+      if (data.avatar_url) setAvatarUrl(data.avatar_url);
     }
   };
 
@@ -33,6 +34,12 @@ export default function ProfileScreen() {
       fetchProfile();
     }, [user])
   );
+
+  const avatar =
+    avatarUrl ||
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    'https://ui-avatars.com/api/?name=User';
 
   return (
     <View className="flex-1 items-center bg-gray-100 px-4 pt-20 dark:bg-black">
