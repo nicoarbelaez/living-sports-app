@@ -51,7 +51,7 @@ export default function EditProfile() {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      quality: 0.8,
     });
 
     if (result.canceled) return;
@@ -65,19 +65,61 @@ export default function EditProfile() {
 
     setLoading(true);
 
-    const { error } = await supabase.from('profiles').upsert({
-      id: user.id,
-      username,
-      avatar_url: avatarUrl,
-    });
+    try {
+      let uploadedUrl = avatarUrl;
 
-    setLoading(false);
+      if (avatarUrl && avatarUrl.startsWith('file://')) {
+        console.log('Subiendo imagen:', avatarUrl);
 
-    if (error) {
-      Alert.alert('Error', 'No se pudo actualizar');
-    } else {
+        const fileName = `${user.id}-${Date.now()}.jpg`;
+
+        const file = {
+          uri: avatarUrl,
+          name: fileName,
+          type: 'image/jpeg',
+        } as any;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, formData as any, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.log('UPLOAD ERROR:', uploadError);
+          setLoading(false);
+          Alert.alert('Error', 'No se pudo subir la imagen');
+          return;
+        }
+
+        const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+
+        uploadedUrl = data.publicUrl;
+      }
+
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        username,
+        avatar_url: uploadedUrl,
+      });
+
+      if (error) {
+        console.log('PROFILE ERROR:', error);
+        Alert.alert('Error', 'No se pudo actualizar');
+        return;
+      }
+
       Alert.alert('Listo', 'Perfil actualizado');
       router.back();
+    } catch (err) {
+      console.log('CATCH ERROR:', err);
+      Alert.alert('Error', 'Error inesperado al guardar');
+    } finally {
+      setLoading(false);
     }
   };
 
