@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Pressable } from 'react-native';
-import { Search, Bell, Settings } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Pressable, TextInput } from 'react-native';
+import { Search, Bell, Settings, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 type Props = {
@@ -9,12 +9,33 @@ type Props = {
 
 export default function HeaderActions({ screen }: Props) {
   const router = useRouter();
+  const [searchMode, setSearchMode] = useState(false);
+  const [query, setQuery] = useState('');
+
+  if (searchMode) {
+    return (
+      <View className="flex-1 flex-row items-center rounded-xl bg-gray-100 px-2 dark:bg-gray-900">
+        <Pressable onPress={() => setSearchMode(false)} className="p-2">
+          <ArrowLeft size={20} color="#374151" />
+        </Pressable>
+
+        <TextInput
+          autoFocus
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Buscar..."
+          placeholderTextColor="#9ca3af"
+          className="flex-1 px-2 text-black dark:text-white"
+        />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-row items-center">
       {screen === 'home' && (
         <>
-          <Pressable onPress={() => router.push('/modal')}>
+          <Pressable onPress={() => setSearchMode(true)}>
             <Search size={22} color="#374151" />
           </Pressable>
 
@@ -28,7 +49,7 @@ export default function HeaderActions({ screen }: Props) {
 
       {screen === 'comunidades' && (
         <>
-          <Pressable>
+          <Pressable onPress={() => setSearchMode(true)}>
             <Search size={22} color="#374151" />
           </Pressable>
 
