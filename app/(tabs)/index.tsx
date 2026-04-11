@@ -1,10 +1,9 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import ActivityCard from '@/components/activity-card';
 import PostCard from '@/components/post-card';
 import { useAuth } from '@/providers/AuthProvider';
-import { supabase } from '@/lib/supabase';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
 import { Session } from '@supabase/supabase-js';
 
@@ -18,28 +17,9 @@ function AuthenticatedHome({ session }: { session: Session | null }) {
   const { onScroll } = useNavbarScroll();
   const isDark = useColorScheme() === 'dark';
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error('Error signing out:', error);
-  };
-
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
       <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
-        {/* CARD */}
-        <View style={[styles.card, isDark && styles.cardDark]}>
-          <Text style={[styles.emailText, isDark && styles.textDark]}>
-            Signed in as: {session?.user?.email ?? 'User'}
-          </Text>
-
-          <TouchableOpacity
-            style={[styles.signOutButton, isDark && styles.signOutButtonDark]}
-            onPress={handleSignOut}
-          >
-            <Text style={[styles.signOutText]}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
-
         <ActivityCard />
 
         <PostCard
@@ -90,21 +70,5 @@ const styles = StyleSheet.create({
   },
   textDark: {
     color: '#fff',
-  },
-
-  signOutButton: {
-    backgroundColor: '#e5e7eb',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  signOutButtonDark: {
-    backgroundColor: '#374151',
-  },
-
-  signOutText: {
-    color: '#ef4444',
-    fontWeight: '600',
-    fontSize: 16,
   },
 });
