@@ -20,6 +20,9 @@ export default function EditProfile() {
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
 
+  const [isChecking, setIsChecking] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+
   const fallbackAvatar =
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
@@ -28,6 +31,14 @@ export default function EditProfile() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      checkUsername(username);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [username]);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -40,6 +51,24 @@ export default function EditProfile() {
 
     if (data?.username) setUsername(data.username);
     if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+  };
+
+  const checkUsername = async (value: string) => {
+    if (!value || value.length < 3) {
+      setIsAvailable(null);
+      return;
+    }
+
+    setIsChecking(true);
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', value)
+      .maybeSingle();
+
+    setIsAvailable(!data);
+    setIsChecking(false);
   };
 
   const pickImage = async () => {
@@ -111,8 +140,6 @@ export default function EditProfile() {
 
       Alert.alert('Listo', 'Perfil actualizado');
       router.back();
-    } catch (err) {
-      Alert.alert('Error', 'Error inesperado');
     } finally {
       setLoading(false);
     }
@@ -120,7 +147,6 @@ export default function EditProfile() {
 
   return (
     <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
-      {/* HEADER */}
       <View className="mb-8 flex-row items-center justify-between">
         <Pressable
           onPress={() => router.back()}
@@ -134,7 +160,6 @@ export default function EditProfile() {
         <View className="w-8" />
       </View>
 
-      {/* AVATAR */}
       <View className="mb-8 items-center">
         <Pressable onPress={pickImage} className="relative">
           <Image
@@ -176,11 +201,24 @@ export default function EditProfile() {
         />
       </View>
 
-      {/* BUTTON */}
+      <View className="mt-2">
+        {isChecking && <Text className="text-sm text-gray-500">Validando...</Text>}
+
+        {!isChecking && isAvailable === true && (
+          <Text className="text-sm text-green-500">Disponible</Text>
+        )}
+
+        {!isChecking && isAvailable === false && (
+          <Text className="text-sm text-red-500">Ya está en uso</Text>
+        )}
+      </View>
+
       <Pressable
         onPress={handleSave}
-        disabled={loading}
-        className="mt-6 rounded-2xl bg-blue-500 py-4 shadow-md active:opacity-80"
+        disabled={loading || isAvailable === false}
+        className={`mt-6 rounded-2xl py-4 shadow-md ${
+          loading || isAvailable === false ? 'bg-gray-400' : 'bg-blue-500'
+        }`}
       >
         <Text className="text-center text-base font-semibold text-white">
           {loading ? 'Guardando...' : 'Guardar cambios'}
