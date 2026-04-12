@@ -19,6 +19,8 @@ export default function EditProfile() {
   const [originalUsername, setOriginalUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [originalAvatar, setOriginalAvatar] = useState<string | null>(null);
+  const [bio, setBio] = useState('');
+  const [originalBio, setOriginalBio] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -30,7 +32,8 @@ export default function EditProfile() {
     user?.user_metadata?.picture ||
     'https://ui-avatars.com/api/?name=User';
 
-  const hasChanges = username !== originalUsername || avatarUrl !== originalAvatar;
+  const hasChanges =
+    username !== originalUsername || avatarUrl !== originalAvatar || bio !== originalBio;
 
   useEffect(() => {
     fetchProfile();
@@ -54,7 +57,7 @@ export default function EditProfile() {
 
     const { data } = await supabase
       .from('profiles')
-      .select('username, avatar_url')
+      .select('username, avatar_url, bio')
       .eq('id', user.id)
       .single();
 
@@ -66,6 +69,11 @@ export default function EditProfile() {
     if (data?.avatar_url) {
       setAvatarUrl(data.avatar_url);
       setOriginalAvatar(data.avatar_url);
+    }
+
+    if (data?.bio) {
+      setBio(data.bio);
+      setOriginalBio(data.bio);
     }
   };
 
@@ -139,7 +147,6 @@ export default function EditProfile() {
         }
 
         const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-
         uploadedUrl = data.publicUrl;
       }
 
@@ -147,6 +154,7 @@ export default function EditProfile() {
         id: user.id,
         username,
         avatar_url: uploadedUrl,
+        bio,
       });
 
       if (error) {
@@ -229,6 +237,24 @@ export default function EditProfile() {
         )}
       </View>
 
+      <Text className="mt-6 mb-2 text-sm text-gray-500 dark:text-gray-400">Biografía</Text>
+
+      <TextInput
+        value={bio}
+        onChangeText={setBio}
+        placeholder="Cuéntanos algo sobre ti..."
+        placeholderTextColor="#9ca3af"
+        multiline
+        numberOfLines={4}
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          textAlignVertical: 'top',
+          color: isDark ? 'white' : 'black',
+        }}
+        className="rounded-2xl border border-gray-200 bg-white text-base dark:border-gray-700 dark:bg-gray-800"
+      />
+
       <Pressable
         onPress={handleSave}
         disabled={loading || isAvailable === false || !hasChanges}
@@ -237,7 +263,7 @@ export default function EditProfile() {
         }`}
       >
         <Text className="text-center text-base font-semibold text-white">
-          {loading ? 'Guardando...' : !hasChanges ? 'Guardar cambios' : 'Guardar cambios'}
+          {loading ? 'Guardando...' : 'Guardar cambios'}
         </Text>
       </Pressable>
     </View>
