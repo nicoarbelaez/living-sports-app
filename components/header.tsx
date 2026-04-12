@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
-import { Search, Bell, Settings, ArrowLeft, Pencil } from 'lucide-react-native';
+import { Search, Bell, Settings, ArrowLeft, Pencil, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 type Props = {
@@ -71,6 +71,12 @@ export default function HeaderActions({ screen }: Props) {
 
           <Pressable onPress={() => router.push('/modal')}>
             <Settings size={22} color="#374151" />
+          </Pressable>
+
+          <View className="w-4" />
+
+          <Pressable onPress={() => router.push('/create-post')}>
+            <Plus size={22} color="#374151" />
           </Pressable>
         </>
       )}
