@@ -66,7 +66,6 @@ export default function ProfileScreen() {
     user?.user_metadata?.picture ||
     'https://ui-avatars.com/api/?name=User';
 
-  // 🔥 MISMA ANIMACIÓN QUE LA BIO (FADE)
   const fadeOpacity = scrollY.interpolate({
     inputRange: [0, 120],
     outputRange: [1, 0],
@@ -101,7 +100,11 @@ export default function ProfileScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 260, paddingHorizontal: 16 }}
+        contentContainerStyle={{
+          paddingTop: 280,
+          paddingHorizontal: 16,
+          paddingBottom: 40,
+        }}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
           useNativeDriver: true,
         })}
@@ -111,48 +114,52 @@ export default function ProfileScreen() {
       />
 
       {/* HEADER */}
-      <View className="absolute top-0 right-0 left-0 items-center px-4 pt-10">
-        {/* AVATAR*/}
-        <Animated.Image
-          source={{ uri: avatar }}
-          style={{
-            width: 110,
-            height: 110,
-            borderRadius: 55,
-            opacity: fadeOpacity,
-          }}
-        />
+      <View className="absolute top-0 right-0 left-0 items-center pt-10">
+        <View className="w-full max-w-md items-center px-6">
+          {/* AVATAR */}
+          <Animated.Image
+            source={{ uri: avatar }}
+            style={{
+              width: 110,
+              height: 110,
+              borderRadius: 55,
+              opacity: fadeOpacity,
+            }}
+          />
 
-        {/* INFO*/}
-        <Animated.View style={{ opacity: fadeOpacity, width: '100%' }}>
-          <View className="mt-1 items-center">
-            <Text className="text-xl font-bold text-black dark:text-white">
-              {username || fallbackName}
-            </Text>
+          {/* INFO */}
+          <Animated.View style={{ opacity: fadeOpacity, width: '100%' }}>
+            <View className="mt-2 items-center">
+              <Text className="text-center text-xl font-bold text-black dark:text-white">
+                {username || fallbackName}
+              </Text>
 
-            {bio ? (
-              <Text className="mt-1 text-center text-gray-500 dark:text-gray-400">{bio}</Text>
-            ) : null}
-          </View>
-
-          {/* STATS */}
-          <View className="mt-6 flex-row justify-around">
-            <View className="items-center">
-              <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
-              <Text className="text-xs text-gray-500">Posts</Text>
+              {bio ? (
+                <Text className="mt-1 px-4 text-center text-gray-500 dark:text-gray-400">
+                  {bio}
+                </Text>
+              ) : null}
             </View>
 
-            <View className="items-center">
-              <Text className="text-lg font-bold text-black dark:text-white">0</Text>
-              <Text className="text-xs text-gray-500">Seguidores</Text>
-            </View>
+            {/* STATS */}
+            <View className="mt-6 w-full flex-row justify-between px-6">
+              <View className="flex-1 items-center">
+                <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
+                <Text className="text-xs text-gray-500">Posts</Text>
+              </View>
 
-            <View className="items-center">
-              <Text className="text-lg font-bold text-black dark:text-white">0</Text>
-              <Text className="text-xs text-gray-500">Siguiendo</Text>
+              <View className="flex-1 items-center">
+                <Text className="text-lg font-bold text-black dark:text-white">0</Text>
+                <Text className="text-xs text-gray-500">Seguidores</Text>
+              </View>
+
+              <View className="flex-1 items-center">
+                <Text className="text-lg font-bold text-black dark:text-white">0</Text>
+                <Text className="text-xs text-gray-500">Siguiendo</Text>
+              </View>
             </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </View>
       </View>
     </View>
   );
