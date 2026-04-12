@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, Image, FlatList } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, Image, Animated } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from 'expo-router';
@@ -19,6 +19,8 @@ export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
+
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const fallbackName =
     user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Usuario';
@@ -64,6 +66,13 @@ export default function ProfileScreen() {
     user?.user_metadata?.picture ||
     'https://ui-avatars.com/api/?name=User';
 
+  // 🔥 MISMA ANIMACIÓN QUE LA BIO (FADE)
+  const fadeOpacity = scrollY.interpolate({
+    inputRange: [0, 120],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
   const renderItem = ({ item }: { item: Post }) => (
     <View className="mb-3 rounded-2xl bg-white p-4 dark:bg-gray-800">
       {item.content ? (
@@ -85,44 +94,66 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View className="flex-1 bg-gray-100 px-4 pt-10 dark:bg-black">
-      <View className="mb-6 items-center">
-        <Image source={{ uri: avatar }} className="mb-3 h-28 w-28 rounded-full" />
-
-        <Text className="text-xl font-bold text-black dark:text-white">
-          {username || fallbackName}
-        </Text>
-
-        {bio ? (
-          <Text className="mt-2 text-center text-gray-500 dark:text-gray-400">{bio}</Text>
-        ) : null}
-      </View>
-
-      <View className="mb-6 flex-row justify-around">
-        <View className="items-center">
-          <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
-          <Text className="text-xs text-gray-500">Posts</Text>
-        </View>
-
-        <View className="items-center">
-          <Text className="text-lg font-bold text-black dark:text-white">0</Text>
-          <Text className="text-xs text-gray-500">Seguidores</Text>
-        </View>
-
-        <View className="items-center">
-          <Text className="text-lg font-bold text-black dark:text-white">0</Text>
-          <Text className="text-xs text-gray-500">Siguiendo</Text>
-        </View>
-      </View>
-
-      <FlatList
+    <View className="flex-1 bg-gray-100 dark:bg-black">
+      {/* LISTA */}
+      <Animated.FlatList
         data={posts}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 260, paddingHorizontal: 16 }}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
         ListEmptyComponent={
           <Text className="mt-10 text-center text-gray-400">Aún no has publicado nada</Text>
         }
       />
+
+      {/* HEADER */}
+      <View className="absolute top-0 right-0 left-0 items-center px-4 pt-10">
+        {/* AVATAR*/}
+        <Animated.Image
+          source={{ uri: avatar }}
+          style={{
+            width: 110,
+            height: 110,
+            borderRadius: 55,
+            opacity: fadeOpacity,
+          }}
+        />
+
+        {/* INFO*/}
+        <Animated.View style={{ opacity: fadeOpacity, width: '100%' }}>
+          <View className="mt-1 items-center">
+            <Text className="text-xl font-bold text-black dark:text-white">
+              {username || fallbackName}
+            </Text>
+
+            {bio ? (
+              <Text className="mt-1 text-center text-gray-500 dark:text-gray-400">{bio}</Text>
+            ) : null}
+          </View>
+
+          {/* STATS */}
+          <View className="mt-6 flex-row justify-around">
+            <View className="items-center">
+              <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
+              <Text className="text-xs text-gray-500">Posts</Text>
+            </View>
+
+            <View className="items-center">
+              <Text className="text-lg font-bold text-black dark:text-white">0</Text>
+              <Text className="text-xs text-gray-500">Seguidores</Text>
+            </View>
+
+            <View className="items-center">
+              <Text className="text-lg font-bold text-black dark:text-white">0</Text>
+              <Text className="text-xs text-gray-500">Siguiendo</Text>
+            </View>
+          </View>
+        </Animated.View>
+      </View>
     </View>
   );
 }
