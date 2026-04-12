@@ -96,8 +96,9 @@ export default function CreatePost() {
   };
 
   return (
-    <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
-      <View className="mb-6 flex-row items-center justify-between">
+    <View className="flex-1 bg-gray-100 dark:bg-black">
+      {/* HEADER */}
+      <View className="mb-6 flex-row items-center justify-between px-6 pt-10">
         <Pressable
           onPress={() => router.back()}
           className="rounded-full bg-white p-2 dark:bg-gray-800"
@@ -110,39 +111,54 @@ export default function CreatePost() {
         <View className="w-8" />
       </View>
 
-      <TextInput
-        value={content}
-        onChangeText={setContent}
-        placeholder="¿Qué estás pensando?"
-        placeholderTextColor="#9ca3af"
-        multiline
-        className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-4 text-base text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-        style={{ minHeight: 100, textAlignVertical: 'top' }}
-      />
-
-      {image && (
-        <View className="mb-4">
-          <Image source={{ uri: image }} className="h-52 w-full rounded-2xl" />
+      {/* CONTENT */}
+      <View className="px-6">
+        {/* TEXT INPUT CARD */}
+        <View className="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <TextInput
+            value={content}
+            onChangeText={setContent}
+            placeholder="¿Qué estás pensando?"
+            placeholderTextColor="#9ca3af"
+            multiline
+            style={{
+              minHeight: 120,
+              textAlignVertical: 'top',
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 16,
+              color: '#fff',
+            }}
+          />
         </View>
-      )}
 
-      <Pressable
-        onPress={pickImage}
-        className="mb-4 flex-row items-center gap-2 rounded-xl bg-gray-200 px-4 py-3 dark:bg-gray-800"
-      >
-        <ImageIcon size={20} color="#374151" />
-        <Text className="text-gray-700 dark:text-gray-300">Agregar imagen</Text>
-      </Pressable>
+        {/* IMAGE PREVIEW */}
+        {image && (
+          <View className="mb-4">
+            <Image source={{ uri: image }} className="h-52 w-full rounded-2xl" resizeMode="cover" />
+          </View>
+        )}
 
-      <Pressable
-        onPress={handleCreatePost}
-        disabled={loading}
-        className={`rounded-2xl py-4 ${loading ? 'bg-gray-400' : 'bg-blue-500'}`}
-      >
-        <Text className="text-center text-base font-semibold text-white">
-          {loading ? 'Publicando...' : 'Publicar'}
-        </Text>
-      </Pressable>
+        {/* PICK IMAGE BUTTON */}
+        <Pressable
+          onPress={pickImage}
+          className="mb-4 flex-row items-center justify-center rounded-2xl bg-gray-200 px-4 py-4 dark:bg-gray-800"
+        >
+          <ImageIcon size={20} color="#374151" />
+          <Text className="ml-2 text-gray-700 dark:text-gray-300">Agregar imagen</Text>
+        </Pressable>
+
+        {/* CREATE POST BUTTON */}
+        <Pressable
+          onPress={handleCreatePost}
+          disabled={loading}
+          className={`rounded-2xl py-4 ${loading ? 'bg-gray-400' : 'bg-blue-500'}`}
+        >
+          <Text className="text-center text-base font-semibold text-white">
+            {loading ? 'Publicando...' : 'Publicar'}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
