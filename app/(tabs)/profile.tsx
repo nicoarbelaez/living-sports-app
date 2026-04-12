@@ -8,6 +8,7 @@ type Post = {
   id: string;
   content: string;
   created_at: string;
+  image_url?: string | null;
 };
 
 export default function ProfileScreen() {
@@ -43,7 +44,7 @@ export default function ProfileScreen() {
 
     const { data } = await supabase
       .from('posts')
-      .select('id, content, created_at')
+      .select('id, content, created_at, image_url')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -65,7 +66,17 @@ export default function ProfileScreen() {
 
   const renderItem = ({ item }: { item: Post }) => (
     <View className="mb-3 rounded-2xl bg-white p-4 dark:bg-gray-800">
-      <Text className="text-base text-gray-800 dark:text-gray-200">{item.content}</Text>
+      {item.content ? (
+        <Text className="text-base text-gray-800 dark:text-gray-200">{item.content}</Text>
+      ) : null}
+
+      {item.image_url ? (
+        <Image
+          source={{ uri: item.image_url }}
+          className="mt-3 h-60 w-full rounded-xl"
+          resizeMode="cover"
+        />
+      ) : null}
 
       <Text className="mt-2 text-xs text-gray-400">
         {new Date(item.created_at).toLocaleString()}
@@ -75,7 +86,6 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-gray-100 px-4 pt-10 dark:bg-black">
-      {/* HEADER PERFIL */}
       <View className="mb-6 items-center">
         <Image source={{ uri: avatar }} className="mb-3 h-28 w-28 rounded-full" />
 
@@ -88,7 +98,6 @@ export default function ProfileScreen() {
         ) : null}
       </View>
 
-      {/* STATS */}
       <View className="mb-6 flex-row justify-around">
         <View className="items-center">
           <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
@@ -106,7 +115,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* POSTS */}
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
