@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Camera } from 'lucide-react-native';
 import { useTheme } from '@/providers/theme';
 import * as ImagePicker from 'expo-image-picker';
+import { MotiView } from 'moti';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -26,6 +27,8 @@ export default function EditProfile() {
 
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+
+  const MAX_BIO = 80;
 
   const fallbackAvatar =
     user?.user_metadata?.avatar_url ||
@@ -169,6 +172,9 @@ export default function EditProfile() {
     }
   };
 
+  const remaining = MAX_BIO - bio.length;
+  const isOverLimit = remaining < 0;
+
   return (
     <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
       <View className="mb-8 flex-row items-center justify-between">
@@ -227,11 +233,9 @@ export default function EditProfile() {
 
       <View className="mt-2">
         {isChecking && <Text className="text-sm text-gray-500">Validando...</Text>}
-
         {!isChecking && isAvailable === true && (
           <Text className="text-sm text-green-500">Disponible</Text>
         )}
-
         {!isChecking && isAvailable === false && (
           <Text className="text-sm text-red-500">Ya está en uso</Text>
         )}
@@ -239,27 +243,43 @@ export default function EditProfile() {
 
       <Text className="mt-6 mb-2 text-sm text-gray-500 dark:text-gray-400">Biografía</Text>
 
-      <TextInput
-        value={bio}
-        onChangeText={setBio}
-        placeholder="Cuéntanos algo sobre ti..."
-        placeholderTextColor="#9ca3af"
-        multiline
-        numberOfLines={4}
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          textAlignVertical: 'top',
-          color: isDark ? 'white' : 'black',
-        }}
-        className="rounded-2xl border border-gray-200 bg-white text-base dark:border-gray-700 dark:bg-gray-800"
-      />
+      <View className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <TextInput
+          value={bio}
+          onChangeText={(text) => {
+            if (text.length <= MAX_BIO) setBio(text);
+          }}
+          placeholder="Cuéntanos algo sobre ti..."
+          placeholderTextColor="#9ca3af"
+          multiline
+          numberOfLines={4}
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 14,
+            textAlignVertical: 'top',
+            color: isDark ? 'white' : 'black',
+          }}
+        />
+
+        <MotiView
+          from={{ scale: 1 }}
+          animate={{ scale: isOverLimit ? 1.1 : 1 }}
+          transition={{ type: 'timing', duration: 150 }}
+          className="items-end px-4 pb-2"
+        >
+          <Text className={`text-xs ${isOverLimit ? 'text-red-500' : 'text-gray-400'}`}>
+            {bio.length}/{MAX_BIO}
+          </Text>
+        </MotiView>
+      </View>
 
       <Pressable
         onPress={handleSave}
-        disabled={loading || isAvailable === false || !hasChanges}
+        disabled={loading || isAvailable === false || !hasChanges || isOverLimit}
         className={`mt-6 rounded-2xl py-4 shadow-md ${
-          loading || isAvailable === false || !hasChanges ? 'bg-gray-400' : 'bg-blue-500'
+          loading || isAvailable === false || !hasChanges || isOverLimit
+            ? 'bg-gray-400'
+            : 'bg-blue-500'
         }`}
       >
         <Text className="text-center text-base font-semibold text-white">
