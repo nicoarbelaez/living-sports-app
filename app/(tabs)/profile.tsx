@@ -10,6 +10,7 @@ export default function ProfileScreen() {
 
   const [username, setUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [bio, setBio] = useState('');
 
   const fallbackName =
     user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Usuario';
@@ -19,13 +20,14 @@ export default function ProfileScreen() {
 
     const { data } = await supabase
       .from('profiles')
-      .select('username, avatar_url')
+      .select('username, avatar_url, bio')
       .eq('id', user.id)
       .single();
 
     if (data) {
       if (data.username) setUsername(data.username);
       if (data.avatar_url) setAvatarUrl(data.avatar_url);
+      if (data.bio) setBio(data.bio);
     }
   };
 
@@ -47,6 +49,10 @@ export default function ProfileScreen() {
 
       <Text className="text-xl font-semibold text-black dark:text-white">
         {username || fallbackName}
+      </Text>
+
+      <Text className="mt-2 px-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        {bio || 'Sin biografía aún'}
       </Text>
     </View>
   );
