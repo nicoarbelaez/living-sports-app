@@ -17,22 +17,19 @@ create table if not exists public.posts (
   id uuid not null default gen_random_uuid() primary key,
   user_id uuid not null references public.profiles(id) on delete cascade,
   body text,
-  -- contenido de texto (opcional si es un post solo de medios)
   is_deleted boolean not null default false,
-  -- eliminación lógica (preserva el conteo de likes/comentarios)
-  -- Contadores desnormalizados (optimización de rendimiento de lectura — actualizados vía disparador)
   likes_count integer not null default 0,
   comments_count integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint posts_content_required check (
     body is not null
-    or true -- presencia de medios validada en la capa de la app (tiene al menos un post_media)
+    or true
   )
 );
 create trigger posts_updated_at before
-update on publios seguidos create index if not exists posts_user_created_idx on publiic.posts for each row execute function public.set_updated_at();
--- Índices — el feed es cronológico por usuarc.posts (user_id, created_at desc);
+update on public.posts for each row execute function public.set_updated_at();
+create index if not exists posts_user_created_idx on public.posts (user_id, created_at desc);
 create index if not exists posts_created_at_idx on public.posts (created_at desc)
 where is_deleted = false;
 select audit.enable_audit('public', 'posts');
