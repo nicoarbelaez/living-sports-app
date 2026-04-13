@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "lint": "eslint app components providers hooks lib constants",
     "format": "prettier --write \"{app,components,providers,hooks,lib,constants}/**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "update-types": "node scripts/update-types.js"
   },
   "release": {
     "branches": [
