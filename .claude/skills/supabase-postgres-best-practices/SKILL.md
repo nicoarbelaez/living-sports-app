@@ -1,20 +1,16 @@
+---
+name: supabase-postgres-best-practices
+description: Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.
+license: MIT
+metadata:
+  author: supabase
+  version: "1.1.1"
+  organization: Supabase
+  date: January 2026
+  abstract: Comprehensive Postgres performance optimization guide for developers using Supabase and Postgres. Contains performance rules across 8 categories, prioritized by impact from critical (query performance, connection management) to incremental (advanced features). Each rule includes detailed explanations, incorrect vs. correct SQL examples, query plan analysis, and specific performance metrics to guide automated optimization and code generation.
+---
+
 # Supabase Postgres Best Practices
-
-## Structure
-
-```
-supabase-postgres-best-practices/
-  SKILL.md       # Main skill file - read this first
-  AGENTS.md      # This navigation guide
-  CLAUDE.md      # Symlink to AGENTS.md
-  references/    # Detailed reference files
-```
-
-## Usage
-
-1. Read `SKILL.md` for the main skill instructions
-2. Browse `references/` for detailed documentation on specific topics
-3. Reference files are loaded on-demand - read only what you need
 
 Comprehensive performance optimization guide for Postgres, maintained by Supabase. Contains rules across 8 categories, prioritized by impact to guide automated query optimization and schema design.
 
@@ -47,7 +43,7 @@ Read individual rule files for detailed explanations and SQL examples:
 
 ```
 references/query-missing-indexes.md
-references/schema-partial-indexes.md
+references/query-partial-indexes.md
 references/_sections.md
 ```
 
