@@ -6,7 +6,8 @@
       "Bash(git checkout:*)",
       "Bash(npx expo:*)",
       "Bash(npx tsc:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(grep -rn \"camera\\\\|NSCamera\\\\|CAMERA\" C:/Users/arbel/workspace/living-sports-app/app.config.*)"
     ]
   }
 }
