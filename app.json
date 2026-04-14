@@ -34,7 +34,15 @@
     "scheme": "livingsports",
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Living Sports necesita acceso a tu galería para adjuntar fotos y videos.",
+          "cameraPermission": "Living Sports necesita acceso a tu cámara para tomar fotos y videos.",
+          "microphonePermission": "Living Sports necesita acceso a tu micrófono para grabar videos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
