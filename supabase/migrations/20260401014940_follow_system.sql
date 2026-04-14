@@ -69,7 +69,7 @@ select -- El propio dueño siempre ve todo
       and f.follower_id = (
         select auth.uid()
       )
-      and f.status = 'accepted'
+      and f.status = 'accepted'   
   ) -- Roles especiales
   or public.has_role('admin');
 $$;
