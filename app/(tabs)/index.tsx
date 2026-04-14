@@ -1,11 +1,16 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View, useColorScheme } from 'react-native';
 
 import ActivityCard from '@/components/activity-card';
 import PostCard from '@/components/post-card';
+import FormPost from '@/components/form-post';
 import { useAuth } from '@/providers/AuthProvider';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
 import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+
+import { Post, Media, getProfileFullName } from '@/types/post';
+import { formatRelativeTime, getRandomAvatarUrl } from '@/lib/utils';
 
 export default function HomeScreen() {
   const { session } = useAuth();
@@ -16,27 +21,94 @@ export default function HomeScreen() {
 function AuthenticatedHome({ session }: { session: Session | null }) {
   const { onScroll } = useNavbarScroll();
   const isDark = useColorScheme() === 'dark';
+  const [posts, setPosts] = useState<Post[] | null>(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          `
+          id,
+          body,
+          created_at,
+          profiles (
+            first_name,
+            last_name,
+            avatar_url,
+            username
+          ),
+          post_media (
+            url,
+            media_type
+          )
+        `
+        )
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching posts:', error);
+        return;
+      }
+
+      type PostResponse = {
+        id: string;
+        body: string | null;
+        created_at: string;
+        profiles: any; // We can use getProfileFullName with 'any', but properly typing it later
+        post_media: { url: string; media_type: string }[] | null;
+      };
+
+      const formattedPosts: Post[] = (data as PostResponse[]).map((post) => {
+        const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+
+        const media: Media[] =
+          post.post_media?.map((m) => ({
+            url: m.url,
+            type: m.media_type as 'image' | 'video',
+          })) || [];
+
+        return {
+          id: post.id,
+          user: getProfileFullName(profile),
+          time: formatRelativeTime(post.created_at),
+          createdAt: post.created_at,
+          avatar: profile?.avatar_url || getRandomAvatarUrl(getProfileFullName(profile)),
+          media: media,
+          text: post.body || '',
+        };
+      });
+
+      setPosts(formattedPosts);
+    };
+
+    fetchPosts();
+  }, [session?.user.id]);
+
+  const handlePostCreated = (newPost: Post) => {
+    setPosts([newPost, ...(posts || [])]);
+  };
 
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
       <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
         <ActivityCard />
+        <FormPost onPostCreated={handlePostCreated} />
 
-        <PostCard
-          user="Nicolas"
-          time="Hace 2 horas"
-          avatar="https://avatars.githubusercontent.com/u/111522939?v=4"
-          image="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b"
-          text="Hola Chavales! Acabo de completar una carrera de 5 km en 25 minutos. ¡Estoy muy emocionado por mi progreso! #Running #Fitness"
-        />
-
-        <PostCard
-          user="Cristiano"
-          time="Hace 1 minuto"
-          avatar="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdnSj_ePgbGDuzLJwvMXBneYkiVU9aPqY7pZEDvXty5mUFtDoMlmyVb3piUk6uqeC1rWnDFETXX7QRtBDWItAo74ipNslZF9j9uYKyNW0&s=10"
-          image="https://i.ytimg.com/vi/D61hfPHcLKc/hq720.jpg"
-          text="Es falso, no me lesioné, solo estaba descansando después de un entrenamiento intenso. #Fitness #NoPainNoGain"
-        />
+        {!posts ? (
+          <View style={{ padding: 20 }}>{/* Spinner here */}</View>
+        ) : (
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              user={post.user}
+              time={post.time}
+              avatar={post.avatar}
+              media={post.media}
+              text={post.text}
+            />
+          ))
+        )}
       </ScrollView>
     </View>
   );

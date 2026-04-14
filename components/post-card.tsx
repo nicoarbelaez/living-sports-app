@@ -1,31 +1,42 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Heart, MessageCircle } from 'lucide-react-native';
+import MediaCarousel from './media-carousel';
+import { Image } from 'expo-image';
 import CommentsSheet from './comments-sheet';
+import { Post, Media } from '@/types/post';
+import { getRandomAvatarUrl } from '@/lib/utils';
 
 interface PostCardProps {
   user: string;
   time: string;
   avatar: string;
-  image: string;
+  media: Media[];
   text: string;
 }
 
-export default function PostCard({ user, time, avatar, image, text }: PostCardProps) {
+export default function PostCard({ user, time, avatar, media, text }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
+
+  const finalAvatar =
+    !avatar || avatar.includes('avatars.githubusercontent.com') ? getRandomAvatarUrl(user) : avatar;
 
   return (
     <View className="mx-4 mt-3 overflow-hidden rounded-2xl bg-white shadow">
       <View className="flex-row items-center px-4 py-3">
-        <Image source={{ uri: avatar }} className="h-10 w-10 rounded-full" />
+        <Image
+          source={{ uri: finalAvatar }}
+          style={{ width: 40, height: 40, borderRadius: 20 }}
+          contentFit="cover"
+        />
 
         <View className="ml-3">
-          <Text className="font-semibold">{user}</Text>
+          <Text className="font-semibold text-gray-900">{user}</Text>
           <Text className="text-xs text-gray-500">{time}</Text>
         </View>
       </View>
 
-      <Image source={{ uri: image }} className="h-48 w-full" />
+      <MediaCarousel media={media} />
 
       <View className="px-4 py-3">
         <Text className="text-gray-700">{text}</Text>
@@ -49,10 +60,10 @@ export default function PostCard({ user, time, avatar, image, text }: PostCardPr
       <CommentsSheet
         isVisible={showComments}
         onClose={() => setShowComments(false)}
-        postUser={user}
-        postAvatar={avatar}
-        postImage={image}
-        postCaption={text}
+        postUser={user || ''}
+        postAvatar={avatar || ''}
+        postImage={media?.[0]?.url || ''}
+        postCaption={text || ''}
       />
     </View>
   );
