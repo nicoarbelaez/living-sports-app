@@ -3,7 +3,7 @@
     "editor.defaultFormatter": "mtxr.sqltools"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -11,6 +11,7 @@
   "deno.enablePaths": [
     "supabase/functions"
   ],
+  "deno.enable": true,
   "deno.lint": true,
   "deno.unstable": [
     "bare-node-builtins",
