@@ -27,9 +27,7 @@
       "bundler": "metro"
     },
     "platforms": [
-      "ios",
-      "android",
-      "web"
+      "android"
     ],
     "scheme": "livingsports",
     "plugins": [
