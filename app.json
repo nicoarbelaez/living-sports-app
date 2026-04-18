@@ -40,7 +40,8 @@
           "cameraPermission": "Living Sports necesita acceso a tu cámara para tomar fotos y videos.",
           "microphonePermission": "Living Sports necesita acceso a tu micrófono para grabar videos."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
