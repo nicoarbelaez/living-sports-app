@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from 'expo-router';
 import { MotiView, MotiText, AnimatePresence } from 'moti';
 
+/* TYPES Y DATA IGUAL (NO TOCADO) */
+
 type Post = {
   id: string;
   content: string;
@@ -51,7 +53,6 @@ const workoutPlans = [
   },
 ];
 
-// 🔥 NUEVO: EJERCICIOS DESTACADOS
 const featuredExercises = [
   {
     id: '1',
@@ -128,12 +129,12 @@ export default function ProfileScreen() {
   const displayPosts = posts.length > 0 ? posts : mockPosts;
 
   const renderPost = ({ item }: { item: Post }) => (
-    <View className="mb-6 rounded-3xl bg-white p-4 shadow-sm">
+    <View className="mb-6 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900">
       {item.image_url && (
         <Image source={{ uri: item.image_url }} className="h-52 w-full rounded-2xl" />
       )}
 
-      <Text className="mt-3 text-sm text-gray-700">{item.content}</Text>
+      <Text className="mt-3 text-sm text-gray-700 dark:text-gray-300">{item.content}</Text>
 
       <View className="mt-3 flex-row justify-between">
         <Text className="text-xs text-gray-400">❤️ 34</Text>
@@ -143,7 +144,7 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View className="flex-1 bg-gray-100">
+    <View className="flex-1 bg-gray-100 dark:bg-black">
       <FlatList
         data={displayPosts}
         keyExtractor={(item) => item.id}
@@ -156,50 +157,63 @@ export default function ProfileScreen() {
         ListHeaderComponent={
           <View>
             {/* PROFILE CARD */}
-            <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm">
+            <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-900">
               <Image
                 source={{ uri: avatar }}
                 className="h-24 w-24 rounded-full border-4 border-blue-600"
               />
 
-              <Text className="mt-3 text-xl font-bold">{username || fallbackName}</Text>
+              <Text className="mt-3 text-xl font-bold text-black dark:text-white">
+                {username || fallbackName}
+              </Text>
 
               <Text className="text-xs text-blue-600">POWERLIFTER • CALI</Text>
 
-              <Text className="mt-3 text-center text-sm text-gray-600">
+              <Text className="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
                 {bio || 'Sin biografía aún'}
               </Text>
             </View>
 
             {/* STATS */}
             <View className="mt-6 flex-row justify-between gap-3">
-              <View className="flex-1 items-center rounded-2xl bg-white p-4">
-                <Text className="text-lg font-bold">{displayPosts.length}</Text>
-                <Text className="text-xs text-gray-500">POSTS</Text>
+              <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
+                <Text className="text-lg font-bold text-black dark:text-white">
+                  {displayPosts.length}
+                </Text>
+                <Text className="text-xs text-gray-500 dark:text-gray-400">POSTS</Text>
               </View>
 
-              <View className="flex-1 items-center rounded-2xl bg-white p-4">
-                <Text className="text-lg font-bold">10.923</Text>
-                <Text className="text-xs text-gray-500">SEGUIDORES</Text>
+              <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
+                <Text className="text-lg font-bold text-black dark:text-white">10.923</Text>
+                <Text className="text-xs text-gray-500 dark:text-gray-400">SEGUIDORES</Text>
               </View>
 
-              <View className="flex-1 items-center rounded-2xl bg-white p-4">
-                <Text className="text-lg font-bold">312</Text>
-                <Text className="text-xs text-gray-500">SIGUIENDO</Text>
+              <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
+                <Text className="text-lg font-bold text-black dark:text-white">312</Text>
+                <Text className="text-xs text-gray-500 dark:text-gray-400">SIGUIENDO</Text>
               </View>
             </View>
 
-            {/*RUTINAS DESTACADAS */}
-            <Text className="mt-8 text-lg font-bold">Rutinas destacadas</Text>
+            {/* RUTINAS DESTACADAS (NO TOCADO, SOLO DARK MODE) */}
+            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
+              Rutinas destacadas
+            </Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
               {workoutPlans.map((item) => (
-                <View key={item.id} className="mr-4 w-72 rounded-3xl bg-white p-4 shadow-sm">
+                <View
+                  key={item.id}
+                  className="mr-4 w-72 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900"
+                >
                   <Image source={{ uri: item.image }} className="h-40 w-full rounded-2xl" />
 
-                  <Text className="mt-3 text-base font-bold">{item.title}</Text>
+                  <Text className="mt-3 text-base font-bold text-black dark:text-white">
+                    {item.title}
+                  </Text>
 
-                  <Text className="mt-1 text-xs text-gray-500">{item.duration}</Text>
+                  <Text className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {item.duration}
+                  </Text>
 
                   <View className="mt-3 flex-row flex-wrap gap-2">
                     {item.focus.map((f, i) => (
@@ -232,17 +246,24 @@ export default function ProfileScreen() {
               ))}
             </ScrollView>
 
-            {/*EJERCICIOS DESTACADOS */}
-            <Text className="mt-8 text-lg font-bold">Ejercicios destacados</Text>
+            {/* EJERCICIOS DESTACADOS (SOLO DARK FIX) */}
+            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
+              Ejercicios destacados
+            </Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
               {featuredExercises.map((item) => (
-                <View key={item.id} className="mr-4 w-64 rounded-3xl bg-white p-4 shadow-sm">
+                <View
+                  key={item.id}
+                  className="mr-4 w-64 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900"
+                >
                   <Image source={{ uri: item.image }} className="h-40 w-full rounded-2xl" />
 
-                  <Text className="mt-3 text-base font-bold">{item.name}</Text>
+                  <Text className="mt-3 text-base font-bold text-black dark:text-white">
+                    {item.name}
+                  </Text>
 
-                  <Text className="text-xs text-gray-500">{item.muscle}</Text>
+                  <Text className="text-xs text-gray-500 dark:text-gray-400">{item.muscle}</Text>
 
                   <View className="mt-3 flex-row justify-between">
                     <Text className="text-xs text-gray-400">PR personal</Text>
@@ -259,7 +280,7 @@ export default function ProfileScreen() {
             </ScrollView>
 
             {/* POSTS TITLE */}
-            <Text className="mt-8 mb-4 text-lg font-bold">Posts</Text>
+            <Text className="mt-8 mb-4 text-lg font-bold text-black dark:text-white">Posts</Text>
           </View>
         }
       />
