@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, Image, Animated, FlatList, Pressable, ScrollView } from 'react-native';
+import { View, Text, Image, Animated, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from 'expo-router';
+import { MotiView, MotiText, AnimatePresence } from 'moti';
 
 type Post = {
   id: string;
@@ -44,6 +45,7 @@ export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
+  const [started, setStarted] = useState(false);
 
   const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Usuario';
 
@@ -84,6 +86,8 @@ export default function ProfileScreen() {
 
   const avatar = avatarUrl || 'https://ui-avatars.com/api/?name=User';
 
+  const displayPosts = posts.length > 0 ? posts : mockPosts;
+
   const renderPost = ({ item }: { item: Post }) => (
     <View className="mb-6 rounded-3xl bg-white p-4 shadow-sm">
       {item.image_url && (
@@ -99,8 +103,6 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const displayPosts = posts.length > 0 ? posts : mockPosts;
-
   return (
     <View className="flex-1 bg-gray-100">
       <FlatList
@@ -114,7 +116,7 @@ export default function ProfileScreen() {
         }}
         ListHeaderComponent={
           <View>
-            {/* PROFILE */}
+            {/* PROFILE CARD */}
             <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm">
               <Image
                 source={{ uri: avatar }}
@@ -190,16 +192,36 @@ export default function ProfileScreen() {
                 </Text>
               </View>
 
-              <Pressable className="mt-4 items-center rounded-full bg-black py-3">
-                <Text className="font-semibold text-white">INICIAR RUTINA</Text>
-              </Pressable>
+              {/* 🔵 BOTÓN AZUL ANIMADO */}
+              <TouchableOpacity onPress={() => setStarted(!started)}>
+                <MotiView
+                  animate={{
+                    backgroundColor: started ? '#27272a' : '#3b82f6',
+                  }}
+                  className="mt-4 items-center justify-center rounded-full py-3"
+                >
+                  <AnimatePresence exitBeforeEnter>
+                    {started ? (
+                      <MotiText key="started" className="font-semibold text-white">
+                        En progreso
+                      </MotiText>
+                    ) : (
+                      <MotiText key="start" className="font-bold text-white">
+                        Iniciar rutina
+                      </MotiText>
+                    )}
+                  </AnimatePresence>
+                </MotiView>
+              </TouchableOpacity>
             </View>
 
-            {/* POSTS */}
+            {/* POSTS TITLE */}
             <Text className="mt-8 text-lg font-bold">Posts</Text>
 
             {posts.length === 0 && (
-              <Text className="mt-2 text-sm text-gray-400">Mostrando ejemplo de publicaciones</Text>
+              <Text className="mt-2 text-sm text-gray-400">
+                Mostrando ejemplos de publicaciones
+              </Text>
             )}
           </View>
         }
