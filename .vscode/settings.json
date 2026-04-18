@@ -23,5 +23,8 @@
 
   "editor.quickSuggestions": {
     "strings": true
+  },
+  "[sql]": {
+    "editor.defaultFormatter": "mtxr.sqltools"
   }
 }
