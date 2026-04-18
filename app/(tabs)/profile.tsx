@@ -145,16 +145,12 @@ export default function ProfileScreen() {
             <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm">
               <Image
                 source={{ uri: avatar }}
-                className="h-24 w-24 rounded-full border-4 border-pink-500"
+                className="h-24 w-24 rounded-full border-4 border-blue-600"
               />
 
               <Text className="mt-3 text-xl font-bold">{username || fallbackName}</Text>
 
-              <Text className="text-xs text-pink-500">POWERLIFTER • CALI</Text>
-
-              <Text className="mt-3 text-center text-sm text-gray-600">
-                {bio || 'Sin biografía aún'}
-              </Text>
+              <Text className="text-xs text-blue-600">POWERLIFTER • CALI</Text>
             </View>
 
             {/* STATS */}
