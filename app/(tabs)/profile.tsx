@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, Image, Animated, FlatList, Pressable } from 'react-native';
+import { View, Text, Image, Animated, FlatList, Pressable, ScrollView } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from 'expo-router';
@@ -11,6 +11,31 @@ type Post = {
   image_url?: string | null;
 };
 
+const mockPosts: Post[] = [
+  {
+    id: '1',
+    content: 'Hoy fue un día brutal de pierna 🔥',
+    created_at: '2026-04-18',
+    image_url: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e',
+  },
+  {
+    id: '2',
+    content: 'Subiendo pesos en banca 💪',
+    created_at: '2026-04-17',
+    image_url: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61',
+  },
+];
+
+const workoutsByDay = [
+  { day: 'Lun', focus: ['Pecho', 'Tríceps'] },
+  { day: 'Mar', focus: ['Espalda', 'Bíceps'] },
+  { day: 'Mié', focus: ['Pierna'] },
+  { day: 'Jue', focus: ['Hombro'] },
+  { day: 'Vie', focus: ['Full Body'] },
+  { day: 'Sáb', focus: ['Cardio'] },
+  { day: 'Dom', focus: ['Descanso'] },
+];
+
 export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
@@ -20,9 +45,7 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-  const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Nicolas A';
+  const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Usuario';
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -69,17 +92,19 @@ export default function ProfileScreen() {
 
       <Text className="mt-3 text-sm text-gray-700">{item.content}</Text>
 
-      <View className="mt-3 flex-row gap-4">
+      <View className="mt-3 flex-row justify-between">
         <Text className="text-xs text-gray-400">❤️ 34</Text>
         <Text className="text-xs text-gray-400">💬 2</Text>
       </View>
     </View>
   );
 
+  const displayPosts = posts.length > 0 ? posts : mockPosts;
+
   return (
     <View className="flex-1 bg-gray-100">
       <FlatList
-        data={posts}
+        data={displayPosts}
         keyExtractor={(item) => item.id}
         renderItem={renderPost}
         showsVerticalScrollIndicator={false}
@@ -89,54 +114,65 @@ export default function ProfileScreen() {
         }}
         ListHeaderComponent={
           <View>
-            {/* HEADER */}
-            <View className="items-center pt-10">
+            {/* PROFILE */}
+            <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm">
               <Image
                 source={{ uri: avatar }}
-                className="h-24 w-24 rounded-full border-4 border-white"
+                className="h-24 w-24 rounded-full border-4 border-pink-500"
               />
 
-              <Text className="mt-3 text-xl font-bold text-black">{username || fallbackName}</Text>
+              <Text className="mt-3 text-xl font-bold">{username || fallbackName}</Text>
 
-              <Text className="text-xs text-pink-500">POWERLIFTER - CALI</Text>
+              <Text className="text-xs text-pink-500">POWERLIFTER • CALI</Text>
+
+              <Text className="mt-3 text-center text-sm text-gray-600">
+                {bio || 'Sin biografía aún'}
+              </Text>
             </View>
 
             {/* STATS */}
-            <View className="mt-6 flex-row justify-between px-6">
+            <View className="mt-6 flex-row justify-between gap-3">
               <View className="flex-1 items-center rounded-2xl bg-white p-4">
-                <Text className="text-lg font-bold">{posts.length}</Text>
+                <Text className="text-lg font-bold">{displayPosts.length}</Text>
                 <Text className="text-xs text-gray-500">POSTS</Text>
               </View>
 
-              <View className="mx-2 flex-1 items-center rounded-2xl bg-white p-4">
+              <View className="flex-1 items-center rounded-2xl bg-white p-4">
                 <Text className="text-lg font-bold">10.923</Text>
                 <Text className="text-xs text-gray-500">SEGUIDORES</Text>
               </View>
+
+              <View className="flex-1 items-center rounded-2xl bg-white p-4">
+                <Text className="text-lg font-bold">312</Text>
+                <Text className="text-xs text-gray-500">SIGUIENDO</Text>
+              </View>
             </View>
 
-            {/* WORKOUTS */}
-            <View className="mt-8 flex-row items-center justify-between px-4">
-              <Text className="text-lg font-bold">Workouts Grid</Text>
-              <Text className="text-sm text-blue-500">Ver todos</Text>
-            </View>
+            {/* WORKOUTS HORIZONTAL */}
+            <Text className="mt-8 text-lg font-bold">Workouts por día</Text>
 
-            <View className="mt-4 flex-row justify-between px-4">
-              {['Banca', 'Curl', 'Smith'].map((item, i) => (
-                <View
-                  key={i}
-                  className="h-24 w-[30%] items-center justify-center rounded-2xl bg-gray-200"
-                >
-                  <Text className="text-xs font-bold">{item}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
+              {workoutsByDay.map((item, i) => (
+                <View key={i} className="mr-3 w-28 rounded-2xl bg-white p-4">
+                  <Text className="text-center font-bold">{item.day}</Text>
+
+                  {item.focus.map((f, idx) => (
+                    <Text key={idx} className="mt-1 text-center text-xs text-gray-500">
+                      {f}
+                    </Text>
+                  ))}
                 </View>
               ))}
-            </View>
+            </ScrollView>
 
             {/* RUTINA */}
-            <Text className="mt-8 px-4 text-lg font-bold">Rutina - Lunes</Text>
+            <Text className="mt-8 text-lg font-bold">Rutina destacada</Text>
 
-            <View className="mx-4 mt-4 rounded-3xl bg-white p-4">
+            <View className="mt-4 rounded-3xl bg-white p-4 shadow-sm">
               <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61' }}
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61',
+                }}
                 className="h-40 w-full rounded-2xl"
               />
 
@@ -147,7 +183,7 @@ export default function ProfileScreen() {
                   PECHO
                 </Text>
                 <Text className="rounded-full bg-purple-100 px-2 py-1 text-xs text-purple-600">
-                  TRICEPS
+                  TRÍCEPS
                 </Text>
                 <Text className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-600">
                   CARDIO
@@ -155,12 +191,16 @@ export default function ProfileScreen() {
               </View>
 
               <Pressable className="mt-4 items-center rounded-full bg-black py-3">
-                <Text className="text-white">INICIAR RUTINA</Text>
+                <Text className="font-semibold text-white">INICIAR RUTINA</Text>
               </Pressable>
             </View>
 
-            {/* POSTS TITLE */}
-            <Text className="mt-8 px-4 text-lg font-bold">Posts</Text>
+            {/* POSTS */}
+            <Text className="mt-8 text-lg font-bold">Posts</Text>
+
+            {posts.length === 0 && (
+              <Text className="mt-2 text-sm text-gray-400">Mostrando ejemplo de publicaciones</Text>
+            )}
           </View>
         }
       />
