@@ -27,17 +27,6 @@ const mockPosts: Post[] = [
   },
 ];
 
-const workoutsByDay = [
-  { day: 'Lun', focus: ['Pecho', 'Tríceps'] },
-  { day: 'Mar', focus: ['Espalda', 'Bíceps'] },
-  { day: 'Mié', focus: ['Pierna'] },
-  { day: 'Jue', focus: ['Hombro'] },
-  { day: 'Vie', focus: ['Full Body'] },
-  { day: 'Sáb', focus: ['Cardio'] },
-  { day: 'Dom', focus: ['Descanso'] },
-];
-
-// 🔥 NUEVAS RUTINAS DESTACADAS
 const workoutPlans = [
   {
     id: '1',
@@ -59,6 +48,31 @@ const workoutPlans = [
     duration: '2H 30MIN',
     focus: ['PIERNA', 'GLÚTEO'],
     image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b',
+  },
+];
+
+// 🔥 NUEVO: EJERCICIOS DESTACADOS
+const featuredExercises = [
+  {
+    id: '1',
+    name: 'Press Banca',
+    muscle: 'Pecho',
+    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e',
+    pr: '80 kg',
+  },
+  {
+    id: '2',
+    name: 'Sentadilla',
+    muscle: 'Pierna',
+    image: 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e',
+    pr: '120 kg',
+  },
+  {
+    id: '3',
+    name: 'Curl Bíceps',
+    muscle: 'Bíceps',
+    image: 'https://images.unsplash.com/photo-1598971639058-9993f6f5e6d1',
+    pr: '25 kg',
   },
 ];
 
@@ -151,6 +165,10 @@ export default function ProfileScreen() {
               <Text className="mt-3 text-xl font-bold">{username || fallbackName}</Text>
 
               <Text className="text-xs text-blue-600">POWERLIFTER • CALI</Text>
+
+              <Text className="mt-3 text-center text-sm text-gray-600">
+                {bio || 'Sin biografía aún'}
+              </Text>
             </View>
 
             {/* STATS */}
@@ -171,24 +189,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* WORKOUTS POR DÍA */}
-            <Text className="mt-8 text-lg font-bold">Workouts por día</Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
-              {workoutsByDay.map((item, i) => (
-                <View key={i} className="mr-3 w-28 rounded-2xl bg-white p-4">
-                  <Text className="text-center font-bold">{item.day}</Text>
-
-                  {item.focus.map((f, idx) => (
-                    <Text key={idx} className="mt-1 text-center text-xs text-gray-500">
-                      {f}
-                    </Text>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* 🔥 RUTINAS DESTACADAS (HORIZONTAL) */}
+            {/* 🔥 RUTINAS DESTACADAS */}
             <Text className="mt-8 text-lg font-bold">Rutinas destacadas</Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
@@ -211,7 +212,6 @@ export default function ProfileScreen() {
                     ))}
                   </View>
 
-                  {/* 🔵 BOTÓN AZUL ANIMADO */}
                   <TouchableOpacity onPress={() => setStarted(!started)}>
                     <MotiView
                       animate={{
@@ -221,16 +221,38 @@ export default function ProfileScreen() {
                     >
                       <AnimatePresence exitBeforeEnter>
                         {started ? (
-                          <MotiText key="started" className="font-semibold text-white">
-                            En progreso
-                          </MotiText>
+                          <MotiText className="font-semibold text-white">En progreso</MotiText>
                         ) : (
-                          <MotiText key="start" className="font-bold text-white">
-                            Iniciar rutina
-                          </MotiText>
+                          <MotiText className="font-bold text-black">Iniciar rutina</MotiText>
                         )}
                       </AnimatePresence>
                     </MotiView>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* 🔥 NUEVO: EJERCICIOS DESTACADOS */}
+            <Text className="mt-8 text-lg font-bold">Ejercicios destacados</Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
+              {featuredExercises.map((item) => (
+                <View key={item.id} className="mr-4 w-64 rounded-3xl bg-white p-4 shadow-sm">
+                  <Image source={{ uri: item.image }} className="h-40 w-full rounded-2xl" />
+
+                  <Text className="mt-3 text-base font-bold">{item.name}</Text>
+
+                  <Text className="text-xs text-gray-500">{item.muscle}</Text>
+
+                  <View className="mt-3 flex-row justify-between">
+                    <Text className="text-xs text-gray-400">PR personal</Text>
+                    <Text className="text-sm font-bold text-blue-600">{item.pr}</Text>
+                  </View>
+
+                  <TouchableOpacity>
+                    <View className="mt-4 items-center rounded-full bg-blue-600 py-3">
+                      <Text className="font-bold text-black">Ver ejercicio</Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               ))}
