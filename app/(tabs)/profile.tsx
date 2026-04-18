@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, Image, Animated } from 'react-native';
+import { View, Text, Image, Animated, FlatList, Pressable } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from 'expo-router';
@@ -22,8 +22,7 @@ export default function ProfileScreen() {
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const fallbackName =
-    user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Usuario';
+  const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Nicolas A';
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -35,9 +34,9 @@ export default function ProfileScreen() {
       .single();
 
     if (data) {
-      if (data.username) setUsername(data.username);
-      if (data.avatar_url) setAvatarUrl(data.avatar_url);
-      if (data.bio) setBio(data.bio);
+      setUsername(data.username || '');
+      setAvatarUrl(data.avatar_url || '');
+      setBio(data.bio || '');
     }
   };
 
@@ -60,107 +59,111 @@ export default function ProfileScreen() {
     }, [user])
   );
 
-  const avatar =
-    avatarUrl ||
-    user?.user_metadata?.avatar_url ||
-    user?.user_metadata?.picture ||
-    'https://ui-avatars.com/api/?name=User';
+  const avatar = avatarUrl || 'https://ui-avatars.com/api/?name=User';
 
-  const fadeOpacity = scrollY.interpolate({
-    inputRange: [0, 120],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const renderPost = ({ item }: { item: Post }) => (
+    <View className="mb-6 rounded-3xl bg-white p-4 shadow-sm">
+      {item.image_url && (
+        <Image source={{ uri: item.image_url }} className="h-52 w-full rounded-2xl" />
+      )}
 
-  const renderItem = ({ item }: { item: Post }) => (
-    <View className="mb-3 rounded-2xl bg-white p-4 dark:bg-gray-800">
-      {item.content ? (
-        <Text className="text-base text-gray-800 dark:text-gray-200">{item.content}</Text>
-      ) : null}
+      <Text className="mt-3 text-sm text-gray-700">{item.content}</Text>
 
-      {item.image_url ? (
-        <Image
-          source={{ uri: item.image_url }}
-          className="mt-3 h-60 w-full rounded-xl"
-          resizeMode="cover"
-        />
-      ) : null}
-
-      <Text className="mt-2 text-xs text-gray-400">
-        {new Date(item.created_at).toLocaleString()}
-      </Text>
+      <View className="mt-3 flex-row gap-4">
+        <Text className="text-xs text-gray-400">❤️ 34</Text>
+        <Text className="text-xs text-gray-400">💬 2</Text>
+      </View>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-gray-100 dark:bg-black">
-      {/* LISTA */}
-      <Animated.FlatList
+    <View className="flex-1 bg-gray-100">
+      <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        renderItem={renderPost}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: 280,
           paddingHorizontal: 16,
-          paddingBottom: 40,
+          paddingBottom: 120,
         }}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: true,
-        })}
-        ListEmptyComponent={
-          <Text className="mt-10 text-center text-gray-400">Aún no has publicado nada</Text>
-        }
-      />
+        ListHeaderComponent={
+          <View>
+            {/* HEADER */}
+            <View className="items-center pt-10">
+              <Image
+                source={{ uri: avatar }}
+                className="h-24 w-24 rounded-full border-4 border-white"
+              />
 
-      {/* HEADER */}
-      <View className="absolute top-0 right-0 left-0 items-center pt-10">
-        <View className="w-full max-w-md items-center px-6">
-          {/* AVATAR */}
-          <Animated.Image
-            source={{ uri: avatar }}
-            style={{
-              width: 110,
-              height: 110,
-              borderRadius: 55,
-              opacity: fadeOpacity,
-            }}
-          />
+              <Text className="mt-3 text-xl font-bold text-black">{username || fallbackName}</Text>
 
-          {/* INFO */}
-          <Animated.View style={{ opacity: fadeOpacity, width: '100%' }}>
-            <View className="mt-2 items-center">
-              <Text className="text-center text-xl font-bold text-black dark:text-white">
-                {username || fallbackName}
-              </Text>
-
-              {bio ? (
-                <Text className="mt-1 px-4 text-center text-gray-500 dark:text-gray-400">
-                  {bio}
-                </Text>
-              ) : null}
+              <Text className="text-xs text-pink-500">POWERLIFTER - CALI</Text>
             </View>
 
             {/* STATS */}
-            <View className="mt-6 w-full flex-row justify-between px-6">
-              <View className="flex-1 items-center">
-                <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
-                <Text className="text-xs text-gray-500">Posts</Text>
+            <View className="mt-6 flex-row justify-between px-6">
+              <View className="flex-1 items-center rounded-2xl bg-white p-4">
+                <Text className="text-lg font-bold">{posts.length}</Text>
+                <Text className="text-xs text-gray-500">POSTS</Text>
               </View>
 
-              <View className="flex-1 items-center">
-                <Text className="text-lg font-bold text-black dark:text-white">0</Text>
-                <Text className="text-xs text-gray-500">Seguidores</Text>
-              </View>
-
-              <View className="flex-1 items-center">
-                <Text className="text-lg font-bold text-black dark:text-white">0</Text>
-                <Text className="text-xs text-gray-500">Siguiendo</Text>
+              <View className="mx-2 flex-1 items-center rounded-2xl bg-white p-4">
+                <Text className="text-lg font-bold">10.923</Text>
+                <Text className="text-xs text-gray-500">SEGUIDORES</Text>
               </View>
             </View>
-          </Animated.View>
-        </View>
-      </View>
+
+            {/* WORKOUTS */}
+            <View className="mt-8 flex-row items-center justify-between px-4">
+              <Text className="text-lg font-bold">Workouts Grid</Text>
+              <Text className="text-sm text-blue-500">Ver todos</Text>
+            </View>
+
+            <View className="mt-4 flex-row justify-between px-4">
+              {['Banca', 'Curl', 'Smith'].map((item, i) => (
+                <View
+                  key={i}
+                  className="h-24 w-[30%] items-center justify-center rounded-2xl bg-gray-200"
+                >
+                  <Text className="text-xs font-bold">{item}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* RUTINA */}
+            <Text className="mt-8 px-4 text-lg font-bold">Rutina - Lunes</Text>
+
+            <View className="mx-4 mt-4 rounded-3xl bg-white p-4">
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61' }}
+                className="h-40 w-full rounded-2xl"
+              />
+
+              <Text className="mt-3 font-bold">2H SESIÓN</Text>
+
+              <View className="mt-2 flex-row gap-2">
+                <Text className="rounded-full bg-pink-100 px-2 py-1 text-xs text-pink-600">
+                  PECHO
+                </Text>
+                <Text className="rounded-full bg-purple-100 px-2 py-1 text-xs text-purple-600">
+                  TRICEPS
+                </Text>
+                <Text className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-600">
+                  CARDIO
+                </Text>
+              </View>
+
+              <Pressable className="mt-4 items-center rounded-full bg-black py-3">
+                <Text className="text-white">INICIAR RUTINA</Text>
+              </Pressable>
+            </View>
+
+            {/* POSTS TITLE */}
+            <Text className="mt-8 px-4 text-lg font-bold">Posts</Text>
+          </View>
+        }
+      />
     </View>
   );
 }
