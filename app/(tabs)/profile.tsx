@@ -189,7 +189,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* 🔥 RUTINAS DESTACADAS */}
+            {/*RUTINAS DESTACADAS */}
             <Text className="mt-8 text-lg font-bold">Rutinas destacadas</Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
@@ -232,7 +232,7 @@ export default function ProfileScreen() {
               ))}
             </ScrollView>
 
-            {/* 🔥 NUEVO: EJERCICIOS DESTACADOS */}
+            {/*EJERCICIOS DESTACADOS */}
             <Text className="mt-8 text-lg font-bold">Ejercicios destacados</Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
@@ -259,13 +259,7 @@ export default function ProfileScreen() {
             </ScrollView>
 
             {/* POSTS TITLE */}
-            <Text className="mt-8 text-lg font-bold">Posts</Text>
-
-            {posts.length === 0 && (
-              <Text className="mt-2 text-sm text-gray-400">
-                Mostrando ejemplos de publicaciones
-              </Text>
-            )}
+            <Text className="mt-8 mb-4 text-lg font-bold">Posts</Text>
           </View>
         }
       />
