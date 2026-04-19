@@ -176,58 +176,6 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* RUTINAS DESTACADAS */}
-            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
-              Rutinas destacadas
-            </Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
-              {workoutPlans.map((item) => (
-                <View
-                  key={item.id}
-                  className="mr-4 w-72 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900"
-                >
-                  <Image source={{ uri: item.image }} className="h-40 w-full rounded-2xl" />
-
-                  <Text className="mt-3 text-base font-bold text-black dark:text-white">
-                    {item.title}
-                  </Text>
-
-                  <Text className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {item.duration}
-                  </Text>
-
-                  <View className="mt-3 flex-row flex-wrap gap-2">
-                    {item.focus.map((f, i) => (
-                      <Text
-                        key={i}
-                        className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-600"
-                      >
-                        {f}
-                      </Text>
-                    ))}
-                  </View>
-
-                  <TouchableOpacity onPress={() => setStarted(!started)}>
-                    <MotiView
-                      animate={{
-                        backgroundColor: started ? '#27272a' : '#3b82f6',
-                      }}
-                      className="mt-4 items-center justify-center rounded-full py-3"
-                    >
-                      <AnimatePresence exitBeforeEnter>
-                        {started ? (
-                          <MotiText className="font-semibold text-white">En progreso</MotiText>
-                        ) : (
-                          <MotiText className="font-bold text-black">Iniciar rutina</MotiText>
-                        )}
-                      </AnimatePresence>
-                    </MotiView>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-
             {/* EJERCICIOS */}
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Ejercicios destacados
@@ -255,6 +203,56 @@ export default function ProfileScreen() {
                   <TouchableOpacity>
                     <View className="mt-4 items-center rounded-full bg-blue-600 py-3">
                       <Text className="font-bold text-black">Ver ejercicio</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* RUTINA SEMANAL */}
+            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
+              Rutina semanal
+            </Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
+              {[
+                { day: 'Lunes', routine: 'Push (Pecho, tríceps, hombro)', rest: false },
+                { day: 'Martes', routine: 'Pull (Espalda, bíceps)', rest: false },
+                { day: 'Miércoles', routine: 'Pierna completa', rest: false },
+                { day: 'Jueves', routine: 'Push ligero', rest: false },
+                { day: 'Viernes', routine: 'Pull intenso', rest: false },
+                { day: 'Sábado', routine: 'Pierna + glúteo', rest: false },
+                { day: 'Domingo', routine: 'Descanso total ', rest: true },
+              ].map((item, index) => (
+                <View
+                  key={index}
+                  className="mr-4 w-72 rounded-3xl bg-white p-5 shadow-sm dark:bg-zinc-900"
+                >
+                  {/* DÍA */}
+                  <Text className="text-sm text-gray-500 dark:text-gray-400">{item.day}</Text>
+
+                  {/* NOMBRE RUTINA */}
+                  <Text className="mt-2 text-lg font-bold text-black dark:text-white">
+                    {item.rest ? 'Día de descanso' : item.routine}
+                  </Text>
+
+                  {/* MENSAJE */}
+                  <Text className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    {item.rest
+                      ? 'Recupera energía para la próxima semana '
+                      : 'Entrena fuerte y mantén la disciplina '}
+                  </Text>
+
+                  {/* BOTÓN */}
+                  <TouchableOpacity>
+                    <View
+                      className={`mt-6 items-center rounded-full py-3 ${
+                        item.rest ? 'bg-gray-300 dark:bg-gray-700' : 'bg-blue-600'
+                      }`}
+                    >
+                      <Text className={`font-bold ${item.rest ? 'text-gray-600' : 'text-white'}`}>
+                        {item.rest ? 'Descansar' : 'Ver rutina'}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 </View>
