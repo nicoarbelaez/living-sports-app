@@ -12,10 +12,9 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Image as ImageIcon, Camera, Send, X, Video as VideoIcon } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
-import { withTimeout } from '@/lib/async/withTimeout';
 import { Image } from 'expo-image';
 import { getRandomAvatarUrl } from '@/lib/utils';
 import { useProfileStore } from '@/stores/useProfileStore';
@@ -45,8 +44,6 @@ interface CreatePostResponse {
 export interface FormPostProps {
   onPostCreated: (post: Post) => void;
 }
-
-const TIMEOUT_MS = 30_000;
 
 export default function FormPost({ onPostCreated }: FormPostProps) {
   const profile = useProfileStore((s) => s.profile);
@@ -95,12 +92,11 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
         let uri = asset.uri;
 
         if (!isVideo) {
-          const manipResult = await ImageManipulator.manipulateAsync(
-            asset.uri,
-            [{ resize: { width: 1080 } }],
-            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: false }
-          );
-          uri = manipResult.uri;
+          const ctx = ImageManipulator.manipulate(asset.uri);
+          ctx.resize({ width: 1080 });
+          const ref = await ctx.renderAsync();
+          const saved = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+          uri = saved.uri;
         }
 
         return { uri, type: (isVideo ? 'video' : 'image') as 'image' | 'video' };
@@ -130,12 +126,11 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
     let uri = asset.uri;
 
     if (!isVideo) {
-      const manipResult = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 1080 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: false }
-      );
-      uri = manipResult.uri;
+      const ctx = ImageManipulator.manipulate(asset.uri);
+      ctx.resize({ width: 1080 });
+      const ref = await ctx.renderAsync();
+      const saved = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+      uri = saved.uri;
     }
 
     append({ uri, type: isVideo ? 'video' : 'image' });
@@ -156,10 +151,9 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
     });
 
     try {
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke<CreatePostResponse>('create-post', { body: formData }),
-        TIMEOUT_MS
-      );
+      const { data, error } = await supabase.functions.invoke<CreatePostResponse>('create-post', {
+        body: formData,
+      });
 
       if (error) throw new Error(error.message);
       if (!data?.post) throw new Error('Respuesta del servidor no contiene la publicación.');
@@ -198,6 +192,7 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                editable={!isSubmitting}
                 className="mb-2 max-h-32 min-h-[40px] p-0 text-base text-gray-800 dark:text-gray-200"
               />
             )}
@@ -228,12 +223,14 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
                       <VideoIcon color="white" size={32} className="absolute" />
                     </View>
                   )}
-                  <TouchableOpacity
-                    className="absolute top-2 right-2 rounded-full bg-black/50 p-1"
-                    onPress={() => remove(index)}
-                  >
-                    <X color="white" size={16} />
-                  </TouchableOpacity>
+                  {!isSubmitting && (
+                    <TouchableOpacity
+                      className="absolute top-2 right-2 rounded-full bg-black/50 p-1"
+                      onPress={() => remove(index)}
+                    >
+                      <X color="white" size={16} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </ScrollView>
