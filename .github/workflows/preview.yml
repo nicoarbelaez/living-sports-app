@@ -1,36 +1,35 @@
-name: PR Preview
+name: Native Build Check
 
 on:
   pull_request:
 
 jobs:
-  preview:
+  android-build-check:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      pull-requests: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Expo doctor
+        run: npx expo-doctor
 
-      - name: Create Preview Update
-        uses: expo/expo-github-action/preview@v8
-        with:
-          command: eas update --auto
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          PROJECT_REF: ${{ secrets.PROJECT_REF }}

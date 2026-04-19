@@ -1,8 +1,6 @@
 {
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+  "[sql]": {
+    "editor.defaultFormatter": "mtxr.sqltools"
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -10,21 +8,52 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-   "tailwindCSS.classAttributes": [
-    "className",
-    "class"
+  "deno.enablePaths": [
+    "supabase/functions"
   ],
-
-  "tailwindCSS.experimental.classRegex": [
-    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*)[\"'`]"],
-    ["\\bclassName\\s*=\\s*[\"'`]([^\"'`]*)[\"'`]", ""]
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports",
+    "unsafe-proto",
+    "webgpu",
+    "broadcast-channel",
+    "worker-options",
+    "cron",
+    "kv",
+    "ffi",
+    "fs",
+    "http",
+    "net"
   ],
-
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
   "editor.quickSuggestions": {
     "strings": true
   },
-  "[sql]": {
-    "editor.defaultFormatter": "mtxr.sqltools"
-  }
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "tailwindCSS.classAttributes": [
+    "className",
+    "class"
+  ],
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "cn\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*)[\"'`]"
+    ],
+    [
+      "\\bclassName\\s*=\\s*[\"'`]([^\"'`]*)[\"'`]",
+      ""
+    ]
+  ]
 }

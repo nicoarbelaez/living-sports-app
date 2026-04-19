@@ -87,111 +87,100 @@ const LoginScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-black">
-      <ImageBackground source={bgImage} resizeMode="cover" className="flex-1">
-        {/* Oscurecimiento base para legibilidad */}
-        <View className="absolute inset-0 bg-black/50" />
+    <View className="bg-secondary-foreground flex-1">
+      {/* Oscurecimiento base para legibilidad */}
+      <View className="absolute inset-0 bg-black/50" />
 
-        {/* Gradiente inferior -> superior */}
-        <LinearGradient
-          colors={getGradientColors(isDark)}
-          locations={[0, 0.6, 1]}
-          start={{ x: 0.4, y: 1 }}
-          end={{ x: 0.5, y: 0 }}
-          className="absolute inset-0"
-        />
-
-        <View className="flex-1 px-6 py-12">
-          {/* Contenido principal más abajo */}
-          <View className="flex-1 items-center justify-end pb-12">
-            <View className="flex w-full items-center gap-48">
-              <View className="items-center">
-                {/* Logo */}
-                <MotiView
-                  from={{ opacity: 0, translateY: -24 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{
-                    type: 'timing',
-                    duration: 500,
-                  }}
-                  className="mb-8"
-                >
-                  <View className="size-32 items-center justify-center rounded-2xl">
-                    <View className="bg-primary absolute inset-0 rounded-2xl blur-xl" />
-                    <Image source={require('@/assets/icon.png')} className="size-32" />
-                  </View>
-                </MotiView>
-
-                {/* Título */}
-                <MotiView
-                  from={{ opacity: 0, translateY: 16 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{
-                    type: 'timing',
-                    duration: 500,
-                  }}
-                  className="mb-2 items-center"
-                >
-                  <View className="flex-row items-baseline justify-center">
-                    <MotiText className="text-secondary-foreground text-4xl font-black tracking-tight">
-                      Living
-                    </MotiText>
-                    <MotiText className="ml-1 text-4xl font-black tracking-tight text-green-400">
-                      Sports
-                    </MotiText>
-                  </View>
-                </MotiView>
-              </View>
-
-              {/* Auth */}
+      <View className="flex-1 px-6 py-12">
+        {/* Contenido principal más abajo */}
+        <View className="flex-1 items-center justify-end pb-12">
+          <View className="flex w-full items-center gap-48">
+            <View className="items-center">
+              {/* Logo */}
               <MotiView
-                from={{ opacity: 0, translateY: 24 }}
+                from={{ opacity: 0, translateY: -24 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{
                   type: 'timing',
                   duration: 500,
                 }}
-                className="w-full max-w-sm pt-4"
+                className="mb-8"
               >
-                <MotiText className="text-md text-secondary-foreground mb-6 text-center font-semibold tracking-wide">
-                  Inicia sesión para continuar
-                </MotiText>
+                <View className="size-32 items-center justify-center rounded-2xl">
+                  <View className="bg-primary absolute inset-0 rounded-2xl blur-xl" />
+                  <Image source={require('@/assets/icon.png')} className="size-32" />
+                </View>
+              </MotiView>
 
-                <View className="gap-3">
-                  <LoginButton
-                    variant="outline"
-                    provider="google"
-                    icon={<Mail size={20} />}
-                    text="Continuar con Google"
-                  />
-
-                  <LoginButton
-                    variant="secondary"
-                    provider="github"
-                    icon={<Github size={20} />}
-                    text="Continuar con GitHub"
-                  />
+              {/* Título */}
+              <MotiView
+                from={{ opacity: 0, translateY: 16 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: 'timing',
+                  duration: 500,
+                }}
+                className="mb-2 items-center"
+              >
+                <View className="flex-row items-baseline justify-center">
+                  <MotiText className="text-secondary-foreground text-4xl font-black tracking-tight">
+                    Living
+                  </MotiText>
+                  <MotiText className="ml-1 text-4xl font-black tracking-tight text-green-400">
+                    Sports
+                  </MotiText>
                 </View>
               </MotiView>
             </View>
-          </View>
 
-          {/* Footer */}
-          <MotiView
-            from={{ opacity: 0, translateY: 24 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{
-              type: 'timing',
-              duration: 500,
-            }}
-            className="w-full max-w-sm self-center"
-          >
-            <View className="items-end px-6">
-              <ThemeToggle />
-            </View>
-          </MotiView>
+            {/* Auth */}
+            <MotiView
+              from={{ opacity: 0, translateY: 24 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{
+                type: 'timing',
+                duration: 500,
+              }}
+              className="w-full max-w-sm pt-4"
+            >
+              <MotiText className="text-md text-secondary-foreground mb-6 text-center font-semibold tracking-wide">
+                Inicia sesión para continuar
+              </MotiText>
+
+              <View className="gap-3">
+                <LoginButton
+                  variant="outline"
+                  provider="google"
+                  icon={<Mail size={20} />}
+                  text="Continuar con Google"
+                />
+
+                <LoginButton
+                  variant="secondary"
+                  provider="github"
+                  icon={<Github size={20} />}
+                  text="Continuar con GitHub"
+                />
+              </View>
+            </MotiView>
+          </View>
         </View>
-      </ImageBackground>
+
+        {/* Footer */}
+        <MotiView
+          from={{ opacity: 0, translateY: 24 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{
+            type: 'timing',
+            duration: 500,
+          }}
+          className="w-full max-w-sm self-center"
+        >
+          <View className="items-end px-6">
+            <ThemeToggle />
+          </View>
+        </MotiView>
+      </View>
     </View>
   );
 };
