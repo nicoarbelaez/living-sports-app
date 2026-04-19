@@ -13,19 +13,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
+/* ==========================
+   RUTINA ALINEADA CON PROFILE
+   ========================== */
 const routines: any = {
   LUN: {
     title: 'Push Day',
     muscles: 'Pecho • Tríceps • Hombro',
     exercises: [
       {
-        name: 'Press banca',
+        name: 'Press Banca',
         sets: '4x8',
         rest: '90s',
         level: 'hard',
-        description: 'Ejercicio compuesto para desarrollar fuerza y masa en el pecho.',
-        howTo:
-          'Acostado en banco plano, baja la barra controlada al pecho y empuja explosivamente.',
+        description: 'Ejercicio principal para fuerza de pecho.',
+        howTo: 'Acostado en banco plano, baja la barra al pecho y empuja controlado hacia arriba.',
         video: 'https://www.youtube.com/watch?v=rT7DgCr-3pg',
       },
       {
@@ -34,7 +36,7 @@ const routines: any = {
         rest: '90s',
         level: 'medium',
         description: 'Enfocado en la parte superior del pecho.',
-        howTo: 'Banco inclinado, baja mancuernas hasta el pecho superior y empuja hacia arriba.',
+        howTo: 'Empuja mancuernas en banco inclinado controlando el recorrido.',
         video: 'https://www.youtube.com/watch?v=8iPEnn-ltC8',
       },
       {
@@ -42,9 +44,8 @@ const routines: any = {
         sets: '3x12',
         rest: '60s',
         level: 'easy',
-        description: 'Trabaja pecho inferior y tríceps con peso corporal.',
-        howTo: 'Baja el cuerpo entre barras paralelas y empuja hacia arriba.',
-        video: 'https://www.youtube.com/watch?v=6kALZikXxLc',
+        description: 'Pecho inferior y tríceps con peso corporal.',
+        howTo: 'Baja entre barras paralelas y empuja hacia arriba.',
       },
     ],
   },
@@ -58,61 +59,55 @@ const routines: any = {
         sets: '4x8',
         rest: '90s',
         level: 'hard',
-        description: 'Ejercicio clave para espalda y fuerza general.',
-        howTo: 'Cuelga de la barra y eleva el cuerpo hasta pasar la barbilla.',
-        video: 'https://www.youtube.com/watch?v=eGo4IYlbE5g',
+        description: 'Fuerza de espalda y dorsales.',
+        howTo: 'Eleva el cuerpo hasta pasar la barbilla sobre la barra.',
       },
       {
         name: 'Remo barra',
         sets: '3x10',
         rest: '90s',
         level: 'medium',
-        description: 'Desarrolla grosor en la espalda media.',
-        howTo: 'Inclina el torso y lleva la barra hacia el abdomen.',
-        video: 'https://www.youtube.com/watch?v=vT2GjY_Umpw',
+        description: 'Espalda media y grosor muscular.',
+        howTo: 'Tira la barra hacia el abdomen con torso inclinado.',
       },
       {
         name: 'Curl bíceps',
         sets: '3x12',
         rest: '60s',
         level: 'easy',
-        description: 'Aislamiento para bíceps.',
-        howTo: 'Flexiona los codos levantando las mancuernas sin mover hombros.',
-        video: 'https://www.youtube.com/watch?v=ykJmrZ5v0Oo',
+        description: 'Aislamiento de bíceps.',
+        howTo: 'Flexiona codos sin mover hombros.',
       },
     ],
   },
 
   MIE: {
-    title: 'Core + Cardio',
-    muscles: 'Abdomen • Resistencia',
+    title: 'Leg Day',
+    muscles: 'Pierna • Glúteo',
     exercises: [
       {
-        name: 'Crunch abdominal',
-        sets: '4x15',
-        rest: '45s',
-        level: 'easy',
-        description: 'Fortalece el abdomen superior.',
-        howTo: 'Eleva el torso contrayendo el abdomen sin jalar el cuello.',
-        video: 'https://www.youtube.com/watch?v=Xyd_fa5zoEU',
-      },
-      {
-        name: 'Plancha',
-        sets: '4x40s',
-        rest: '45s',
-        level: 'medium',
-        description: 'Ejercicio isométrico de core.',
-        howTo: 'Mantén el cuerpo recto apoyado en antebrazos y pies.',
-        video: 'https://www.youtube.com/watch?v=pSHjTRCQxIw',
-      },
-      {
-        name: 'Mountain climbers',
-        sets: '3x30s',
-        rest: '30s',
+        name: 'Sentadilla',
+        sets: '4x8',
+        rest: '120s',
         level: 'hard',
-        description: 'Cardio intenso para abdomen y piernas.',
-        howTo: 'Alterna rodillas al pecho en posición de plancha.',
-        video: 'https://www.youtube.com/watch?v=nmwgirgXLYM',
+        description: 'Ejercicio base de pierna y fuerza.',
+        howTo: 'Baja con espalda recta hasta 90° y sube empujando talones.',
+      },
+      {
+        name: 'Sentadilla goblet',
+        sets: '3x12',
+        rest: '60s',
+        level: 'medium',
+        description: 'Pierna y estabilidad de core.',
+        howTo: 'Sujeta mancuerna y baja controlado.',
+      },
+      {
+        name: 'Burpees',
+        sets: '3x12',
+        rest: '60s',
+        level: 'hard',
+        description: 'Condicionamiento físico completo.',
+        howTo: 'Flexión + salto explosivo.',
       },
     ],
   },
@@ -126,43 +121,39 @@ const routines: any = {
         sets: '3x12',
         rest: '60s',
         level: 'easy',
-        description: 'Trabajo ligero de pecho con mancuernas.',
-        howTo: 'Empuja mancuernas desde el pecho hacia arriba controlado.',
-        video: 'https://www.youtube.com/watch?v=VmB1G1K7v94',
+        description: 'Trabajo ligero de pecho.',
+        howTo: 'Empuja mancuernas desde el pecho.',
       },
       {
         name: 'Elevaciones laterales',
         sets: '3x15',
         rest: '45s',
         level: 'easy',
-        description: 'Aislamiento de hombro lateral.',
-        howTo: 'Eleva mancuernas lateralmente hasta altura de hombros.',
-        video: 'https://www.youtube.com/watch?v=3VcKaXpzqRo',
+        description: 'Hombro lateral.',
+        howTo: 'Eleva brazos hasta altura de hombros.',
       },
       {
         name: 'Extensión tríceps',
         sets: '3x12',
         rest: '60s',
         level: 'medium',
-        description: 'Aislamiento de tríceps.',
-        howTo: 'Extiende brazos hacia abajo o arriba según máquina.',
-        video: 'https://www.youtube.com/watch?v=2-LAMcpzODU',
+        description: 'Aislamiento tríceps.',
+        howTo: 'Extiende brazos en polea o mancuerna.',
       },
     ],
   },
 
   VIE: {
     title: 'Pull Intenso',
-    muscles: 'Espalda • Fuerza',
+    muscles: 'Fuerza • Espalda',
     exercises: [
       {
         name: 'Peso muerto',
         sets: '4x6',
         rest: '120s',
         level: 'hard',
-        description: 'Ejercicio de fuerza total del cuerpo.',
-        howTo: 'Levanta la barra desde el suelo manteniendo espalda recta.',
-        video: 'https://www.youtube.com/watch?v=op9kVnSso6Q',
+        description: 'Fuerza total del cuerpo.',
+        howTo: 'Levanta barra desde el suelo manteniendo espalda neutra.',
       },
       {
         name: 'Remo con barra',
@@ -170,8 +161,7 @@ const routines: any = {
         rest: '90s',
         level: 'hard',
         description: 'Espalda media y fuerza.',
-        howTo: 'Tira la barra hacia el abdomen en posición inclinada.',
-        video: 'https://www.youtube.com/watch?v=G8l_5R1z0gE',
+        howTo: 'Tira barra hacia abdomen.',
       },
       {
         name: 'Curl martillo',
@@ -179,44 +169,38 @@ const routines: any = {
         rest: '60s',
         level: 'medium',
         description: 'Bíceps y antebrazo.',
-        howTo: 'Levanta mancuernas con agarre neutro.',
-        video: 'https://www.youtube.com/watch?v=zC3nLlEvin4',
+        howTo: 'Curl con agarre neutro.',
       },
     ],
   },
 
   SAB: {
-    title: 'Full Body',
-    muscles: 'Cuerpo completo',
+    title: 'Pierna Pro',
+    muscles: 'Cuádriceps • Femoral',
     exercises: [
       {
-        name: 'Burpees',
-        sets: '4x12',
-        rest: '60s',
+        name: 'Sentadilla pesada',
+        sets: '4x6',
+        rest: '120s',
         level: 'hard',
-        description: 'Ejercicio cardiovascular completo.',
-        howTo: 'Combina flexión, salto y extensión completa.',
-        video: 'https://www.youtube.com/watch?v=dZgVxmf6jkA',
+        description: 'Fuerza máxima en pierna.',
+        howTo: 'Sentadilla profunda controlada.',
       },
       {
-        name: 'Sentadilla goblet',
+        name: 'Zancadas',
         sets: '3x12',
         rest: '60s',
         level: 'medium',
-        description: 'Pierna y core.',
-        howTo: 'Sujeta mancuerna y baja en sentadilla profunda.',
-        video: 'https://www.youtube.com/watch?v=6xwGFn-J_QA',
-      },
-      {
-        name: 'Flexiones',
-        sets: '3x15',
-        rest: '45s',
-        level: 'easy',
-        description: 'Pecho y tríceps con peso corporal.',
-        howTo: 'Baja el cuerpo recto y empuja hacia arriba.',
-        video: 'https://www.youtube.com/watch?v=_l3ySVKYVJ8',
+        description: 'Unilateral de pierna.',
+        howTo: 'Paso largo y baja rodilla trasera.',
       },
     ],
+  },
+
+  DOM: {
+    title: 'Descanso',
+    muscles: 'Recuperación',
+    exercises: [],
   },
 };
 
@@ -293,7 +277,7 @@ export default function RoutineScreen() {
           })}
 
           <TouchableOpacity
-            className="mt-6 mb-10 items-center rounded-full bg-black py-4 dark:bg-blue-500"
+            className="mt-6 mb-10 items-center rounded-full bg-black py-4 dark:bg-white"
             onPress={() => router.back()}
           >
             <Text className="font-bold text-white dark:text-black">Volver</Text>
@@ -301,37 +285,46 @@ export default function RoutineScreen() {
         </View>
       </ScrollView>
 
-      {/* MODAL BOTTOM SHEET */}
+      {/* BOTTOM SHEET MEJORADO */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <Pressable
-          className="flex-1 justify-end bg-black/40"
+          className="flex-1 justify-end bg-black/50"
           onPress={() => setModalVisible(false)}
         >
           <View className="rounded-t-3xl bg-white p-6 dark:bg-zinc-900">
             <View className="mb-3 h-1 w-12 self-center rounded-full bg-gray-300" />
 
-            <Text className="text-xl font-bold text-black dark:text-white">
+            <Text className="text-2xl font-bold text-black dark:text-white">
               {selectedExercise?.name}
             </Text>
 
-            <Text className="mt-3 text-sm text-gray-500">{selectedExercise?.description}</Text>
+            <Text className="mt-2 text-xs text-blue-600">{routine.title}</Text>
 
-            <Text className="mt-4 text-sm font-semibold text-black dark:text-white">
-              Cómo hacerlo
-            </Text>
-            <Text className="mt-1 text-sm text-gray-500">{selectedExercise?.howTo}</Text>
+            <View className="mt-4 rounded-2xl bg-gray-100 p-4 dark:bg-zinc-800">
+              <Text className="text-sm font-semibold text-black dark:text-white">Descripción</Text>
+              <Text className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {selectedExercise?.description}
+              </Text>
+            </View>
+
+            <View className="mt-3 rounded-2xl bg-gray-100 p-4 dark:bg-zinc-800">
+              <Text className="text-sm font-semibold text-black dark:text-white">Cómo hacerlo</Text>
+              <Text className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {selectedExercise?.howTo}
+              </Text>
+            </View>
 
             {selectedExercise?.video && (
               <TouchableOpacity
-                className="mt-6 items-center rounded-full bg-blue-600 p-3"
+                className="mt-6 items-center rounded-full bg-black py-3 dark:bg-blue-500"
                 onPress={() => Linking.openURL(selectedExercise.video)}
               >
-                <Text className="text-center font-bold text-white">Ver video demostración</Text>
+                <Text className="font-bold text-white dark:text-black">Ver video demostración</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              className="mt-6 items-center rounded-full bg-black py-3 dark:bg-white"
+              className="mt-4 items-center rounded-full bg-black py-3 dark:bg-white"
               onPress={() => setModalVisible(false)}
             >
               <Text className="font-bold text-white dark:text-black">Cerrar</Text>
