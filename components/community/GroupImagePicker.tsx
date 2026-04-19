@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Image as ImageIcon } from 'lucide-react-native';
-import { Image } from 'expo-image';
+import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useMediaPicker } from '@/hooks/useMediaPicker';
 import ActionSheet from '@/components/ui/action-sheet';
-import BottomSheetComponent from '@/components/ui/bottom-sheet';
+import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
+import AvatarWithEmoji from '@/components/ui/avatar-with-emoji';
 
 const GYM_EMOJIS = [
   '🏋️',
@@ -41,6 +42,7 @@ export default function GroupImagePicker({
 }: GroupImagePickerProps) {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<BottomSheetModal>(null);
   const { handlePickFromGallery, handlePickFromCamera } = useMediaPicker({
     multiple: false,
     allowVideo: false,
@@ -76,16 +78,9 @@ export default function GroupImagePicker({
         onPress={() => setShowActionSheet(true)}
         disabled={disabled}
         activeOpacity={0.7}
+        className="mb-4 self-center"
       >
-        <View className="mb-4 h-32 w-32 self-center overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} />
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-4xl">{emoji || '🏋️'}</Text>
-            </View>
-          )}
-        </View>
+        <AvatarWithEmoji imageUrl={imageUri} emoji={emoji || '🏋️'} size="xl" />
       </TouchableOpacity>
 
       <View className="flex-row items-center justify-center gap-2">
@@ -111,18 +106,18 @@ export default function GroupImagePicker({
         ]}
       />
 
-      {/* Emoji Picker Bottom Sheet */}
-      <BottomSheetComponent
+      {/* Emoji Picker Bottom Sheet Modal */}
+      <BottomSheetModalComponent
         visible={showEmojiPicker}
         title="Selecciona emoji"
         onClose={() => setShowEmojiPicker(false)}
         config={{ snapPoints: ['50%', '90%'] }}
+        bottomSheetRef={emojiPickerRef}
       >
-        <FlatList
+        <BottomSheetFlatList
           data={GYM_EMOJIS}
           keyExtractor={(item) => item}
           numColumns={5}
-          scrollEnabled
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => handleChooseEmoji(item)}
@@ -132,7 +127,7 @@ export default function GroupImagePicker({
             </TouchableOpacity>
           )}
         />
-      </BottomSheetComponent>
+      </BottomSheetModalComponent>
     </>
   );
 }

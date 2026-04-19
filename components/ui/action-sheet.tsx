@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
-import BottomSheetComponent from '@/components/ui/bottom-sheet';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
 
 export interface ActionSheetAction {
   label: string;
@@ -16,12 +17,15 @@ export interface ActionSheetProps {
 }
 
 export default function ActionSheet({ visible, title, actions, onClose }: ActionSheetProps) {
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
   return (
-    <BottomSheetComponent
+    <BottomSheetModalComponent
       visible={visible}
       title={title}
       onClose={onClose}
       config={{ snapPoints: [Math.min(80 + actions.length * 50, 300)] }}
+      bottomSheetRef={bottomSheetRef}
     >
       {/* Actions */}
       <View className="gap-2">
@@ -46,6 +50,6 @@ export default function ActionSheet({ visible, title, actions, onClose }: Action
           </TouchableOpacity>
         ))}
       </View>
-    </BottomSheetComponent>
+    </BottomSheetModalComponent>
   );
 }
