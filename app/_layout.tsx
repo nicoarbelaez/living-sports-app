@@ -11,6 +11,9 @@ import { ScrollProvider } from '@/providers/scroll-context';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/providers/theme';
+import { useProfileSync } from '@/hooks/useProfileSync';
+import { usePostStore } from '@/stores/usePostStore';
+
 WebBrowser.maybeCompleteAuthSession();
 
 function RootLayoutContent() {
@@ -19,6 +22,16 @@ function RootLayoutContent() {
   const segments = useSegments();
   const router = useRouter();
   const url = Linking.useURL();
+
+  // Profile Realtime sync + background fetch — runs for the entire app lifetime.
+  useProfileSync();
+
+  // Reset feed data on logout so stale posts don't appear on re-login.
+  useEffect(() => {
+    if (!isLoading && !session) {
+      usePostStore.getState().reset();
+    }
+  }, [session, isLoading]);
 
   useEffect(() => {
     if (url) {
@@ -46,16 +59,11 @@ function RootLayoutContent() {
   useEffect(() => {
     if (isLoading) return;
 
-    // @ts-ignore: expo-router typing might miss dynamic route names
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!session && !inAuthGroup) {
-      // Must be logged in, redirect to login
-      // @ts-ignore: bypass expo-router strict route typing for now
       router.replace('/login');
     } else if (session && inAuthGroup) {
-      // Must NOT be in auth group if logged in, redirect to home
-      // @ts-ignore
       router.replace('/');
     }
   }, [session, isLoading, segments, router]);

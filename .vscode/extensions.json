@@ -1,1 +1,7 @@
-{ "recommendations": ["expo.vscode-expo-tools", "bradlc.vscode-tailwindcss"] }
+{
+  "recommendations": [
+    "expo.vscode-expo-tools",
+    "bradlc.vscode-tailwindcss",
+    "denoland.vscode-deno"
+  ]
+}

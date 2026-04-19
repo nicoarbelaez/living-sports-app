@@ -1,74 +1,103 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { View, ActivityIndicator, Text } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import type { FlashListRef, ListRenderItem } from '@shopify/flash-list';
 
-import ActivityCard from '@/components/activity-card';
-import PostCard from '@/components/post-card';
-import { useAuth } from '@/providers/AuthProvider';
+import PostCard from '@/components/feed/post-card';
+import PostCardSkeleton from '@/components/feed/post-card-skeleton';
+import FormPost from '@/components/feed/form-post';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
-import { Session } from '@supabase/supabase-js';
+import { usePostStore } from '@/stores/usePostStore';
+import type { Post } from '@/types/post';
+
+type SkeletonItem = {
+  id: string;
+  _skeleton: true;
+};
+
+type FeedItem = Post | SkeletonItem;
 
 export default function HomeScreen() {
-  const { session } = useAuth();
-
-  return <AuthenticatedHome session={session} />;
-}
-
-function AuthenticatedHome({ session }: { session: Session | null }) {
   const { onScroll } = useNavbarScroll();
-  const isDark = useColorScheme() === 'dark';
+  const listRef = useRef<FlashListRef<FeedItem>>(null);
+
+  const posts = usePostStore((s) => s.posts);
+  const isLoading = usePostStore((s) => s.isLoading);
+  const isFetchingMore = usePostStore((s) => s.isFetchingMore);
+  const fetchPosts = usePostStore((s) => s.fetchPosts);
+  const fetchMorePosts = usePostStore((s) => s.fetchMorePosts);
+  const prependPost = usePostStore((s) => s.prependPost);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const handlePostCreated = useCallback(
+    (post: Post) => {
+      prependPost(post);
+      // Wait for the list to re-render with the new item before scrolling
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      });
+    },
+    [prependPost]
+  );
+
+  const skeletonData = useMemo<FeedItem[]>(
+    () =>
+      Array.from({ length: 6 }, (_, index) => ({
+        id: `post-skeleton-${index}`,
+        _skeleton: true as const,
+      })),
+    []
+  );
+
+  const data = isLoading && posts.length === 0 ? skeletonData : posts;
+
+  const renderItem: ListRenderItem<FeedItem> = useCallback(({ item }) => {
+    if ('_skeleton' in item) {
+      return <PostCardSkeleton />;
+    }
+
+    return <PostCard post={item} />;
+  }, []);
+
+  const keyExtractor = useCallback((item: FeedItem) => item.id, []);
+
+  const ListHeader = (
+    <>
+      <FormPost onPostCreated={handlePostCreated} />
+    </>
+  );
+
+  const ListFooter = isFetchingMore ? (
+    <View className="items-center py-4">
+      <ActivityIndicator size="small" color="#10b981" />
+    </View>
+  ) : null;
+
+  const ListEmpty = !isLoading ? (
+    <View className="items-center px-6 py-12">
+      <Text className="text-muted-foreground text-center">Sé el primero en publicar algo hoy.</Text>
+    </View>
+  ) : null;
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
-      <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
-        <ActivityCard />
-
-        <PostCard
-          user="Nicolas"
-          time="Hace 2 horas"
-          avatar="https://avatars.githubusercontent.com/u/111522939?v=4"
-          image="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b"
-          text="Hola Chavales! Acabo de completar una carrera de 5 km en 25 minutos. ¡Estoy muy emocionado por mi progreso! #Running #Fitness"
-        />
-
-        <PostCard
-          user="Cristiano"
-          time="Hace 1 minuto"
-          avatar="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdnSj_ePgbGDuzLJwvMXBneYkiVU9aPqY7pZEDvXty5mUFtDoMlmyVb3piUk6uqeC1rWnDFETXX7QRtBDWItAo74ipNslZF9j9uYKyNW0&s=10"
-          image="https://i.ytimg.com/vi/D61hfPHcLKc/hq720.jpg"
-          text="Es falso, no me lesioné, solo estaba descansando después de un entrenamiento intenso. #Fitness #NoPainNoGain"
-        />
-      </ScrollView>
+    <View className="bg-background dark:bg-background flex-1">
+      <FlashList
+        ref={listRef}
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeader}
+        ListFooterComponent={ListFooter}
+        ListEmptyComponent={ListEmpty}
+        onEndReached={fetchMorePosts}
+        onEndReachedThreshold={0.5}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-  },
-  containerDark: {
-    backgroundColor: '#000',
-  },
-
-  card: {
-    marginHorizontal: 24,
-    marginVertical: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-  },
-  cardDark: {
-    backgroundColor: '#111827',
-  },
-
-  emailText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  textDark: {
-    color: '#fff',
-  },
-});
