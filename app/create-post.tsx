@@ -74,7 +74,7 @@ export default function CreatePost() {
         user_id: user.id,
         content,
         image_url: imageUrl,
-      });
+      } as any);
 
       if (error) {
         Alert.alert('Error', 'No se pudo crear el post');

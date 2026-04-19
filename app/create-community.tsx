@@ -41,10 +41,10 @@ const GYM_EMOJIS = [
 
 const GroupSchema = z.object({
   name: z.string().min(3, 'Mínimo 3 caracteres').max(80, 'Máximo 80 caracteres'),
-  description: z.string().max(300, 'Máximo 300 caracteres').optional().default(''),
-  isPublic: z.boolean().default(true),
-  emoji: z.string().default(() => GYM_EMOJIS[Math.floor(Math.random() * GYM_EMOJIS.length)]),
-  imageUri: z.string().nullable().default(null),
+  description: z.string().max(300, 'Máximo 300 caracteres'),
+  isPublic: z.boolean(),
+  emoji: z.string(),
+  imageUri: z.string().nullable(),
 });
 
 type GroupFormValues = z.infer<typeof GroupSchema>;
