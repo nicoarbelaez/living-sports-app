@@ -26,7 +26,9 @@ export default function CreatePost() {
 
   const pickImage = async () => {
     const items = await handlePickFromGallery();
-    if (items.length > 0) setImage(items[0].uri);
+    if (items.length > 0) {
+      setImage(items[0].uri);
+    }
   };
 
   const handleCreatePost = async () => {
@@ -45,12 +47,18 @@ export default function CreatePost() {
       if (image) {
         const fileName = `${user.id}-${Date.now()}.jpg`;
 
-        const base64 = await FileSystem.readAsStringAsync(image, { encoding: 'base64' });
+        const base64 = await FileSystem.readAsStringAsync(image, {
+          encoding: 'base64',
+        });
+
         const arrayBuffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
         const { error: uploadError } = await supabase.storage
           .from('post')
-          .upload(fileName, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
+          .upload(fileName, arrayBuffer, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
 
         if (uploadError) {
           Alert.alert('Error', 'No se pudo subir la imagen');
@@ -58,6 +66,7 @@ export default function CreatePost() {
         }
 
         const { data } = supabase.storage.from('post').getPublicUrl(fileName);
+
         imageUrl = data.publicUrl;
       }
 
@@ -118,7 +127,11 @@ export default function CreatePost() {
           <View className="mb-4">
             <Image
               source={{ uri: image }}
-              style={{ height: 208, width: '100%', borderRadius: 16 }}
+              style={{
+                height: 208,
+                width: '100%',
+                borderRadius: 16,
+              }}
               contentFit="cover"
             />
           </View>

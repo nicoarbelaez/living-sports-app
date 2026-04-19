@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, FlatList, SafeAreaView } from 'react-native';
-import { Image as ImageIcon, X } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { Image as ImageIcon } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useMediaPicker } from '@/hooks/useMediaPicker';
 import ActionSheet from '@/components/ui/action-sheet';
+import BottomSheetComponent from '@/components/ui/bottom-sheet';
 
 const GYM_EMOJIS = [
   '🏋️',
@@ -110,35 +111,28 @@ export default function GroupImagePicker({
         ]}
       />
 
-      {/* Emoji Picker Modal */}
-      <Modal visible={showEmojiPicker} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
-          <View className="mb-4 flex-row items-center justify-between px-4 pt-4">
-            <Text className="text-lg font-semibold text-gray-900 dark:text-white">
-              Selecciona emoji
-            </Text>
-            <TouchableOpacity onPress={() => setShowEmojiPicker(false)}>
-              <X size={24} color="#64748b" />
+      {/* Emoji Picker Bottom Sheet */}
+      <BottomSheetComponent
+        visible={showEmojiPicker}
+        title="Selecciona emoji"
+        onClose={() => setShowEmojiPicker(false)}
+        config={{ snapPoints: ['50%', '90%'] }}
+      >
+        <FlatList
+          data={GYM_EMOJIS}
+          keyExtractor={(item) => item}
+          numColumns={5}
+          scrollEnabled
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => handleChooseEmoji(item)}
+              className="flex-1 items-center justify-center py-3"
+            >
+              <Text className="text-5xl">{item}</Text>
             </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={GYM_EMOJIS}
-            keyExtractor={(item) => item}
-            numColumns={5}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
-            scrollEnabled
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => handleChooseEmoji(item)}
-                className="flex-1 items-center justify-center py-4"
-              >
-                <Text className="text-5xl">{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        </SafeAreaView>
-      </Modal>
+          )}
+        />
+      </BottomSheetComponent>
     </>
   );
 }
