@@ -63,11 +63,13 @@ export default function CommunityDetailsScreen() {
       {/* Hero Header */}
       <View className="mb-4 bg-white pb-6 shadow-sm dark:bg-gray-900">
         <View className="relative h-36 bg-blue-100 dark:bg-blue-900/30">
-          <Image
-            source={{ uri: community.avatarUrl }}
-            className="absolute inset-0 h-full w-full opacity-40"
-            blurRadius={10}
-          />
+          {community.avatarUrl && (
+            <Image
+              source={{ uri: community.avatarUrl }}
+              className="absolute inset-0 h-full w-full opacity-40"
+              blurRadius={10}
+            />
+          )}
           <View className="absolute inset-0 bg-black/40" />
           <TouchableOpacity
             onPress={() => router.back()}
@@ -78,10 +80,16 @@ export default function CommunityDetailsScreen() {
         </View>
 
         <View className="-mt-10 items-center px-6">
-          <Image
-            source={{ uri: community.avatarUrl }}
-            className="h-20 w-20 rounded-full border-4 border-white dark:border-gray-900"
-          />
+          {community.avatarUrl ? (
+            <Image
+              source={{ uri: community.avatarUrl }}
+              className="h-20 w-20 rounded-full border-4 border-white dark:border-gray-900"
+            />
+          ) : (
+            <View className="h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-gray-200 dark:border-gray-900 dark:bg-gray-700">
+              <Text className="text-4xl">{community.emoji || '🏋️'}</Text>
+            </View>
+          )}
           <Text className="mt-2 text-2xl font-black text-black dark:text-white">
             {community.name}
           </Text>
