@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { MotiView, MotiText, AnimatePresence } from 'moti';
-
-/* TYPES Y DATA IGUAL (NO TOCADO) */
+import { useRouter } from 'expo-router';
 
 type Post = {
   id: string;
@@ -54,8 +53,7 @@ const featuredExercises = [
 export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
-
-  const [started, setStarted] = useState(false);
+  const router = useRouter();
 
   const displayName =
     user?.user_metadata?.full_name ||
@@ -95,7 +93,6 @@ export default function ProfileScreen() {
         }}
         ListHeaderComponent={
           <View>
-            {/* PROFILE CARD */}
             <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-900">
               <Image
                 source={{ uri: avatar }}
@@ -113,7 +110,6 @@ export default function ProfileScreen() {
               </Text>
             </View>
 
-            {/* STATS */}
             <View className="mt-6 flex-row justify-between gap-3">
               <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
                 <Text className="text-lg font-bold text-black dark:text-white">
@@ -133,7 +129,6 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* EJERCICIOS */}
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Ejercicios destacados
             </Text>
@@ -166,7 +161,6 @@ export default function ProfileScreen() {
               ))}
             </ScrollView>
 
-            {/*RUTINA SEMANAL*/}
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Rutina semanal
             </Text>
@@ -263,6 +257,14 @@ export default function ProfileScreen() {
                   </View>
 
                   <TouchableOpacity
+                    onPress={() => {
+                      if (!item.rest) {
+                        router.push({
+                          pathname: '/routine/[day]',
+                          params: { day: item.day },
+                        });
+                      }
+                    }}
                     className={`mt-8 items-center rounded-full py-3 ${
                       item.rest ? 'bg-gray-300 dark:bg-gray-700' : 'bg-blue-600'
                     }`}
