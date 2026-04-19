@@ -17,9 +17,8 @@ function mapGroupToCommunity(group: Group): Community {
     id: group.id,
     name: group.name,
     followersCount: group.membersCount,
-    avatarUrl:
-      group.imageUrl ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(group.emoji || group.name)}&background=random`,
+    avatarUrl: group.imageUrl ?? null,
+    emoji: group.emoji || undefined,
     isFeatured: false,
   };
 }
@@ -145,8 +144,10 @@ export default function Comunidades() {
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     scrollEnabled
+                    nestedScrollEnabled
+                    contentContainerStyle={{ paddingRight: 12 }}
                     renderItem={({ item }) => (
-                      <View className="mr-3">
+                      <View className="mr-3 w-80">
                         <CommunityCard community={item} />
                       </View>
                     )}
