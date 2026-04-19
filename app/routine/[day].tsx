@@ -1,5 +1,13 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  Modal,
+  Pressable,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,94 +17,70 @@ const routines: any = {
     title: 'Push Day',
     muscles: 'Pecho • Tríceps • Hombro',
     exercises: [
-      { name: 'Press banca', sets: '4x8', rest: '90s descanso entre serie', level: 'hard' },
-      { name: 'Press inclinado', sets: '3x10', rest: '90s descanso entre serie', level: 'medium' },
-      { name: 'Fondos', sets: '3x12', rest: '60s descanso entre serie', level: 'easy' },
+      { name: 'Press banca', sets: '4x8', rest: '90s', level: 'hard' },
+      { name: 'Press inclinado', sets: '3x10', rest: '90s', level: 'medium' },
+      { name: 'Fondos', sets: '3x12', rest: '60s', level: 'easy' },
     ],
   },
   MAR: {
     title: 'Pull Day',
     muscles: 'Espalda • Bíceps',
     exercises: [
-      { name: 'Dominadas', sets: '4x8', rest: '90s descanso entre serie', level: 'hard' },
-      { name: 'Remo barra', sets: '3x10', rest: '90s descanso entre serie', level: 'medium' },
-      { name: 'Curl bíceps', sets: '3x12', rest: '60s descanso entre serie', level: 'easy' },
+      { name: 'Dominadas', sets: '4x8', rest: '90s', level: 'hard' },
+      { name: 'Remo barra', sets: '3x10', rest: '90s', level: 'medium' },
+      { name: 'Curl bíceps', sets: '3x12', rest: '60s', level: 'easy' },
     ],
   },
   MIE: {
-    title: 'Leg Day',
-    muscles: 'Pierna • Glúteo',
+    title: 'Core + Cardio',
+    muscles: 'Abdomen • Resistencia',
     exercises: [
-      { name: 'Sentadilla', sets: '4x8', rest: '120s descanso entre serie', level: 'hard' },
-      { name: 'Prensa', sets: '3x12', rest: '90s descanso entre serie', level: 'medium' },
-      { name: 'Extensiones', sets: '3x15', rest: '60s descanso entre serie', level: 'easy' },
+      { name: 'Crunch abdominal', sets: '4x15', rest: '45s', level: 'easy' },
+      { name: 'Plancha', sets: '4x40s', rest: '45s', level: 'medium' },
+      { name: 'Mountain climbers', sets: '3x30s', rest: '30s', level: 'hard' },
     ],
   },
   JUE: {
     title: 'Push Ligero',
     muscles: 'Técnica • Volumen',
     exercises: [
-      { name: 'Press mancuernas', sets: '3x12', rest: '60s descanso entre serie', level: 'easy' },
-      {
-        name: 'Elevaciones laterales',
-        sets: '3x15',
-        rest: '45s descanso entre serie',
-        level: 'easy',
-      },
-      {
-        name: 'Extensión tríceps',
-        sets: '3x12',
-        rest: '60s descanso entre serie',
-        level: 'medium',
-      },
+      { name: 'Press mancuernas', sets: '3x12', rest: '60s', level: 'easy' },
+      { name: 'Elevaciones laterales', sets: '3x15', rest: '45s', level: 'easy' },
+      { name: 'Extensión tríceps', sets: '3x12', rest: '60s', level: 'medium' },
     ],
   },
   VIE: {
     title: 'Pull Intenso',
     muscles: 'Espalda • Fuerza',
     exercises: [
-      { name: 'Peso muerto', sets: '4x6', rest: '120s descanso entre serie', level: 'hard' },
-      { name: 'Remo con barra', sets: '4x8', rest: '90s descanso entre serie', level: 'hard' },
-      { name: 'Curl martillo', sets: '3x10', rest: '60s descanso entre serie', level: 'medium' },
+      { name: 'Peso muerto', sets: '4x6', rest: '120s', level: 'hard' },
+      { name: 'Remo con barra', sets: '4x8', rest: '90s', level: 'hard' },
+      { name: 'Curl martillo', sets: '3x10', rest: '60s', level: 'medium' },
     ],
   },
   SAB: {
-    title: 'Pierna Pro',
-    muscles: 'Cuádriceps • Femoral',
+    title: 'Full Body',
+    muscles: 'Cuerpo completo',
     exercises: [
-      { name: 'Sentadilla frontal', sets: '4x8', rest: '120s descanso entre serie', level: 'hard' },
-      { name: 'Curl femoral', sets: '3x12', rest: '90s descanso entre serie', level: 'medium' },
-      { name: 'Pantorrilla', sets: '4x15', rest: '60s descanso entre serie', level: 'easy' },
+      { name: 'Burpees', sets: '4x12', rest: '60s', level: 'hard' },
+      { name: 'Sentadilla goblet', sets: '3x12', rest: '60s', level: 'medium' },
+      { name: 'Flexiones', sets: '3x15', rest: '45s', level: 'easy' },
     ],
-  },
-  DOM: {
-    title: 'Descanso',
-    muscles: 'Recuperación total',
-    restDay: true,
   },
 };
 
 const difficultyStyles: any = {
-  easy: {
-    label: 'Fácil',
-    bg: 'bg-green-100',
-    text: 'text-green-600',
-  },
-  medium: {
-    label: 'Intermedio',
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-600',
-  },
-  hard: {
-    label: 'Difícil',
-    bg: 'bg-red-100',
-    text: 'text-red-600',
-  },
+  easy: { label: 'Fácil', bg: 'bg-green-100', text: 'text-green-600' },
+  medium: { label: 'Intermedio', bg: 'bg-yellow-100', text: 'text-yellow-600' },
+  hard: { label: 'Difícil', bg: 'bg-red-100', text: 'text-red-600' },
 };
 
 export default function RoutineScreen() {
   const { day } = useLocalSearchParams();
   const router = useRouter();
+
+  const [selectedExercise, setSelectedExercise] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const routine = routines[day as string];
 
@@ -131,11 +115,16 @@ export default function RoutineScreen() {
             const diff = difficultyStyles[ex.level];
 
             return (
-              <View
+              <TouchableOpacity
                 key={index}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setSelectedExercise(ex);
+                  setModalVisible(true);
+                }}
                 className="mb-4 flex-row items-center rounded-2xl bg-white p-4 shadow-sm dark:bg-zinc-900"
               >
-                <View className="mr-4 h-11 w-11 items-center justify-center rounded-full bg-blue-600 shadow">
+                <View className="mr-4 h-11 w-11 items-center justify-center rounded-full bg-blue-600">
                   <Text className="font-bold text-white">{index + 1}</Text>
                 </View>
 
@@ -151,18 +140,43 @@ export default function RoutineScreen() {
                 <View className={`rounded-full px-3 py-1 ${diff.bg}`}>
                   <Text className={`text-xs font-semibold ${diff.text}`}>{diff.label}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
 
           <TouchableOpacity
-            className="mt-6 mb-10 items-center rounded-full bg-black py-4 shadow-lg dark:bg-white"
+            className="mt-6 mb-10 items-center rounded-full bg-black py-4 dark:bg-white"
             onPress={() => router.back()}
           >
             <Text className="font-bold text-white dark:text-black">Volver</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* MODAL BOTTOM SHEET */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <Pressable
+          className="flex-1 justify-end bg-black/40"
+          onPress={() => setModalVisible(false)}
+        >
+          <View className="rounded-t-3xl bg-white p-6 dark:bg-zinc-900">
+            <View className="mb-3 h-1 w-12 self-center rounded-full bg-gray-300" />
+
+            <Text className="text-lg font-bold text-black dark:text-white">
+              {selectedExercise?.name}
+            </Text>
+
+            <Text className="mt-4 text-sm text-gray-500">Esta opción se está implementando...</Text>
+
+            <TouchableOpacity
+              className="mt-6 items-center rounded-full bg-blue-600 py-3"
+              onPress={() => setModalVisible(false)}
+            >
+              <Text className="font-bold text-white">Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
