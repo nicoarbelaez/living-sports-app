@@ -6,7 +6,10 @@
       "Bash(git checkout:*)",
       "Bash(npx expo:*)",
       "Bash(npx tsc:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix: usar nueva API de ImageManipulator \\(no deprecada\\) *)",
+      "Bash(git commit -m 'chore: actualizar dependencias *)"
     ]
   }
 }
