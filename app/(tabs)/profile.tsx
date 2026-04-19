@@ -31,22 +31,23 @@ const featuredExercises = [
     id: '1',
     name: 'Press Banca',
     muscle: 'Pecho',
-    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e',
-    pr: '80 kg',
+    image:
+      'https://www.myprotein.es/images?url=https://blogscdn.thehut.net/app/uploads/sites/450/2016/09/bench-press_1595337964_1595417256.jpg&auto=avif&width=700&fit=crop',
+    pr: '135 kg',
   },
   {
     id: '2',
     name: 'Sentadilla',
     muscle: 'Pierna',
-    image: 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e',
-    pr: '120 kg',
+    image: 'https://media.hearstapps.com/loop/coleman-ronnie-1645715649.mp4/poster.jpg',
+    pr: '350 kg',
   },
   {
     id: '3',
     name: 'Curl Bíceps',
     muscle: 'Bíceps',
-    image: 'https://images.unsplash.com/photo-1598971639058-9993f6f5e6d1',
-    pr: '25 kg',
+    image: 'https://intowellness.in/wp-content/uploads/2024/10/Into_Wellness_Biceps_Curl.jpg',
+    pr: '60 kg',
   },
 ];
 
