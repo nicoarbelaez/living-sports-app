@@ -316,7 +316,7 @@ export default function RoutineScreen() {
 
             {selectedExercise?.video && (
               <TouchableOpacity
-                className="mt-6 items-center rounded-full bg-black py-3 dark:bg-blue-500"
+                className="mt-6 items-center rounded-full bg-blue-500 py-3 dark:bg-white"
                 onPress={() => Linking.openURL(selectedExercise.video)}
               >
                 <Text className="font-bold text-white dark:text-black">Ver video demostración</Text>
@@ -324,7 +324,7 @@ export default function RoutineScreen() {
             )}
 
             <TouchableOpacity
-              className="mt-4 items-center rounded-full bg-black py-3 dark:bg-white"
+              className="mt-4 items-center rounded-full bg-black py-3 dark:bg-blue-500"
               onPress={() => setModalVisible(false)}
             >
               <Text className="font-bold text-white dark:text-black">Cerrar</Text>
