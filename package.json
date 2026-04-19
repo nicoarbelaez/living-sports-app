@@ -57,7 +57,6 @@
     "@rn-primitives/aspect-ratio": "^1.4.0",
     "@shopify/flash-list": "2.0.2",
     "@supabase/supabase-js": "^2.99.1",
-    "@types/react": "~19.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -97,7 +96,6 @@
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
     "tailwind-merge": "^3.5.0",
-    "typescript": "~5.3.3",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
