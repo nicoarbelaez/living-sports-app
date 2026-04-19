@@ -182,7 +182,7 @@ export default function ProfileScreen() {
                   rest: false,
                 },
                 {
-                  day: 'MIÉ',
+                  day: 'MIE',
                   full: 'Miércoles',
                   routine: 'Leg Day',
                   desc: 'Pierna • Glúteo',
@@ -203,7 +203,7 @@ export default function ProfileScreen() {
                   rest: false,
                 },
                 {
-                  day: 'SÁB',
+                  day: 'SAB',
                   full: 'Sábado',
                   routine: 'Pierna Pro',
                   desc: 'Cuádriceps • Femoral',
