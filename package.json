@@ -56,6 +56,7 @@
     "@react-navigation/material-top-tabs": "^7.4.23",
     "@react-navigation/native": "^7.1.8",
     "@rn-primitives/aspect-ratio": "^1.4.0",
+    "@rn-primitives/avatar": "^1.4.0",
     "@shopify/flash-list": "2.0.2",
     "@supabase/supabase-js": "^2.99.1",
     "class-variance-authority": "^0.7.1",
