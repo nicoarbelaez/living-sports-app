@@ -81,29 +81,16 @@ export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
 
-  const [username, setUsername] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [bio, setBio] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [started, setStarted] = useState(false);
 
-  const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Usuario';
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split('@')[0] ||
+    'Usuario';
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('username, avatar_url, bio')
-      .eq('id', user.id)
-      .single();
-
-    if (data) {
-      setUsername(data.username || '');
-      setAvatarUrl(data.avatar_url || '');
-      setBio(data.bio || '');
-    }
-  };
+  const avatar = user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User';
 
   const fetchPosts = async () => {
     if (!user) return;
@@ -113,18 +100,13 @@ export default function ProfileScreen() {
       .select('id, content, created_at, image_url')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-
-    if (data) setPosts(data);
   };
 
   useFocusEffect(
     useCallback(() => {
-      fetchProfile();
       fetchPosts();
     }, [user])
   );
-
-  const avatar = avatarUrl || 'https://ui-avatars.com/api/?name=User';
 
   const displayPosts = posts.length > 0 ? posts : mockPosts;
 
@@ -164,13 +146,13 @@ export default function ProfileScreen() {
               />
 
               <Text className="mt-3 text-xl font-bold text-black dark:text-white">
-                {username || fallbackName}
+                {displayName}
               </Text>
 
               <Text className="text-xs text-blue-600">POWERLIFTER • CALI</Text>
 
               <Text className="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
-                {bio || 'Sin biografía aún'}
+                Sin biografía aún
               </Text>
             </View>
 
@@ -194,7 +176,7 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* RUTINAS DESTACADAS (NO TOCADO, SOLO DARK MODE) */}
+            {/* RUTINAS DESTACADAS */}
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Rutinas destacadas
             </Text>
@@ -246,7 +228,7 @@ export default function ProfileScreen() {
               ))}
             </ScrollView>
 
-            {/* EJERCICIOS DESTACADOS (SOLO DARK FIX) */}
+            {/* EJERCICIOS */}
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Ejercicios destacados
             </Text>
@@ -279,7 +261,6 @@ export default function ProfileScreen() {
               ))}
             </ScrollView>
 
-            {/* POSTS TITLE */}
             <Text className="mt-8 mb-4 text-lg font-bold text-black dark:text-white">Posts</Text>
           </View>
         }
