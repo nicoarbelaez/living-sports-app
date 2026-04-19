@@ -1,0 +1,146 @@
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Alert, Modal, FlatList, SafeAreaView } from 'react-native';
+import { Image as ImageIcon, Camera, SmileIcon, X } from 'lucide-react-native';
+import { Image } from 'expo-image';
+import { useMediaPicker } from '@/hooks/useMediaPicker';
+
+const GYM_EMOJIS = [
+  '🏋️',
+  '💪',
+  '🤸',
+  '🏃',
+  '🚴',
+  '⚽',
+  '🏀',
+  '🎯',
+  '🏊',
+  '🥊',
+  '🏆',
+  '⚡',
+  '🔥',
+  '🎽',
+  '🏅',
+];
+
+export interface GroupImagePickerProps {
+  imageUri: string | null;
+  emoji: string;
+  onImageChange: (uri: string | null) => void;
+  onEmojiChange: (emoji: string) => void;
+  disabled?: boolean;
+}
+
+export default function GroupImagePicker({
+  imageUri,
+  emoji,
+  onImageChange,
+  onEmojiChange,
+  disabled = false,
+}: GroupImagePickerProps) {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const { handlePickFromGallery, handlePickFromCamera } = useMediaPicker({
+    multiple: false,
+    allowVideo: false,
+    resizeWidth: 400,
+    compressQuality: 0.8,
+  });
+
+  const handleChooseFromGallery = async () => {
+    const items = await handlePickFromGallery();
+    if (items.length > 0) {
+      onImageChange(items[0].uri);
+      onEmojiChange('');
+    }
+  };
+
+  const handleChooseFromCamera = async () => {
+    const item = await handlePickFromCamera();
+    if (item) {
+      onImageChange(item.uri);
+      onEmojiChange('');
+    }
+  };
+
+  const handleChooseEmoji = (selected: string) => {
+    onImageChange(null);
+    onEmojiChange(selected);
+    setShowEmojiPicker(false);
+  };
+
+  const showOptions = () => {
+    Alert.alert('Cambiar imagen del grupo', undefined, [
+      {
+        text: '📷 Galería',
+        onPress: handleChooseFromGallery,
+      },
+      {
+        text: '📸 Cámara',
+        onPress: handleChooseFromCamera,
+      },
+      {
+        text: '😀 Emoji',
+        onPress: () => setShowEmojiPicker(true),
+      },
+      {
+        text: 'Cancelar',
+        style: 'cancel',
+      },
+    ]);
+  };
+
+  return (
+    <>
+      <TouchableOpacity onPress={showOptions} disabled={disabled} activeOpacity={0.7}>
+        <View className="mb-4 h-32 w-32 self-center overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} />
+          ) : (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-4xl">{emoji || '🏋️'}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      <View className="flex-row items-center justify-center gap-2">
+        <TouchableOpacity
+          onPress={showOptions}
+          disabled={disabled}
+          className="flex-row items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 dark:bg-slate-700"
+        >
+          <ImageIcon size={16} color="#64748b" />
+          <Text className="text-xs font-medium text-slate-600 dark:text-slate-300">Cambiar</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal visible={showEmojiPicker} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
+          <View className="mb-4 flex-row items-center justify-between px-4 pt-4">
+            <Text className="text-lg font-semibold text-gray-900 dark:text-white">
+              Selecciona emoji
+            </Text>
+            <TouchableOpacity onPress={() => setShowEmojiPicker(false)}>
+              <X size={24} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={GYM_EMOJIS}
+            keyExtractor={(item) => item}
+            numColumns={5}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            scrollEnabled
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => handleChooseEmoji(item)}
+                className="flex-1 items-center justify-center py-4"
+              >
+                <Text className="text-5xl">{item}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </SafeAreaView>
+      </Modal>
+    </>
+  );
+}

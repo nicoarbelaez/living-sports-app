@@ -6,7 +6,9 @@
       "Bash(git checkout:*)",
       "Bash(npx expo:*)",
       "Bash(npx tsc:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: sistema de grupos con comunidades reales *)"
     ]
   }
 }
