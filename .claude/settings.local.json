@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx supabase:*)",
+      "Bash(ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx expo:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: sistema de grupos con comunidades reales *)",
+      "Bash(git commit -m 'refactor: reemplazar Alert por ActionSheet modal reutilizable *)",
+      "Bash(npm install *)",
+      "Bash(git commit -m 'refactor: usar @gorhom/bottom-sheet para todas las modales *)",
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(cat)",
+      "Bash(git commit -m *)",
+      "Bash(git push *)",
+      "Bash(gh pr *)"
+    ]
+  }
+}

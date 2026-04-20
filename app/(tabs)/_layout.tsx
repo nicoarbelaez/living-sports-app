@@ -1,62 +1,52 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { Home, Users, User, Compass } from 'lucide-react-native';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View } from 'react-native';
+import { useTheme } from '@/providers/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FloatingNavbar } from '@/components/floating-navbar';
+import { MaterialTopTabs } from '@/components/swipable-tabs';
+import HeaderActions from '@/components/header';
+import { useSegments } from 'expo-router';
 
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const segments = useSegments();
+  const current = segments[segments.length - 1];
+
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  const screen =
+    current === 'comunidades' ? 'comunidades' : current === 'profile' ? 'profile' : 'home';
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
+    <View className={isDark ? 'flex-1 bg-black' : 'flex-1 bg-gray-50'}>
+      {/* HEADER */}
+      <SafeAreaView edges={['top']} className={isDark ? 'bg-black' : 'bg-white'}>
+        <View
+          className={
+            isDark
+              ? 'h-14 flex-row items-center justify-between border-b border-gray-800 px-4'
+              : 'h-14 flex-row items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm'
+          }
+        >
+          <View />
+          <HeaderActions screen={screen} />
+        </View>
+      </SafeAreaView>
 
-        tabBarButton: HapticTab,
-
-        tabBarActiveTintColor: theme.tint,
-        tabBarInactiveTintColor: theme.icon,
-
-        tabBarStyle: {
-          backgroundColor: theme.background,
-          borderTopColor: 'transparent',
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'HOME',
-          tabBarIcon: ({ color, size }) => (
-            <Home color={color} size={size ?? 24} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="comunidades"
-        options={{
-          title: 'COMUNIDADES',
-          tabBarIcon: ({ color, size }) => (
-            <Users color={color} size={size ?? 24} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'PERFIL',
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={size ?? 24} />
-          ),
-        }}
-      />
-    </Tabs>
+      {/* BODY */}
+      <View className={isDark ? 'flex-1 bg-gray-900' : 'flex-1 bg-gray-100'}>
+        <MaterialTopTabs
+          tabBar={(props) => <FloatingNavbar {...props} />}
+          screenOptions={{
+            tabBarShowLabel: false,
+            tabBarStyle: { height: 0, position: 'absolute', top: -100 },
+          }}
+        >
+          <MaterialTopTabs.Screen name="index" />
+          <MaterialTopTabs.Screen name="comunidades" />
+          <MaterialTopTabs.Screen name="profile" />
+        </MaterialTopTabs>
+      </View>
+    </View>
   );
 }

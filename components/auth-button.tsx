@@ -1,59 +1,52 @@
-import React, { useState, ReactNode } from "react";
-import { Pressable, View } from "react-native";
-import { MotiView, MotiText } from "moti";
-import { useAuth } from "@/providers/AuthProvider";
+import React, { useState } from 'react';
+import { MotiText, MotiView } from 'moti';
+import { Button, type ButtonProps } from './ui/button';
+import { LucideIcon } from '@/types/icons';
+import { cn } from '@/lib/utils';
 
-export interface AuthButtonProps {
-  icon: ReactNode;
+export type AuthButtonProps = ButtonProps & {
+  icon: LucideIcon;
   text: string;
   onPress: () => void;
-  /**
-   * Additional Tailwind classes for the button container.
-   * e.g., "bg-black" for GitHub or "bg-[#F2F2F7]" for Google.
-   */
-  containerClassName?: string;
-  /**
-   * Additional Tailwind classes for the text.
-   * e.g., "text-white" for GitHub or "text-black" for Google.
-   */
+  loading?: boolean;
+  disabled?: boolean;
   textClassName?: string;
-}
+};
 
 export default function AuthButton({
   icon,
   text,
   onPress,
-  containerClassName = "bg-[#F2F2F7]",
-  textClassName = "text-black",
+  loading = false,
+  disabled = false,
+  textClassName,
+  ...props
 }: AuthButtonProps) {
-  const { isLoading, setIsLoading } = useAuth();
   const [isPressed, setIsPressed] = useState(false);
-  const handleOnPress = () => {
-    setIsLoading(true);
-    onPress();
-  };
 
   return (
     <MotiView
-      animate={{ scale: isPressed ? 0.95 : 1 }}
-      transition={{
-        type: "spring",
-        damping: 10,
-        mass: 0.5,
-      }}>
-      <Pressable
-        onPressIn={() => setIsPressed(true)}
+      animate={{
+        scale: isPressed ? 0.96 : 1,
+        opacity: disabled || loading ? 0.6 : 1,
+      }}
+    >
+      <Button
+        size="lg"
+        onPress={onPress}
+        disabled={disabled}
+        loading={loading}
+        onPressIn={() => {
+          if (!loading && !disabled) setIsPressed(true);
+        }}
         onPressOut={() => setIsPressed(false)}
-        onPress={handleOnPress}
-        disabled={isLoading}>
-        <View
-          className={`w-full h-14 rounded-2xl flex-row items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${containerClassName}`}>
-          <View className="mr-3">{icon}</View>
-          <MotiText className={`text-base font-semibold ${textClassName}`}>
-            {isLoading ? "Cargando..." : text}
-          </MotiText>
-        </View>
-      </Pressable>
+        icon={icon}
+        {...props}
+      >
+        <MotiText className={cn('text-base font-semibold tracking-wide', textClassName)}>
+          {loading ? 'Cargando...' : text}
+        </MotiText>
+      </Button>
     </MotiView>
   );
 }

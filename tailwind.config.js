@@ -1,10 +1,12 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  // NOTE: Update this to include the paths to all files that contain Nativewind classes.
-  content: ["./App.tsx", "./components/**/*.{js,jsx,ts,tsx}", , "./app/**/*.{js,jsx,ts,tsx}"],
-  presets: [require("nativewind/preset")],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
+const config = {
+  // NativeWind v5 preset - includes dark mode support via prefers-color-scheme
+  presets: [require('nativewind/preset')],
+  content: [
+    './app/**/*.{js,jsx,ts,tsx}',
+    './components/**/*.{js,jsx,ts,tsx}',
+    './lib/**/*.{js,jsx,ts,tsx}',
+  ],
 };
+
+module.exports = config;
