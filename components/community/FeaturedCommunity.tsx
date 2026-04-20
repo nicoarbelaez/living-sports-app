@@ -29,10 +29,16 @@ export default function FeaturedCommunity({ community }: { community: Community 
         </View>
 
         <View className="flex-row items-center gap-4">
-          <Image
-            source={{ uri: community.avatarUrl }}
-            className="h-20 w-20 rounded-full border-2 border-blue-500"
-          />
+          {community.avatarUrl ? (
+            <Image
+              source={{ uri: community.avatarUrl }}
+              className="h-20 w-20 rounded-full border-2 border-blue-500"
+            />
+          ) : (
+            <View className="h-20 w-20 items-center justify-center rounded-full border-2 border-blue-500 bg-gray-700">
+              <Text className="text-4xl">{community.emoji || '🏋️'}</Text>
+            </View>
+          )}
           <View className="flex-1">
             <Text className="mb-1 text-xl font-bold text-zinc-100">{community.name}</Text>
             <Text className="mb-3 text-sm text-zinc-400">

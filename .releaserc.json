@@ -1,0 +1,16 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    ["@semantic-release/exec", {
+      "prepareCmd": "jq '.expo.version = \"${nextRelease.version}\"' app.json > tmp.app.json && mv tmp.app.json app.json && npm version ${nextRelease.version} --no-git-tag-version"
+    }],
+    ["@semantic-release/git", {
+      "assets": ["package.json", "package-lock.json", "app.json", "CHANGELOG.md"],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    "@semantic-release/github"
+  ]
+}
