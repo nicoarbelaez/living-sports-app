@@ -108,13 +108,13 @@ export default function ProfileScreen() {
   const fetchPosts = async () => {
     if (!user) return;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('posts')
       .select('id, content, created_at, image_url')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (data) setPosts(data);
+    if (data && !error) setPosts(data as unknown as Post[]);
   };
 
   useFocusEffect(

@@ -158,7 +158,7 @@ export default function EditProfile() {
         username,
         avatar_url: uploadedUrl,
         bio,
-      });
+      } as any);
 
       if (error) {
         Alert.alert('Error', 'No se pudo actualizar');

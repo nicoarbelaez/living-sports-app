@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
-import { Database } from '@/database.types';
+import { Database } from '@/types/database.types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;

@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import 'react-native-reanimated';
 import * as WebBrowser from 'expo-web-browser';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
@@ -87,12 +89,16 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <ScrollProvider>
-        <AuthProvider>
-          <RootLayoutContent />
-        </AuthProvider>
-      </ScrollProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <ThemeProvider>
+          <ScrollProvider>
+            <AuthProvider>
+              <RootLayoutContent />
+            </AuthProvider>
+          </ScrollProvider>
+        </ThemeProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -8,22 +8,29 @@ export interface MediaMetadata {
   bytes: number;
 }
 
+export type UploadSize = 'post' | 'avatar';
+
 const MAX_FILE_SIZE = 5_000_000; // 5 MB
+
+const IMAGE_TRANSFORMS: Record<UploadSize, { transform: string; width: number; height: number }> =
+  {
+    post: { transform: 'c_fill,w_1080,h_1350,g_auto', width: 1080, height: 1350 },
+    avatar: { transform: 'c_fill,w_400,h_400,g_face', width: 400, height: 400 },
+  };
 
 /**
  * Uploads one or more File objects to Cloudinary.
  *
  * @param files   Files to upload.
  * @param subPath Path **relative to** `living-sports/` — e.g. `users/abc/posts` or `groups/xyz/cover`.
- *                The final Cloudinary folder will be `living-sports/<subPath>`.
- *
- * Throws on:
- *  - missing env vars
- *  - file exceeding 5 MB
- *  - unsupported MIME type
- *  - Cloudinary API error
+ * @param size    Transform preset: `'post'` (1080×1350 portrait) or `'avatar'` (400×400 square).
+ *                Defaults to `'post'`.
  */
-export async function uploadMedia(files: File[], subPath: string): Promise<MediaMetadata[]> {
+export async function uploadMedia(
+  files: File[],
+  subPath: string,
+  size: UploadSize = 'post'
+): Promise<MediaMetadata[]> {
   const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
   const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET');
 
@@ -34,7 +41,7 @@ export async function uploadMedia(files: File[], subPath: string): Promise<Media
   const folder = `living-sports/${subPath}`;
 
   return Promise.all(
-    files.map((file) => uploadSingleFile(file, cloudName, uploadPreset, folder))
+    files.map((file) => uploadSingleFile(file, cloudName, uploadPreset, folder, size))
   );
 }
 
@@ -42,7 +49,8 @@ async function uploadSingleFile(
   file: File,
   cloudName: string,
   uploadPreset: string,
-  folder: string
+  folder: string,
+  size: UploadSize
 ): Promise<MediaMetadata> {
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(`El archivo "${file.name || 'subido'}" excede el límite de 5 MB.`);
@@ -75,17 +83,17 @@ async function uploadSingleFile(
 
   const data = await res.json();
 
-  // Apply transformation URL for images: crop to 4:5 portrait (1080×1350)
+  const { transform, width, height } = IMAGE_TRANSFORMS[size];
   let secureUrl: string = data.secure_url;
   if (resourceType === 'image') {
-    secureUrl = secureUrl.replace('/upload/', '/upload/c_fill,w_1080,h_1350,g_auto/');
+    secureUrl = secureUrl.replace('/upload/', `/upload/${transform}/`);
   }
 
   return {
     url: secureUrl,
     public_id: data.public_id,
-    width: resourceType === 'image' ? 1080 : (data.width as number),
-    height: resourceType === 'image' ? 1350 : (data.height as number),
+    width: resourceType === 'image' ? width : (data.width as number),
+    height: resourceType === 'image' ? height : (data.height as number),
     type: resourceType,
     format: data.format as string,
     bytes: data.bytes as number,

@@ -11,13 +11,12 @@ import {
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import * as ImagePicker from 'expo-image-picker';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Image as ImageIcon, Camera, Send, X, Video as VideoIcon } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { getRandomAvatarUrl } from '@/lib/utils';
 import { useProfileStore } from '@/stores/useProfileStore';
+import { useMediaPicker } from '@/hooks/useMediaPicker';
 import type { Post } from '@/types/post';
 
 const MediaItemSchema = z.object({
@@ -64,76 +63,24 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
     defaultValues: { text: '', medias: [] },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'medias',
+  const { fields, append, remove } = useFieldArray({ control, name: 'medias' });
+
+  const { handlePickFromGallery, handlePickFromCamera } = useMediaPicker({
+    maxFiles: 5,
+    allowVideo: true,
+    resizeWidth: 1080,
+    compressQuality: 0.8,
+    multiple: true,
   });
 
   const handlePickMedia = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permiso requerido', 'Se necesita acceso a la galería.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
-      allowsMultipleSelection: true,
-      selectionLimit: 5 - fields.length,
-      quality: 1,
-      base64: false,
-    });
-
-    if (result.canceled || !result.assets?.length) return;
-
-    const processed = await Promise.all(
-      result.assets.map(async (asset) => {
-        const isVideo = asset.type === 'video';
-        let uri = asset.uri;
-
-        if (!isVideo) {
-          const ctx = ImageManipulator.manipulate(asset.uri);
-          ctx.resize({ width: 1080 });
-          const ref = await ctx.renderAsync();
-          const saved = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
-          uri = saved.uri;
-        }
-
-        return { uri, type: (isVideo ? 'video' : 'image') as 'image' | 'video' };
-      })
-    );
-
-    processed.forEach((item) => append(item));
+    const items = await handlePickFromGallery(fields.length);
+    items.forEach((item) => append(item));
   };
 
   const handleTakeMedia = async () => {
-    const camPerm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!camPerm.granted) {
-      Alert.alert('Permiso requerido', 'Se necesita acceso a la cámara.');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images', 'videos'],
-      quality: 1,
-      base64: false,
-    });
-
-    if (result.canceled || !result.assets?.length) return;
-
-    const asset = result.assets[0];
-    const isVideo = asset.type === 'video';
-    let uri = asset.uri;
-
-    if (!isVideo) {
-      const ctx = ImageManipulator.manipulate(asset.uri);
-      ctx.resize({ width: 1080 });
-      const ref = await ctx.renderAsync();
-      const saved = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
-      uri = saved.uri;
-    }
-
-    append({ uri, type: isVideo ? 'video' : 'image' });
+    const item = await handlePickFromCamera();
+    if (item) append(item);
   };
 
   const onSubmit = async (values: PostFormValues) => {
