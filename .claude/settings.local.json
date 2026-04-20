@@ -15,7 +15,9 @@
       "Bash(npm run *)",
       "Bash(npx *)",
       "Bash(cat)",
-      "Bash(git commit -m *)"
+      "Bash(git commit -m *)",
+      "Bash(git push *)",
+      "Bash(gh pr *)"
     ]
   }
 }
