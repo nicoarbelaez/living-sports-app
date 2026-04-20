@@ -1,9 +1,7 @@
-Este archivo proporciona orientación a Claude Code (claude.ai/code) al trabajar con código en este repositorio.
-
 # Comandos
 
 ```bash
-npm run start        # Inicia el servidor de desarrollo de Expo
+npm run start        # Nunca usar
 npm run android      # Ejecuta en Android
 npm run lint         # ESLint
 npm run format       # Prettier (con Tailwind plugin)
@@ -33,7 +31,7 @@ La app funciona únicamente para **Android**.
 
 # Arquitectura
 
-**Living Sports** es una red social de fitness donde los usuarios:
+**Living Sports** es MVP de una red social de fitness donde los usuarios:
 
 * Publican entrenamientos
 * Comparten rutinas
