@@ -17,7 +17,11 @@
       "Bash(cat)",
       "Bash(git commit -m *)",
       "Bash(git push *)",
-      "Bash(gh pr *)"
+      "Bash(gh pr *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git pull *)",
+      "Bash(npm ls *)",
+      "Bash(git restore *)"
     ]
   }
 }
