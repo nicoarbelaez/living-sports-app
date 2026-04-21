@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Pressable, TextInput, Text, useColorScheme } from 'react-native';
 import { Search, Bell, Settings, ArrowLeft, Pencil, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { useNotificationStore } from '@/features/notifications/stores/useNotificationStore';
 
 type Props = {
   screen: 'home' | 'comunidades' | 'profile';

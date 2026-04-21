@@ -11,7 +11,7 @@ import {
   ArrowLeft,
   Clock,
 } from 'lucide-react-native';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { useNotificationStore } from '@/features/notifications/stores/useNotificationStore';
 import type { NotificationType } from '@/types/notification';
 
 // ─── Icon + color map ─────────────────────────────────────────────────────────

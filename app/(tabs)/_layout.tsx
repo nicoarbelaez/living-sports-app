@@ -2,9 +2,9 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTheme } from '@/providers/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FloatingNavbar } from '@/components/floating-navbar';
-import { MaterialTopTabs } from '@/components/swipable-tabs';
-import HeaderActions from '@/components/header';
+import { FloatingNavbar } from '@/components/shared/floating-navbar';
+import { MaterialTopTabs } from '@/components/shared/swipable-tabs';
+import HeaderActions from '@/components/shared/header';
 import { useSegments } from 'expo-router';
 
 export default function TabsLayout() {

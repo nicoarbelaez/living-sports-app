@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { View, Image, ImageBackground, ColorValue, useColorScheme } from 'react-native';
+import { View, Image } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Mail, Github } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText } from 'moti';
 import { supabase } from '@/lib/supabase';
-import AuthButton, { AuthButtonProps } from '@/components/auth-button';
+import AuthButton, { AuthButtonProps } from '@/components/shared/auth-button';
 import type { Provider } from '@supabase/supabase-js';
 import { makeRedirectUri } from 'expo-auth-session';
-import ThemeToggle from '@/components/theme-toggle';
+import ThemeToggle from '@/components/shared/theme-toggle';
 import { LucideIcon } from '@/types/icons';
 
 type LoginButtonProps = {
@@ -19,12 +18,6 @@ type LoginButtonProps = {
 };
 
 const LoginScreen = () => {
-  const isDark = useColorScheme() === 'dark';
-
-  const bgImage = {
-    uri: 'https://img.freepik.com/foto-gratis/alegre-deportista-posa-fotografo-club-gimnasia-oscuro_613910-14470.jpg?semt=ais_incoming&w=740&q=80',
-  };
-
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
   const handleProviderLogin = async (provider: Provider) => {
@@ -76,14 +69,6 @@ const LoginScreen = () => {
         textClassName="dark:text-white text-xl"
       />
     );
-  };
-
-  const getGradientColors = (isDark: boolean): [ColorValue, ColorValue, ...ColorValue[]] => {
-    if (isDark) {
-      return ['rgb(24, 24, 27)', 'rgba(24, 24, 27,0.8)', 'rgba(24, 24, 27,0.3)'];
-    }
-
-    return ['rgb(255, 255, 255)', 'rgba(134, 134, 140,0.8)', 'rgba(24, 24, 27,0.2)'];
   };
 
   return (

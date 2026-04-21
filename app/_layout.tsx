@@ -13,8 +13,8 @@ import { ScrollProvider } from '@/providers/scroll-context';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/providers/theme';
-import { useProfileSync } from '@/hooks/useProfileSync';
-import { usePostStore } from '@/stores/usePostStore';
+import { useProfileSync } from '@/features/profile/hooks/useProfileSync';
+import { usePostStore } from '@/features/feed/stores/usePostStore';
 
 WebBrowser.maybeCompleteAuthSession();
 

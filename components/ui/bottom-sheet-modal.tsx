@@ -1,6 +1,6 @@
 import React, { ReactNode, useMemo, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { BottomSheetModal, BottomSheetView, useBottomSheetInternal } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
 
 export interface BottomSheetModalConfig {
@@ -62,7 +62,10 @@ export default function BottomSheetModalComponent({
       onDismiss={handleClose}
       handleIndicatorStyle={{ backgroundColor: '#cbd5e1', height: 4, width: 40 }}
       handleStyle={{ backgroundColor: 'transparent' }}
-      backdropComponent={({ animatedIndex, animatedPosition }) => (
+      backdropComponent={({
+        animatedIndex: _animatedIndex,
+        animatedPosition: _animatedPosition,
+      }) => (
         <TouchableOpacity
           style={{
             position: 'absolute',

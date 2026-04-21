@@ -5,6 +5,8 @@ import { useAuth } from '@/providers/AuthProvider';
 import Podium from '@/components/competition/Podium';
 import RankingRow from '@/components/competition/RankingRow';
 import type { RankingEntry } from '@/types/competition';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 type RankingFilter = 'total' | 'weekly';
 
@@ -73,24 +75,20 @@ export default function RankingTab({ groupId }: { groupId: string }) {
       ListHeaderComponent={
         <View>
           {/* Toggle */}
-          <View className="mt-4 mb-2 flex-row self-center rounded-full bg-gray-100 p-1 dark:bg-gray-800">
+          <View className="mt-4 mb-2 flex-row gap-2 self-center p-1">
             {(['total', 'weekly'] as RankingFilter[]).map((f) => (
-              <TouchableOpacity
-                key={f}
-                onPress={() => setFilter(f)}
-                className={`rounded-full px-5 py-1.5 ${
-                  filter === f ? 'bg-white shadow-sm dark:bg-gray-700' : ''
-                }`}
-              >
-                <Text
-                  className={`text-sm font-semibold ${
-                    filter === f
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-500 dark:text-gray-400'
-                  }`}
+              <TouchableOpacity key={f} onPress={() => setFilter(f)}>
+                <Badge
+                  variant="default"
+                  className={cn(
+                    'px-5 py-1.5 font-semibold',
+                    filter === f ? 'bg-white shadow-sm dark:bg-gray-700' : 'bg-transparent'
+                  )}
                 >
-                  {f === 'total' ? 'Total' : 'Esta semana'}
-                </Text>
+                  <Text className={cn(filter === f ? 'text-primary' : 'text-muted-foreground')}>
+                    {f === 'total' ? 'Total' : 'Esta semana'}
+                  </Text>
+                </Badge>
               </TouchableOpacity>
             ))}
           </View>

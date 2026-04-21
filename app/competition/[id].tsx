@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Upload } from 'lucide-react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { useTheme } from '@/providers/theme';
-import { useCompetitionDetail } from '@/hooks/useCompetitionDetail';
+import { useCompetitionDetail } from '@/features/competitions/hooks/useCompetitionDetail';
 import EntryCard from '@/components/competition/EntryCard';
 import EvidenceModal from '@/components/competition/EvidenceModal';
 import type { CompetitionEntry } from '@/types/competition';

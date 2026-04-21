@@ -3,19 +3,13 @@ import { View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-na
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Users } from 'lucide-react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/providers/theme';
 import CompetitionsTab from '@/components/community/tabs/CompetitionsTab';
 import RankingTab from '@/components/community/tabs/RankingTab';
-
-interface GroupDetail {
-  id: string;
-  name: string;
-  image_url: string | null;
-  emoji: string | null;
-  members_count: number;
-  description: string | null;
-}
+import {
+  fetchCommunityDetail,
+  type GroupDetail,
+} from '@/features/communities/services/fetchCommunityDetail';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -32,15 +26,10 @@ export default function CommunityDetailScreen() {
     useCallback(() => {
       if (!id) return;
       setLoading(true);
-      supabase
-        .from('groups')
-        .select('id, name, image_url, emoji, members_count, description')
-        .eq('id', id)
-        .single()
-        .then(({ data }) => {
-          setGroup(data ?? null);
-          setLoading(false);
-        });
+      fetchCommunityDetail(id).then((data) => {
+        setGroup(data);
+        setLoading(false);
+      });
     }, [id])
   );
 
@@ -123,7 +112,7 @@ export default function CommunityDetailScreen() {
             borderBottomWidth: 1,
             borderBottomColor: isDark ? '#1f2937' : '#f3f4f6',
           },
-          tabBarLabelStyle: { fontWeight: '700', fontSize: 13, textTransform: 'none' },
+          tabBarLabelStyle: { fontWeight: '700', fontSize: 16, textTransform: 'none' },
         }}
       >
         <Tab.Screen name="Competiciones">{() => <CompetitionsTab groupId={group.id} />}</Tab.Screen>

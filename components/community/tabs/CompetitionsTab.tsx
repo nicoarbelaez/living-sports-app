@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react';
-import { FlatList, View, ActivityIndicator } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { useCompetitionsStore } from '@/stores/useCompetitionsStore';
+import { useCompetitionsStore } from '@/features/competitions/stores/useCompetitionsStore';
 import CompetitionCard from '@/components/competition/CompetitionCard';
+import CompetitionCardSkeleton from '@/components/competition/CompetitionCardSkeleton';
 import CreateCompetitionCard from '@/components/competition/CreateCompetitionCard';
 import type { Competition } from '@/types/competition';
 
@@ -26,8 +27,13 @@ export default function CompetitionsTab({ groupId }: { groupId: string }) {
 
   if (isLoading && competitions.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator color="#3b82f6" />
+      <View className="p-2">
+        {[0, 1].map((row) => (
+          <View key={row} className="flex-row">
+            <CompetitionCardSkeleton />
+            <CompetitionCardSkeleton />
+          </View>
+        ))}
       </View>
     );
   }
