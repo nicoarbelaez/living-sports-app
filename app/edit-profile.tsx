@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TextInput, Pressable, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
@@ -38,24 +38,7 @@ export default function EditProfile() {
   const hasChanges =
     username !== originalUsername || avatarUrl !== originalAvatar || bio !== originalBio;
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (username === originalUsername) {
-        setIsAvailable(null);
-        setIsChecking(false);
-        return;
-      }
-      checkUsername(username);
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [username]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -78,7 +61,24 @@ export default function EditProfile() {
       setBio(data.bio);
       setOriginalBio(data.bio);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (username === originalUsername) {
+        setIsAvailable(null);
+        setIsChecking(false);
+        return;
+      }
+      checkUsername(username);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [username, originalUsername]);
 
   const checkUsername = async (value: string) => {
     if (!value || value.length < 3) {

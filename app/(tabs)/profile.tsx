@@ -89,7 +89,7 @@ export default function ProfileScreen() {
 
   const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Usuario';
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -103,9 +103,9 @@ export default function ProfileScreen() {
       setAvatarUrl(data.avatar_url || '');
       setBio(data.bio || '');
     }
-  };
+  }, [user]);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -115,13 +115,13 @@ export default function ProfileScreen() {
       .order('created_at', { ascending: false });
 
     if (data && !error) setPosts(data as unknown as Post[]);
-  };
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
       fetchPosts();
-    }, [user])
+    }, [fetchProfile, fetchPosts])
   );
 
   const avatar = avatarUrl || 'https://ui-avatars.com/api/?name=User';

@@ -19,7 +19,7 @@ export default function CompetitionsTab({ groupId }: { groupId: string }) {
   useFocusEffect(
     useCallback(() => {
       fetch(groupId);
-    }, [groupId])
+    }, [fetch, groupId])
   );
 
   const data: ListItem[] = [...competitions, { __type: 'create' as const }];

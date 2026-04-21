@@ -34,7 +34,7 @@ export default function BottomSheetComponent({
     enableOverDrag = true,
   } = config;
 
-  const defaultSnapPoints = useMemo(() => snapPoints, []);
+  const defaultSnapPoints = useMemo(() => snapPoints, [snapPoints]);
 
   if (!visible) return null;
 

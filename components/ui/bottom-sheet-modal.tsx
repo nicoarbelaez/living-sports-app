@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { ReactNode, useMemo, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
@@ -38,7 +39,7 @@ export default function BottomSheetModalComponent({
     enableOverDrag = true,
   } = config;
 
-  const defaultSnapPoints = useMemo(() => snapPoints, []);
+  const defaultSnapPoints = useMemo(() => snapPoints, [snapPoints]);
 
   React.useEffect(() => {
     if (visible) {
