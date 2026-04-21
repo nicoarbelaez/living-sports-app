@@ -25,7 +25,7 @@ export interface Post {
  */
 export type PostRow = Tables<'posts'> & {
   profiles: Pick<Tables<'profiles'>, 'username' | 'first_name' | 'last_name' | 'avatar_url'> | null;
-  post_media: Array<Pick<Tables<'post_media'>, 'url' | 'media_type' | 'sort_order'>>;
+  post_media: Pick<Tables<'post_media'>, 'url' | 'media_type' | 'sort_order'>[];
 };
 
 // Helper to convert DB Profile to UI Name

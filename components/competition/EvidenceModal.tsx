@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, Pressable, Alert } from 'react-native';
+import { Text, TextInput, TouchableOpacity, Modal, Pressable, Alert } from 'react-native';
 import { Upload } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/providers/theme';
