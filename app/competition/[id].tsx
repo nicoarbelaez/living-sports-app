@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Upload } from 'lucide-react-native';
 import { useAuth } from '@/providers/AuthProvider';
-import { useTheme } from '@/providers/theme';
 import { useCompetitionDetail } from '@/features/competitions/hooks/useCompetitionDetail';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import EntryCard from '@/components/competition/EntryCard';
 import EvidenceModal from '@/components/competition/EvidenceModal';
 import type { CompetitionEntry } from '@/types/competition';
@@ -43,8 +44,6 @@ export default function CompetitionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
   const currentUserId = session?.user?.id;
 
   const [showSubmit, setShowSubmit] = useState(false);
@@ -83,12 +82,13 @@ export default function CompetitionDetailScreen() {
     <View className="flex-1 bg-gray-100 dark:bg-black">
       <View className="bg-white px-4 pt-14 pb-4 dark:bg-gray-900">
         <View className="mb-3 flex-row items-center gap-3">
-          <TouchableOpacity
+          <Button
+            variant="ghost"
+            size="icon"
+            icon={<ArrowLeft size={20} />}
             onPress={() => router.back()}
-            className="rounded-full bg-gray-100 p-2 dark:bg-gray-800"
-          >
-            <ArrowLeft size={20} color={isDark ? '#fff' : '#000'} />
-          </TouchableOpacity>
+            className="bg-muted rounded-full"
+          />
           <Text className="flex-1 text-base font-bold text-black dark:text-white" numberOfLines={1}>
             {competition.title}
           </Text>
@@ -126,21 +126,16 @@ export default function CompetitionDetailScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View className="items-center py-16">
-            <Text className="text-4xl">🏋️</Text>
-            <Text className="mt-3 text-base font-semibold text-gray-500 dark:text-gray-400">
-              Sin evidencias aún
-            </Text>
-            <Text className="mt-1 text-sm text-gray-400">¡Sé el primero en subir!</Text>
-          </View>
+          <EmptyState emoji="🏋️" title="Sin evidencias aún" subtitle="¡Sé el primero en subir!" />
         }
       />
 
       {competition.status === 'active' && canSubmitToday && (
         <View className="absolute bottom-8 self-center">
-          <TouchableOpacity
+          <Button
             onPress={() => setShowSubmit(true)}
-            className="flex-row items-center gap-2 rounded-full bg-blue-500 px-6 py-4 shadow-xl"
+            icon={<Upload size={20} />}
+            className="rounded-full px-6 py-4"
             style={{
               shadowColor: '#3b82f6',
               shadowOpacity: 0.5,
@@ -148,9 +143,8 @@ export default function CompetitionDetailScreen() {
               shadowOffset: { width: 0, height: 8 },
             }}
           >
-            <Upload size={20} color="#fff" />
-            <Text className="text-base font-bold text-white">Subir evidencia</Text>
-          </TouchableOpacity>
+            <Text className="text-primary-foreground text-base font-bold">Subir evidencia</Text>
+          </Button>
         </View>
       )}
 
