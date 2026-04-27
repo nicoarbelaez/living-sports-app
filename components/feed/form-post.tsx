@@ -1,17 +1,10 @@
 import React from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, Alert, ScrollView } from 'react-native';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Image as ImageIcon, Camera, Send, X, Video as VideoIcon } from 'lucide-react-native';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { getRandomAvatarUrl } from '@/lib/utils';
@@ -187,45 +180,37 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
 
       <View className="flex-row items-center justify-between border-t border-gray-100 px-4 pt-3 pb-3 dark:border-[#374151]">
         <View className="flex-row items-center gap-3">
-          <TouchableOpacity
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<ImageIcon color="#10b981" size={20} />}
             onPress={handlePickMedia}
-            className="flex-row items-center gap-1"
             disabled={isSubmitting || fields.length >= 5}
           >
-            <ImageIcon color="#10b981" size={20} />
-            <Text className="font-medium text-gray-600 dark:text-gray-400">Galería</Text>
-          </TouchableOpacity>
+            <Text className="text-muted-foreground font-medium">Galería</Text>
+          </Button>
 
-          <TouchableOpacity
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Camera color="#10b981" size={20} />}
             onPress={handleTakeMedia}
-            className="flex-row items-center gap-1"
             disabled={isSubmitting || fields.length >= 5}
           >
-            <Camera color="#10b981" size={20} />
-            <Text className="font-medium text-gray-600 dark:text-gray-400">Cámara</Text>
-          </TouchableOpacity>
+            <Text className="text-muted-foreground font-medium">Cámara</Text>
+          </Button>
         </View>
 
-        <TouchableOpacity
+        <Button
+          variant="success"
           onPress={handleSubmit(onSubmit)}
+          loading={isSubmitting}
           disabled={!canSubmit}
-          className={`flex-row items-center gap-2 rounded-full px-4 py-2 ${
-            canSubmit ? 'bg-[#10b981]' : 'bg-gray-100 dark:bg-gray-800'
-          }`}
+          icon={<Send size={16} />}
+          className="rounded-full px-4 py-2"
         >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Text
-                className={canSubmit ? 'font-semibold text-white' : 'font-semibold text-gray-400'}
-              >
-                Publicar
-              </Text>
-              <Send color={canSubmit ? 'white' : '#9ca3af'} size={16} />
-            </>
-          )}
-        </TouchableOpacity>
+          <Text className="font-semibold text-white">Publicar</Text>
+        </Button>
       </View>
     </View>
   );
