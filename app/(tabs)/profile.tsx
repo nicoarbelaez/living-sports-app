@@ -226,6 +226,7 @@ export default function ProfileScreen() {
                     ))}
                   </View>
 
+                  {/* MotiView anima backgroundColor entre estados — Button no soporta este patrón */}
                   <TouchableOpacity onPress={() => setStarted(!started)}>
                     <MotiView
                       animate={{

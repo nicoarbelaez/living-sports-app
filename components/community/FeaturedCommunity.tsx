@@ -45,6 +45,7 @@ export default function FeaturedCommunity({ community }: { community: Community 
               {(community.followersCount / 1000).toFixed(1)}k seguidores
             </Text>
 
+            {/* MotiView anima backgroundColor entre estados — Button no soporta este patrón */}
             <TouchableOpacity onPress={() => setIsJoined(!isJoined)}>
               <MotiView
                 animate={{
