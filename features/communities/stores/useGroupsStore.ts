@@ -38,11 +38,17 @@ export const useGroupsStore = create<GroupsState>((set) => ({
 
       const myGroups = (data ?? [])
         .map((row: any) => mapGroupRow(row.groups))
-        .sort((a: Group, b: Group) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        .sort(
+          (a: Group, b: Group) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
 
       set({ myGroups, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al cargar mis grupos', isLoading: false });
+      set({
+        error: err instanceof Error ? err.message : 'Error al cargar mis grupos',
+        isLoading: false,
+      });
     }
   },
 
@@ -60,7 +66,10 @@ export const useGroupsStore = create<GroupsState>((set) => ({
       const publicGroups = (data ?? []).map((row) => mapGroupRow(row));
       set({ publicGroups, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al cargar grupos públicos', isLoading: false });
+      set({
+        error: err instanceof Error ? err.message : 'Error al cargar grupos públicos',
+        isLoading: false,
+      });
     }
   },
 

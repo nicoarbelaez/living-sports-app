@@ -1,9 +1,6 @@
 import { create } from 'zustand';
 import type { Notification } from '@/types/notification';
 
-// ---------------------------------------------------------------------------
-// Mock data – replace with Supabase query when the backend is ready
-// ---------------------------------------------------------------------------
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
@@ -75,8 +72,6 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     communityId: 'community-002',
   },
 ];
-
-// ---------------------------------------------------------------------------
 
 interface NotificationState {
   notifications: Notification[];

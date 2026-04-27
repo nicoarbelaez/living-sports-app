@@ -6,21 +6,12 @@ import type { CachedProfile, UserProfile } from '@/types/profile';
 
 interface ProfileState {
   profile: CachedProfile | null;
-  /** True once the store has attempted at least one network fetch. */
   isSyncing: boolean;
 }
 
 interface ProfileActions {
-  /**
-   * Persist only the cacheable subset of a full profile row.
-   * Called by the Realtime handler and after a successful fetch.
-   */
   setProfile: (profile: UserProfile) => void;
   clearProfile: () => void;
-  /**
-   * Background sync: fetches latest from API, updates store + MMKV.
-   * Safe to call at any time — errors are swallowed and logged.
-   */
   refreshProfile: (userId: string) => Promise<void>;
 }
 
@@ -43,11 +34,9 @@ export const useProfileStore = create<ProfileStore>()(
       profile: null,
       isSyncing: false,
 
-      setProfile: (profile) =>
-        set({ profile: toCached(profile) }),
+      setProfile: (profile) => set({ profile: toCached(profile) }),
 
-      clearProfile: () =>
-        set({ profile: null, isSyncing: false }),
+      clearProfile: () => set({ profile: null, isSyncing: false }),
 
       refreshProfile: async (userId) => {
         set({ isSyncing: true });
@@ -64,7 +53,6 @@ export const useProfileStore = create<ProfileStore>()(
     {
       name: 'profile-store',
       storage: createJSONStorage(() => zustandMMKVStorage),
-      // Only persist the cacheable slice — never isSyncing
       partialize: (state): Pick<ProfileState, 'profile'> => ({
         profile: state.profile,
       }),

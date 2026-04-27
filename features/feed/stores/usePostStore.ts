@@ -6,10 +6,6 @@ import type { Post, PostRow } from '@/types/post';
 
 const PAGE_SIZE = 15;
 
-/**
- * Select string typed to match PostRow.
- * Keep in sync with PostRow if DB schema changes.
- */
 const POST_SELECT = `
   id,
   body,
@@ -63,7 +59,6 @@ interface PostState {
   isLoading: boolean;
   isFetchingMore: boolean;
   hasMore: boolean;
-  /** ISO timestamp of the oldest loaded post — used as cursor for next page. */
   cursor: string | null;
   error: string | null;
 }
@@ -71,7 +66,6 @@ interface PostState {
 interface PostActions {
   fetchPosts: () => Promise<void>;
   fetchMorePosts: () => Promise<void>;
-  /** Optimistically insert a newly created post at the top of the feed. */
   prependPost: (post: Post) => void;
   reset: () => void;
 }
@@ -153,8 +147,7 @@ export const usePostStore = create<PostState & PostActions>()((set, get) => ({
     }
   },
 
-  prependPost: (post) =>
-    set((state) => ({ posts: [post, ...state.posts] })),
+  prependPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
 
   reset: () => set(initialState),
 }));

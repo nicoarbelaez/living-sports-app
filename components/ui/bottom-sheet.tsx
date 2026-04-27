@@ -1,6 +1,6 @@
 import React, { ReactNode, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import BottomSheet, { BottomSheetView, useBottomSheetInternal } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
 
 export interface BottomSheetConfig {
@@ -34,7 +34,7 @@ export default function BottomSheetComponent({
     enableOverDrag = true,
   } = config;
 
-  const defaultSnapPoints = useMemo(() => snapPoints, []);
+  const defaultSnapPoints = useMemo(() => snapPoints, [snapPoints]);
 
   if (!visible) return null;
 

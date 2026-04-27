@@ -3,6 +3,11 @@
 @import 'tailwindcss/utilities.css';
 @import 'nativewind/theme';
 
+@source './app/**/*.{js,ts,tsx,jsx}';
+@source './components/**/*.{js,ts,tsx,jsx}';
+@source './src/**/*.{js,ts,tsx,jsx}';
+@source './app/**/*';
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
