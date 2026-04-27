@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { Button } from '@/components/ui/button';
 import { Image as ImageIcon } from 'lucide-react-native';
 import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useMediaPicker } from '@/hooks/useMediaPicker';
@@ -84,14 +85,16 @@ export default function GroupImagePicker({
       </TouchableOpacity>
 
       <View className="flex-row items-center justify-center gap-2">
-        <TouchableOpacity
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={<ImageIcon size={16} color="#64748b" />}
           onPress={() => setShowActionSheet(true)}
           disabled={disabled}
-          className="flex-row items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 dark:bg-slate-700"
+          className="rounded-lg"
         >
-          <ImageIcon size={16} color="#64748b" />
-          <Text className="text-xs font-medium text-slate-600 dark:text-slate-300">Cambiar</Text>
-        </TouchableOpacity>
+          <Text className="text-secondary-foreground text-xs font-medium">Cambiar</Text>
+        </Button>
       </View>
 
       {/* Action Sheet for image/emoji selection */}
