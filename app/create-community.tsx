@@ -1,14 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +10,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useGroupsStore } from '@/features/communities/stores/useGroupsStore';
 import { mapGroupRow } from '@/types/group';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import GroupImagePicker from '@/components/community/GroupImagePicker';
 
 const GYM_EMOJIS = [
@@ -115,20 +107,19 @@ export default function CreateCommunityScreen() {
     }
   };
 
-  const canSubmit = !isSubmitting;
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-gray-100 dark:bg-black"
     >
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} className="px-6 pt-6">
-        <TouchableOpacity
+        <Button
+          variant="ghost"
+          size="icon"
+          icon={<ArrowLeft size={24} />}
           onPress={() => router.back()}
-          className="mb-8 h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-        >
-          <ArrowLeft size={24} color="#000" />
-        </TouchableOpacity>
+          className="bg-muted mb-8 rounded-full"
+        />
 
         <Text className="mb-2 text-3xl font-black text-black dark:text-white">Crear Comunidad</Text>
         <Text className="mb-8 text-base text-gray-500 dark:text-gray-400">
@@ -210,22 +201,16 @@ export default function CreateCommunityScreen() {
           </View>
         </View>
 
-        <TouchableOpacity
-          className={`mt-8 h-14 flex-row items-center justify-center gap-2 rounded-2xl shadow-lg ${
-            canSubmit ? 'bg-blue-500 shadow-blue-500/30' : 'bg-gray-300'
-          }`}
+        <Button
           onPress={handleSubmit(onSubmit)}
-          disabled={!canSubmit}
+          loading={isSubmitting}
+          disabled={isSubmitting}
+          icon={<Users size={20} />}
+          className="mt-8 rounded-2xl py-4"
+          size="lg"
         >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Users size={20} color="#fff" />
-              <Text className="text-lg font-bold text-white">Crear Comunidad</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          <Text className="text-primary-foreground text-lg font-bold">Crear Comunidad</Text>
+        </Button>
       </ScrollView>
     </KeyboardAvoidingView>
   );

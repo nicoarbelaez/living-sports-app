@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, Alert } from 'react-native';
+import { View, Text, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
 import { ArrowLeft, Image as ImageIcon } from 'lucide-react-native';
+import { Button } from '@/components/ui/button';
 import { Image } from 'expo-image';
 import { useMediaPicker } from '@/hooks/useMediaPicker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -92,12 +93,13 @@ export default function CreatePost() {
   return (
     <View className="flex-1 bg-gray-100 dark:bg-black">
       <View className="mb-6 flex-row items-center justify-between px-6 pt-10">
-        <Pressable
+        <Button
+          variant="ghost"
+          size="icon"
+          icon={<ArrowLeft size={22} />}
           onPress={() => router.back()}
-          className="rounded-full bg-white p-2 dark:bg-gray-800"
-        >
-          <ArrowLeft size={22} color="#000" />
-        </Pressable>
+          className="bg-muted rounded-full"
+        />
 
         <Text className="text-lg font-bold text-black dark:text-white">Crear post</Text>
 
@@ -137,23 +139,25 @@ export default function CreatePost() {
           </View>
         )}
 
-        <Pressable
+        <Button
+          variant="secondary"
+          icon={<ImageIcon size={20} />}
           onPress={pickImage}
-          className="mb-4 flex-row items-center justify-center rounded-2xl bg-gray-200 px-4 py-4 dark:bg-gray-800"
+          className="mb-4 rounded-2xl py-4"
+          size="lg"
         >
-          <ImageIcon size={20} color="#374151" />
-          <Text className="ml-2 text-gray-700 dark:text-gray-300">Agregar imagen</Text>
-        </Pressable>
+          <Text className="text-secondary-foreground">Agregar imagen</Text>
+        </Button>
 
-        <Pressable
+        <Button
           onPress={handleCreatePost}
+          loading={loading}
           disabled={loading}
-          className={`rounded-2xl py-4 ${loading ? 'bg-gray-400' : 'bg-blue-500'}`}
+          className="rounded-2xl"
+          size="lg"
         >
-          <Text className="text-center text-base font-semibold text-white">
-            {loading ? 'Publicando...' : 'Publicar'}
-          </Text>
-        </Pressable>
+          <Text className="text-primary-foreground text-base font-semibold">Publicar</Text>
+        </Button>
       </View>
     </View>
   );

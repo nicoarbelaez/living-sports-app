@@ -1,16 +1,8 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Controller } from 'react-hook-form';
 import { ArrowLeft } from 'lucide-react-native';
-import { useTheme } from '@/providers/theme';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -65,9 +57,6 @@ function ExerciseChipList({
 export default function CreateCompetitionScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const router = useRouter();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
   const { form, exercises, loading, today, handleDateChange, onSubmit } =
     useCreateCompetition(groupId);
 
@@ -99,12 +88,13 @@ export default function CreateCompetitionScreen() {
   return (
     <View className="flex-1 bg-gray-100 dark:bg-black">
       <View className="flex-row items-center gap-4 bg-white px-4 pt-14 pb-4 dark:bg-gray-900">
-        <TouchableOpacity
+        <Button
+          variant="ghost"
+          size="icon"
+          icon={<ArrowLeft size={22} />}
           onPress={() => router.back()}
-          className="rounded-full bg-gray-100 p-2 dark:bg-gray-800"
-        >
-          <ArrowLeft size={22} color={isDark ? '#fff' : '#000'} />
-        </TouchableOpacity>
+          className="bg-muted rounded-full"
+        />
         <Text className="text-lg font-bold text-black dark:text-white">Nueva competición</Text>
       </View>
 

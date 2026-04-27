@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Camera } from 'lucide-react-native';
 import { useTheme } from '@/providers/theme';
+import { Button } from '@/components/ui/button';
 import * as ImagePicker from 'expo-image-picker';
 import { MotiView } from 'moti';
 
@@ -178,12 +179,13 @@ export default function EditProfile() {
   return (
     <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
       <View className="mb-8 flex-row items-center justify-between">
-        <Pressable
+        <Button
+          variant="ghost"
+          size="icon"
+          icon={<ArrowLeft size={22} />}
           onPress={() => router.back()}
-          className="rounded-full bg-white p-2 dark:bg-gray-800"
-        >
-          <ArrowLeft size={22} color={isDark ? '#fff' : '#000'} />
-        </Pressable>
+          className="bg-muted rounded-full"
+        />
 
         <Text className="text-lg font-bold text-black dark:text-white">Editar perfil</Text>
 
@@ -273,19 +275,15 @@ export default function EditProfile() {
         </MotiView>
       </View>
 
-      <Pressable
+      <Button
         onPress={handleSave}
+        loading={loading}
         disabled={loading || isAvailable === false || !hasChanges || isOverLimit}
-        className={`mt-6 rounded-2xl py-4 shadow-md ${
-          loading || isAvailable === false || !hasChanges || isOverLimit
-            ? 'bg-gray-400'
-            : 'bg-blue-500'
-        }`}
+        className="mt-6 rounded-2xl py-4 shadow-md"
+        size="lg"
       >
-        <Text className="text-center text-base font-semibold text-white">
-          {loading ? 'Guardando...' : 'Guardar cambios'}
-        </Text>
-      </Pressable>
+        <Text className="text-primary-foreground text-base font-semibold">Guardar cambios</Text>
+      </Button>
     </View>
   );
 }
