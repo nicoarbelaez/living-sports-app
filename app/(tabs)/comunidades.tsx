@@ -1,34 +1,58 @@
-import { View, Text, FlatList } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { MotiView } from 'moti';
+import { useFocusEffect } from 'expo-router';
 import FeaturedCommunity from '@/components/community/FeaturedCommunity';
 import CommunityCard from '@/components/community/CommunityCard';
 import CreateCommunityButton from '@/components/community/CreateCommunityButton';
-import { mockCommunities } from '@/constants/mockCommunities';
-import { useFocusEffect } from 'expo-router';
-import { Community } from '@/types/community';
+import { useGroupsStore } from '@/stores/useGroupsStore';
+import { useAuth } from '@/providers/AuthProvider';
+import { useProfileStore } from '@/stores/useProfileStore';
+import type { Community } from '@/types/community';
+import type { Group } from '@/types/group';
+
+function mapGroupToCommunity(group: Group): Community {
+  return {
+    id: group.id,
+    name: group.name,
+    followersCount: group.membersCount,
+    avatarUrl: group.imageUrl ?? null,
+    emoji: group.emoji || undefined,
+    isFeatured: false,
+  };
+}
 
 export default function Comunidades() {
   const { onScroll } = useNavbarScroll();
-  const [isLoading, setIsLoading] = useState(true);
+  const { session } = useAuth();
+  const profile = useProfileStore((s) => s.profile);
+  const myGroups = useGroupsStore((s) => s.myGroups);
+  const publicGroups = useGroupsStore((s) => s.publicGroups);
+  const isLoading = useGroupsStore((s) => s.isLoading);
+  const fetchMyGroups = useGroupsStore((s) => s.fetchMyGroups);
+  const fetchPublicGroups = useGroupsStore((s) => s.fetchPublicGroups);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [localCommunities, setLocalCommunities] = useState<Community[]>(mockCommunities);
 
   useFocusEffect(
     useCallback(() => {
-      setLocalCommunities([...mockCommunities]);
-    }, [])
+      if (profile?.id) {
+        fetchMyGroups(profile.id);
+        fetchPublicGroups();
+      }
+    }, [profile?.id, fetchMyGroups, fetchPublicGroups])
   );
 
-  // Loading skeleton simulation
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  // Convert groups to communities
+  const myCommunities = myGroups.map(mapGroupToCommunity);
+  const allPublicCommunities = publicGroups.map(mapGroupToCommunity);
 
-  const featuredCommunity = localCommunities.find((c) => c.isFeatured);
-  const regularCommunities = localCommunities.filter((c) => !c.isFeatured);
+  // Featured community: first public with most members
+  const featuredCommunity =
+    allPublicCommunities.length > 0 ? { ...allPublicCommunities[0], isFeatured: true } : null;
+
+  const regularCommunities = allPublicCommunities.slice(1);
 
   const filteredCommunities = regularCommunities.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -101,18 +125,48 @@ export default function Comunidades() {
                 </Text>
               </View>
               <Text className="mb-6 text-base leading-relaxed text-gray-500 dark:text-gray-400">
-                Únete a una comunidad para estar atento a los temas que te interesan y comenzar a
-                interactuar.
+                Únete a una comunidad para estar atento a los temas que te interesan.
               </Text>
 
               <View className="mb-6">
                 <CreateCommunityButton />
               </View>
 
+              {/* Mis Comunidades Section */}
+              {myCommunities.length > 0 && (
+                <View className="mb-6">
+                  <Text className="mb-3 text-lg font-bold text-black dark:text-white">
+                    Mis Comunidades
+                  </Text>
+                  <FlatList
+                    data={myCommunities}
+                    keyExtractor={(item) => item.id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    scrollEnabled
+                    nestedScrollEnabled
+                    contentContainerStyle={{ paddingRight: 12 }}
+                    renderItem={({ item }) => (
+                      <View className="mr-3 w-80">
+                        <CommunityCard community={item} />
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+
+              {/* Featured Community */}
               {featuredCommunity && !searchQuery && (
                 <View className="-mx-6 mb-4">
                   <FeaturedCommunity community={featuredCommunity} />
                 </View>
+              )}
+
+              {/* Explorar Comunidades Header */}
+              {regularCommunities.length > 0 && (
+                <Text className="mb-3 text-lg font-bold text-black dark:text-white">
+                  Explorar Comunidades
+                </Text>
               )}
             </View>
           }

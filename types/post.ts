@@ -1,4 +1,4 @@
-import { Tables } from '@/database.types';
+import { Tables } from '@/types/database.types';
 
 export type Media = {
   url: string;

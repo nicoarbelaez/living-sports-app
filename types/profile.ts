@@ -1,4 +1,4 @@
-import { Tables } from '@/database.types';
+import { Tables } from '@/types/database.types';
 
 /** Full profile row from the DB — single source of truth. */
 export type UserProfile = Tables<'profiles'>;
