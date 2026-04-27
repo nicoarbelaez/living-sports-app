@@ -6,6 +6,8 @@ export interface Notification {
   /** Display name of the user who triggered this notification */
   actorName: string;
   actorAvatar?: string;
+  /** ID of the user who triggered this notification (for profile navigation) */
+  actorId?: string;
   /** Short descriptive body text */
   body: string;
   /** ISO timestamp */
@@ -17,3 +19,4 @@ export interface Notification {
   postId?: string;
   communityId?: string;
 }
+
