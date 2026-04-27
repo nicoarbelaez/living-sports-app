@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
-import { MotiView, MotiText, AnimatePresence } from 'moti';
 import { useRouter } from 'expo-router';
 
 type Post = {
