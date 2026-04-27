@@ -161,6 +161,26 @@ export default function ProfileScreen() {
               ))}
             </ScrollView>
 
+            <View className="mt-8 rounded-3xl bg-blue-600 p-5 shadow-lg">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className="text-2xl font-extrabold text-white">Crea tu rutina con IA</Text>
+
+                  <Text className="mt-2 text-sm text-blue-100">
+                    Genera un plan personalizado según tus objetivos en segundos
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => router.push('/routine/ai-routine')}
+                activeOpacity={0.8}
+                className="mt-5 items-center rounded-full bg-white py-3"
+              >
+                <Text className="font-bold text-blue-600">✨ Crear rutina ahora</Text>
+              </TouchableOpacity>
+            </View>
+
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Rutina semanal
             </Text>
