@@ -24,6 +24,7 @@ const buttonVariants = cva(
         outline:
           'border bg-background shadow-xs active:bg-accent active:text-accent-foreground dark:bg-input/30 dark:border-input dark:active:bg-input/50',
         secondary: 'bg-secondary text-secondary shadow-xs active:bg-secondary/80',
+        success: 'bg-green-600 text-white shadow-xs active:bg-green-700 dark:bg-green-700',
         ghost: 'active:bg-accent active:text-accent-foreground  dark:active:bg-accent/50',
         link: 'text-primary underline-offset-4 active:underline',
       },
@@ -62,6 +63,7 @@ function resolveIconColor(variant?: ButtonProps['variant'], isDark = false) {
       return isDark ? '#ffffff' : '#111827';
     case 'secondary':
     case 'destructive':
+    case 'success':
       return isDark ? '#ffffff' : '#111827';
     case 'default':
     default:
