@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Button } from '@/components/ui/button';
 import CommentItem, { Comment } from './comment-item';
 
 const STORAGE_KEY = 'post_comments';
@@ -235,13 +236,9 @@ export default function CommentsSheet({
                 multiline
                 style={{ maxHeight: 100 }}
               />
-              <TouchableOpacity onPress={handleSend} disabled={!newComment.trim()}>
-                <Text
-                  className={`font-bold ${newComment.trim() ? 'text-blue-500' : 'text-blue-300'}`}
-                >
-                  Post
-                </Text>
-              </TouchableOpacity>
+              <Button variant="link" size="sm" onPress={handleSend} disabled={!newComment.trim()}>
+                <Text className="text-primary font-bold">Publicar</Text>
+              </Button>
             </View>
           </KeyboardAvoidingView>
         </View>

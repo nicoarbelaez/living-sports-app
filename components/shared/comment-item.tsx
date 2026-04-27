@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, Image } from 'react-native';
+import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react-native';
 
 export interface Comment {
@@ -48,27 +49,34 @@ export default function CommentItem({ comment, level = 0, onReply, onLike }: Com
                     {comment.likes} {comment.likes === 1 ? 'like' : 'likes'}
                   </Text>
                 )}
-                <TouchableOpacity onPress={() => onReply(comment.user, comment.id)}>
-                  <Text className="text-xs font-semibold text-gray-500">Reply</Text>
-                </TouchableOpacity>
+                <Button variant="ghost" size="sm" onPress={() => onReply(comment.user, comment.id)}>
+                  <Text className="text-muted-foreground text-xs font-semibold">Reply</Text>
+                </Button>
               </View>
             </View>
 
             {/* Columna del corazón con contador debajo */}
-            <TouchableOpacity className="mt-1 items-center pl-2" onPress={() => onLike(comment.id)}>
-              <Heart
-                size={14}
-                color={comment.isLiked ? '#ef4444' : '#6b7280'}
-                fill={comment.isLiked ? '#ef4444' : 'transparent'}
-              />
-              {comment.likes > 0 && (
-                <Text
-                  className={`mt-0.5 text-[10px] ${comment.isLiked ? 'text-red-500' : 'text-gray-500'}`}
-                >
-                  {comment.likes}
-                </Text>
-              )}
-            </TouchableOpacity>
+            <Button
+              variant="ghost"
+              size="icon"
+              onPress={() => onLike(comment.id)}
+              className="mt-1 h-auto min-h-0 w-auto items-center p-2"
+            >
+              <View className="items-center">
+                <Heart
+                  size={14}
+                  color={comment.isLiked ? '#ef4444' : '#6b7280'}
+                  fill={comment.isLiked ? '#ef4444' : 'transparent'}
+                />
+                {comment.likes > 0 && (
+                  <Text
+                    className={`mt-0.5 text-[10px] ${comment.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
+                  >
+                    {comment.likes}
+                  </Text>
+                )}
+              </View>
+            </Button>
           </View>
 
           {/* Render Replies Recursively */}
