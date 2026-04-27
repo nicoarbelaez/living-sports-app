@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, Modal, Pressable, Alert } from 'react-native';
+import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/providers/theme';
@@ -120,15 +121,15 @@ export default function EvidenceModal({
             className="mb-5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           />
 
-          <TouchableOpacity
+          <Button
             onPress={handleSubmit}
+            loading={submitting}
             disabled={submitting || !videoUri || !prValue}
-            className={`rounded-2xl py-4 ${submitting || !videoUri || !prValue ? 'bg-gray-400' : 'bg-blue-500'}`}
+            className="rounded-2xl"
+            size="lg"
           >
-            <Text className="text-center text-base font-bold text-white">
-              {submitting ? 'Enviando...' : 'Enviar evidencia'}
-            </Text>
-          </TouchableOpacity>
+            <Text className="text-primary-foreground text-base font-bold">Enviar evidencia</Text>
+          </Button>
         </Pressable>
       </Pressable>
     </Modal>

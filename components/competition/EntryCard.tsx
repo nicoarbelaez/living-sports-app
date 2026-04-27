@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { Play, ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import AvatarWithEmoji from '@/components/ui/avatar-with-emoji';
+import { Button } from '@/components/ui/button';
 import type { CompetitionEntry } from '@/types/competition';
 import { useTheme } from '@/providers/theme';
 
@@ -79,22 +80,24 @@ export default function EntryCard({ entry, isOwn, isVoting, onVote }: EntryCardP
 
       {canVote && (
         <View className="flex-row gap-3">
-          <TouchableOpacity
+          <Button
+            variant="success"
+            size="sm"
+            icon={<ThumbsUp size={16} />}
             onPress={() => onVote('approve')}
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-green-100 py-2.5 dark:bg-green-900/30"
+            className="flex-1 rounded-xl py-2.5"
           >
-            <ThumbsUp size={16} color="#16a34a" />
-            <Text className="text-sm font-semibold text-green-700 dark:text-green-400">
-              Aprobar
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+            <Text className="text-sm font-semibold text-white">Aprobar</Text>
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            icon={<ThumbsDown size={16} />}
             onPress={() => onVote('reject')}
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-red-100 py-2.5 dark:bg-red-900/30"
+            className="flex-1 rounded-xl py-2.5"
           >
-            <ThumbsDown size={16} color="#dc2626" />
-            <Text className="text-sm font-semibold text-red-700 dark:text-red-400">Rechazar</Text>
-          </TouchableOpacity>
+            <Text className="text-sm font-semibold text-white">Rechazar</Text>
+          </Button>
         </View>
       )}
 
