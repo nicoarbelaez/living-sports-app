@@ -1,6 +1,7 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Heart, MessageCircle } from 'lucide-react-native';
+import { MotiView } from 'moti';
 import MediaCarousel from './media-carousel';
 import { Image } from 'expo-image';
 import CommentsSheet from '../comments-sheet';
@@ -13,8 +14,20 @@ interface PostCardProps {
 function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
 
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(post.likesCount);
+
+  const handleLike = useCallback(() => {
+    setLiked((prev) => !prev);
+
+    setLikes((prev) => (liked ? prev - 1 : prev + 1));
+
+    // 🔥 aquí luego conectamos Supabase
+  }, [liked]);
+
   return (
     <View className="mx-4 mt-3 overflow-hidden rounded-2xl bg-white shadow dark:bg-[#111827]">
+      {/* HEADER */}
       <View className="flex-row items-center px-4 py-3">
         <Image
           source={{ uri: post.avatar }}
@@ -27,18 +40,38 @@ function PostCard({ post }: PostCardProps) {
         </View>
       </View>
 
+      {/* MEDIA */}
       <MediaCarousel media={post.media} />
 
+      {/* TEXT */}
       <View className="px-4 py-3">
         <Text className="text-gray-700 dark:text-gray-300">{post.text}</Text>
       </View>
 
+      {/* ACTIONS */}
       <View className="flex-row items-center gap-6 px-4 pb-4">
-        <View className="flex-row items-center gap-1">
-          <Heart size={18} color="#ef4444" />
-          <Text className="text-gray-700 dark:text-gray-300">{post.likesCount}</Text>
-        </View>
+        {/* LIKE */}
+        <TouchableOpacity
+          onPress={handleLike}
+          activeOpacity={0.7}
+          className="flex-row items-center gap-1"
+        >
+          <MotiView
+            from={{ scale: 1 }}
+            animate={{ scale: liked ? 1.3 : 1 }}
+            transition={{ type: 'spring', damping: 6 }}
+          >
+            <Heart
+              size={18}
+              color={liked ? '#ef4444' : '#6b7280'}
+              fill={liked ? '#ef4444' : 'transparent'}
+            />
+          </MotiView>
 
+          <Text className="text-gray-700 dark:text-gray-300">{likes}</Text>
+        </TouchableOpacity>
+
+        {/* COMMENTS */}
         <TouchableOpacity
           className="flex-row items-center gap-1"
           onPress={() => setShowComments(true)}
@@ -48,6 +81,7 @@ function PostCard({ post }: PostCardProps) {
         </TouchableOpacity>
       </View>
 
+      {/* COMMENTS SHEET */}
       <CommentsSheet
         isVisible={showComments}
         onClose={() => setShowComments(false)}
