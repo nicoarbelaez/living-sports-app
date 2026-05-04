@@ -254,8 +254,15 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
     setComments((prev) => [
       {
         id: data?.id || Date.now().toString(),
-        user: profile.username,
-        avatar: profile.avatar_url,
+
+        user:
+          user?.user_metadata?.display_name ||
+          user?.user_metadata?.full_name ||
+          user?.user_metadata?.name ||
+          'Usuario',
+
+        avatar: user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User',
+
         text: newComment,
         time: 'now',
         likes: 0,
