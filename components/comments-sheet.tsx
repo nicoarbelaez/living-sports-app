@@ -46,116 +46,44 @@ const DUMMY_COMMENTS: Comment[] = [
         id: '1-1',
         user: 'living.sports',
         avatar: 'https://i.pravatar.cc/150?u=sports',
-        text: '¡Gracias Nico! Nos vemos pronto.',
+        text: '¡Gracias Nico!',
         time: '1h',
         likes: 1,
         isLiked: false,
       },
     ],
   },
-  {
-    id: '2',
-    user: 'aleja_fitness',
-    avatar: 'https://i.pravatar.cc/150?u=aleja',
-    text: 'Increíble el ambiente de hoy ⚽️',
-    time: '45m',
-    likes: 12,
-    isLiked: false,
-  },
 ];
 
-export default function CommentsSheet({
-  isVisible,
-  onClose,
-  postUser,
-  postAvatar,
-  postImage,
-  postCaption,
-}: CommentsSheetProps) {
+export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps) {
   const { session } = useAuth();
   const user = session?.user;
 
   const [comments, setComments] = useState<Comment[]>(DUMMY_COMMENTS);
   const [newComment, setNewComment] = useState('');
-  const [replyTo, setReplyTo] = useState<{ user: string; id: string } | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  React.useEffect(() => {
-    const loadComments = async () => {
-      try {
-        const saved = await AsyncStorage.getItem(STORAGE_KEY);
-        if (saved) setComments(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load comments', e);
+  // ===============================
+  // 🔥 HELPERS
+  // ===============================
+
+  const findComment = (
+    list: Comment[],
+    id: string,
+    parentId: string | null = null
+  ): { comment: Comment; parentId: string | null } | null => {
+    for (const c of list) {
+      if (c.id === id) return { comment: c, parentId };
+
+      if (c.replies) {
+        const found = findComment(c.replies, id, c.id);
+        if (found) return found;
       }
-    };
-    if (isVisible) loadComments();
-  }, [isVisible]);
-
-  const saveComments = async (updatedComments: Comment[]) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedComments));
-    } catch (e) {
-      console.error('Failed to save comments', e);
     }
+    return null;
   };
 
-  const handleReply = (user: string, id: string) => {
-    setReplyTo({ user, id });
-    setNewComment(`@${user} `);
-    setTimeout(() => inputRef.current?.focus(), 100);
-  };
-
-  const handleSend = () => {
-    if (!newComment.trim()) return;
-
-    if (replyTo) {
-      const updated = comments.map((c) => {
-        if (c.id === replyTo.id) {
-          return {
-            ...c,
-            replies: [
-              ...(c.replies || []),
-              {
-                id: Date.now().toString(),
-                user: CURRENT_USER.user,
-                avatar: CURRENT_USER.avatar,
-                text: newComment.replace(`@${replyTo.user}`, '').trim(),
-                time: 'now',
-                likes: 0,
-                isLiked: false,
-              },
-            ],
-          };
-        }
-        return c;
-      });
-
-      setComments(updated);
-      saveComments(updated);
-    } else {
-      const newCommentObj: Comment = {
-        id: Date.now().toString(),
-        user: CURRENT_USER.user,
-        avatar: CURRENT_USER.avatar,
-        text: newComment,
-        time: 'now',
-        likes: 0,
-        isLiked: false,
-      };
-
-      const updated = [newCommentObj, ...comments];
-      setComments(updated);
-      saveComments(updated);
-    }
-
-    setNewComment('');
-    setReplyTo(null);
-  };
-
-  // 🔥 FUNCIONES CLAVE
-
-  const updateCommentTree = (list: Comment[], id: string): Comment[] => {
+  const updateTree = (list: Comment[], id: string): Comment[] => {
     return list.map((c) => {
       if (c.id === id) {
         const newLiked = !c.isLiked;
@@ -169,7 +97,7 @@ export default function CommentsSheet({
       if (c.replies) {
         return {
           ...c,
-          replies: updateCommentTree(c.replies, id),
+          replies: updateTree(c.replies, id),
         };
       }
 
@@ -177,55 +105,64 @@ export default function CommentsSheet({
     });
   };
 
-  const findComment = (list: Comment[], id: string): Comment | null => {
-    for (const c of list) {
-      if (c.id === id) return c;
-      if (c.replies) {
-        const found = findComment(c.replies, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
+  // ===============================
+  // 🔥 LIKE FUNCTION
+  // ===============================
 
-  const handleLike = async (commentId: string) => {
+  const handleLike = async (id: string) => {
     if (!user) return;
 
-    const comment = findComment(comments, commentId);
-    if (!comment) return;
+    const found = findComment(comments, id);
+    if (!found) return;
 
+    const { comment, parentId } = found;
     const wasLiked = comment.isLiked;
 
-    // ⚡ UI inmediata
-    const updated = updateCommentTree(comments, commentId);
+    // ⚡ UI optimista
+    const updated = updateTree(comments, id);
     setComments(updated);
-    saveComments(updated);
 
     try {
-      if (wasLiked) {
-        await supabase
-          .from('comment_likes')
-          .delete()
-          .eq('comment_id', commentId)
-          .eq('user_id', user.id);
+      if (parentId) {
+        // 🔥 ES REPLY
+        if (wasLiked) {
+          await supabase
+            .from('comment_reply_likes')
+            .delete()
+            .eq('reply_id', id)
+            .eq('user_id', user.id);
+        } else {
+          await supabase.from('comment_reply_likes').insert({
+            reply_id: id,
+            user_id: user.id,
+          });
+        }
       } else {
-        await supabase.from('comment_likes').insert({
-          comment_id: commentId,
-          user_id: user.id,
-        });
+        // 🔥 ES COMMENT
+        if (wasLiked) {
+          await supabase.from('comment_likes').delete().eq('comment_id', id).eq('user_id', user.id);
+        } else {
+          await supabase.from('comment_likes').insert({
+            comment_id: id,
+            user_id: user.id,
+          });
+        }
       }
     } catch (error) {
       console.error('Like error:', error);
     }
   };
 
+  // ===============================
+  // UI
+  // ===============================
+
   return (
-    <Modal animationType="slide" transparent visible={isVisible} onRequestClose={onClose}>
+    <Modal transparent visible={isVisible} animationType="slide">
       <View className="flex-1 justify-end bg-black/50">
         <View className="h-[85%] overflow-hidden rounded-t-3xl bg-white">
           {/* HEADER */}
-          <View className="flex-row items-center justify-between border-b px-4 py-4">
-            <View className="w-6" />
+          <View className="flex-row justify-between border-b px-4 py-4">
             <Text className="font-bold">Comments</Text>
             <TouchableOpacity onPress={onClose}>
               <X size={24} />
@@ -237,7 +174,7 @@ export default function CommentsSheet({
             data={comments}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <CommentItem comment={item} onReply={handleReply} onLike={handleLike} />
+              <CommentItem comment={item} onReply={() => {}} onLike={handleLike} />
             )}
           />
 
@@ -252,7 +189,7 @@ export default function CommentsSheet({
                 value={newComment}
                 onChangeText={setNewComment}
               />
-              <TouchableOpacity onPress={handleSend}>
+              <TouchableOpacity>
                 <Text className="font-bold text-blue-500">Post</Text>
               </TouchableOpacity>
             </View>
