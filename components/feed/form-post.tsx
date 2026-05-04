@@ -15,7 +15,7 @@ import { Image as ImageIcon, Camera, Send, X, Video as VideoIcon } from 'lucide-
 import { supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { getRandomAvatarUrl } from '@/lib/utils';
-import { useProfileStore } from '@/features/profile/stores/useProfileStore';
+import { useProfileStore } from '@/stores/useProfileStore';
 import { useMediaPicker } from '@/hooks/useMediaPicker';
 import type { Post } from '@/types/post';
 

@@ -22,12 +22,7 @@ interface Props {
 
 const MY_AVATAR = 'https://avatars.githubusercontent.com/u/111522939?v=4';
 
-export default function LogLiftModal({
-  visible,
-  communityId: _communityId,
-  onClose,
-  onSubmit,
-}: Props) {
+export default function LogLiftModal({ visible, communityId, onClose, onSubmit }: Props) {
   const isDark = useColorScheme() === 'dark';
   const [selectedExercise, setSelectedExercise] = useState<Exercise>(EXERCISES[0]);
   const [showExercisePicker, setShowExercisePicker] = useState(false);

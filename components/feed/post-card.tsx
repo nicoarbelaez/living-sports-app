@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Heart, MessageCircle } from 'lucide-react-native';
 import MediaCarousel from './media-carousel';
 import { Image } from 'expo-image';
-import CommentsSheet from '@/components/shared/comments-sheet';
+import CommentsSheet from '../comments-sheet';
 import type { Post } from '@/types/post';
 
 interface PostCardProps {

@@ -1,17 +1,31 @@
-import { View, Text, FlatList } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { MotiView } from 'moti';
 import { useFocusEffect } from 'expo-router';
 import FeaturedCommunity from '@/components/community/FeaturedCommunity';
 import CommunityCard from '@/components/community/CommunityCard';
 import CreateCommunityButton from '@/components/community/CreateCommunityButton';
-import { useGroupsStore } from '@/features/communities/stores/useGroupsStore';
-import { useProfileStore } from '@/features/profile/stores/useProfileStore';
-import { mapGroupToCommunity } from '@/features/communities/mappers';
+import { useGroupsStore } from '@/stores/useGroupsStore';
+import { useAuth } from '@/providers/AuthProvider';
+import { useProfileStore } from '@/stores/useProfileStore';
+import type { Community } from '@/types/community';
+import type { Group } from '@/types/group';
+
+function mapGroupToCommunity(group: Group): Community {
+  return {
+    id: group.id,
+    name: group.name,
+    followersCount: group.membersCount,
+    avatarUrl: group.imageUrl ?? null,
+    emoji: group.emoji || undefined,
+    isFeatured: false,
+  };
+}
 
 export default function Comunidades() {
   const { onScroll } = useNavbarScroll();
+  const { session } = useAuth();
   const profile = useProfileStore((s) => s.profile);
   const myGroups = useGroupsStore((s) => s.myGroups);
   const publicGroups = useGroupsStore((s) => s.publicGroups);
@@ -19,7 +33,7 @@ export default function Comunidades() {
   const fetchMyGroups = useGroupsStore((s) => s.fetchMyGroups);
   const fetchPublicGroups = useGroupsStore((s) => s.fetchPublicGroups);
 
-  const [searchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useFocusEffect(
     useCallback(() => {

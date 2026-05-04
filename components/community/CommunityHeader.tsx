@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Bell, Search, X } from 'lucide-react-native';
-import { MotiView } from 'moti';
+import { MotiView, AnimatePresence } from 'moti';
 
 interface Props {
   onSearch: (query: string) => void;

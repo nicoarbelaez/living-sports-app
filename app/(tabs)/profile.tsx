@@ -1,11 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { View, Text, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
-import { supabase } from '@/lib/supabase';
-import { useFocusEffect } from 'expo-router';
-import { MotiView, MotiText, AnimatePresence } from 'moti';
-
-/* TYPES Y DATA IGUAL (NO TOCADO) */
+import { useRouter } from 'expo-router';
 
 type Post = {
   id: string;
@@ -29,104 +25,45 @@ const mockPosts: Post[] = [
   },
 ];
 
-const workoutPlans = [
-  {
-    id: '1',
-    title: 'Push Day Intenso',
-    duration: '2H SESIÓN',
-    focus: ['PECHO', 'TRÍCEPS', 'HOMBRO'],
-    image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61',
-  },
-  {
-    id: '2',
-    title: 'Pull Power',
-    duration: '1H 45MIN',
-    focus: ['ESPALDA', 'BÍCEPS'],
-    image: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e',
-  },
-  {
-    id: '3',
-    title: 'Leg Day Beast',
-    duration: '2H 30MIN',
-    focus: ['PIERNA', 'GLÚTEO'],
-    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b',
-  },
-];
-
 const featuredExercises = [
   {
     id: '1',
     name: 'Press Banca',
     muscle: 'Pecho',
-    image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e',
-    pr: '80 kg',
+    image:
+      'https://www.myprotein.es/images?url=https://blogscdn.thehut.net/app/uploads/sites/450/2016/09/bench-press_1595337964_1595417256.jpg&auto=avif&width=700&fit=crop',
+    pr: '135 kg',
   },
   {
     id: '2',
     name: 'Sentadilla',
     muscle: 'Pierna',
-    image: 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e',
-    pr: '120 kg',
+    image: 'https://media.hearstapps.com/loop/coleman-ronnie-1645715649.mp4/poster.jpg',
+    pr: '350 kg',
   },
   {
     id: '3',
     name: 'Curl Bíceps',
     muscle: 'Bíceps',
-    image: 'https://images.unsplash.com/photo-1598971639058-9993f6f5e6d1',
-    pr: '25 kg',
+    image: 'https://intowellness.in/wp-content/uploads/2024/10/Into_Wellness_Biceps_Curl.jpg',
+    pr: '60 kg',
   },
 ];
 
 export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
+  const router = useRouter();
 
-  const [username, setUsername] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [bio, setBio] = useState('');
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [started, setStarted] = useState(false);
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split('@')[0] ||
+    'Usuario';
 
-  const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Usuario';
+  const avatar = user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User';
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('username, avatar_url, bio')
-      .eq('id', user.id)
-      .single();
-
-    if (data) {
-      setUsername(data.username || '');
-      setAvatarUrl(data.avatar_url || '');
-      setBio(data.bio || '');
-    }
-  }, [user]);
-
-  const fetchPosts = useCallback(async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('posts')
-      .select('id, content, created_at, image_url')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (data && !error) setPosts(data as unknown as Post[]);
-  }, [user]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchProfile();
-      fetchPosts();
-    }, [fetchProfile, fetchPosts])
-  );
-
-  const avatar = avatarUrl || 'https://ui-avatars.com/api/?name=User';
-
-  const displayPosts = posts.length > 0 ? posts : mockPosts;
+  const displayPosts = mockPosts;
 
   const renderPost = ({ item }: { item: Post }) => (
     <View className="mb-6 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900">
@@ -156,7 +93,6 @@ export default function ProfileScreen() {
         }}
         ListHeaderComponent={
           <View>
-            {/* PROFILE CARD */}
             <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-900">
               <Image
                 source={{ uri: avatar }}
@@ -164,17 +100,16 @@ export default function ProfileScreen() {
               />
 
               <Text className="mt-3 text-xl font-bold text-black dark:text-white">
-                {username || fallbackName}
+                {displayName}
               </Text>
 
               <Text className="text-xs text-blue-600">POWERLIFTER • CALI</Text>
 
               <Text className="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
-                {bio || 'Sin biografía aún'}
+                Sin biografía aún
               </Text>
             </View>
 
-            {/* STATS */}
             <View className="mt-6 flex-row justify-between gap-3">
               <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
                 <Text className="text-lg font-bold text-black dark:text-white">
@@ -194,59 +129,6 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* RUTINAS DESTACADAS (NO TOCADO, SOLO DARK MODE) */}
-            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
-              Rutinas destacadas
-            </Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
-              {workoutPlans.map((item) => (
-                <View
-                  key={item.id}
-                  className="mr-4 w-72 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900"
-                >
-                  <Image source={{ uri: item.image }} className="h-40 w-full rounded-2xl" />
-
-                  <Text className="mt-3 text-base font-bold text-black dark:text-white">
-                    {item.title}
-                  </Text>
-
-                  <Text className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {item.duration}
-                  </Text>
-
-                  <View className="mt-3 flex-row flex-wrap gap-2">
-                    {item.focus.map((f, i) => (
-                      <Text
-                        key={i}
-                        className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-600"
-                      >
-                        {f}
-                      </Text>
-                    ))}
-                  </View>
-
-                  <TouchableOpacity onPress={() => setStarted(!started)}>
-                    <MotiView
-                      animate={{
-                        backgroundColor: started ? '#27272a' : '#3b82f6',
-                      }}
-                      className="mt-4 items-center justify-center rounded-full py-3"
-                    >
-                      <AnimatePresence exitBeforeEnter>
-                        {started ? (
-                          <MotiText className="font-semibold text-white">En progreso</MotiText>
-                        ) : (
-                          <MotiText className="font-bold text-black">Iniciar rutina</MotiText>
-                        )}
-                      </AnimatePresence>
-                    </MotiView>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* EJERCICIOS DESTACADOS (SOLO DARK FIX) */}
             <Text className="mt-8 text-lg font-bold text-black dark:text-white">
               Ejercicios destacados
             </Text>
@@ -272,14 +154,149 @@ export default function ProfileScreen() {
 
                   <TouchableOpacity>
                     <View className="mt-4 items-center rounded-full bg-blue-600 py-3">
-                      <Text className="font-bold text-black">Ver ejercicio</Text>
+                      <Text className="font-bold text-white">Ver ejercicio</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
               ))}
             </ScrollView>
 
-            {/* POSTS TITLE */}
+            <View className="mt-8 rounded-3xl bg-blue-600 p-5 shadow-lg">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className="text-2xl font-extrabold text-white">Crea tu rutina con IA</Text>
+
+                  <Text className="mt-2 text-sm text-blue-100">
+                    Genera un plan personalizado según tus objetivos en segundos
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => router.push('/routine/ai-routine')}
+                activeOpacity={0.8}
+                className="mt-5 items-center rounded-full bg-white py-3"
+              >
+                <Text className="font-bold text-blue-600">✨ Crear rutina ahora</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
+              Rutina semanal
+            </Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-5">
+              {[
+                {
+                  day: 'LUN',
+                  full: 'Lunes',
+                  routine: 'Push Day',
+                  desc: 'Pecho • Tríceps • Hombro',
+                  rest: false,
+                },
+                {
+                  day: 'MAR',
+                  full: 'Martes',
+                  routine: 'Pull Day',
+                  desc: 'Espalda • Bíceps',
+                  rest: false,
+                },
+                {
+                  day: 'MIE',
+                  full: 'Miércoles',
+                  routine: 'Leg Day',
+                  desc: 'Pierna • Glúteo',
+                  rest: false,
+                },
+                {
+                  day: 'JUE',
+                  full: 'Jueves',
+                  routine: 'Push Ligero',
+                  desc: 'Técnica • Volumen',
+                  rest: false,
+                },
+                {
+                  day: 'VIE',
+                  full: 'Viernes',
+                  routine: 'Pull Intenso',
+                  desc: 'Fuerza • Espalda',
+                  rest: false,
+                },
+                {
+                  day: 'SAB',
+                  full: 'Sábado',
+                  routine: 'Pierna Pro',
+                  desc: 'Cuádriceps • Femoral',
+                  rest: false,
+                },
+                {
+                  day: 'DOM',
+                  full: 'Domingo',
+                  routine: 'Descanso',
+                  desc: 'Recuperación total',
+                  rest: true,
+                },
+              ].map((item, index) => (
+                <View
+                  key={index}
+                  className={`mr-4 w-72 rounded-3xl p-5 ${
+                    item.rest ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-white dark:bg-zinc-900'
+                  } shadow-sm`}
+                >
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-xs text-gray-400">{item.full}</Text>
+                      <Text className="text-lg font-bold text-black dark:text-white">
+                        {item.day}
+                      </Text>
+                    </View>
+
+                    <View
+                      className={`rounded-full px-3 py-1 ${
+                        item.rest ? 'bg-gray-400' : 'bg-blue-600'
+                      }`}
+                    >
+                      <Text className="text-xs font-semibold text-white">
+                        {item.rest ? 'REST' : 'WORK'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="mt-6">
+                    <Text
+                      className={`text-xl font-bold ${
+                        item.rest ? 'text-gray-500' : 'text-black dark:text-white'
+                      }`}
+                    >
+                      {item.routine}
+                    </Text>
+
+                    <Text className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                      {item.desc}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (!item.rest) {
+                        router.push({
+                          pathname: '/routine/[day]',
+                          params: { day: item.day },
+                        });
+                      }
+                    }}
+                    className={`mt-8 items-center rounded-full py-3 ${
+                      item.rest ? 'bg-gray-300 dark:bg-gray-700' : 'bg-blue-600'
+                    }`}
+                  >
+                    <Text className={`font-semibold ${item.rest ? 'text-gray-600' : 'text-white'}`}>
+                      {item.rest ? 'Descansar' : 'Ver rutina'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
             <Text className="mt-8 mb-4 text-lg font-bold text-black dark:text-white">Posts</Text>
           </View>
         }

@@ -20,7 +20,7 @@ export type FloatingNavbarProps = MaterialTopTabBarProps & {
 
 export function FloatingNavbar({
   state,
-  descriptors: _descriptors,
+  descriptors,
   navigation,
   showPlusBottom = false,
 }: FloatingNavbarProps) {

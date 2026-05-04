@@ -13,7 +13,7 @@ import {
   CheckCheck,
 } from 'lucide-react-native';
 import type { Notification, NotificationType } from '@/types/notification';
-import { useNotificationStore } from '@/features/notifications/stores/useNotificationStore';
+import { useNotificationStore } from '@/stores/useNotificationStore';
 
 // ─── Icon map ────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
-import ThemeToggle from '@/components/shared/theme-toggle';
+import ThemeToggle from '@/components/theme-toggle';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/providers/theme';
 

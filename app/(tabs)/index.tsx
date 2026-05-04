@@ -7,7 +7,7 @@ import PostCard from '@/components/feed/post-card';
 import PostCardSkeleton from '@/components/feed/post-card-skeleton';
 import FormPost from '@/components/feed/form-post';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
-import { usePostStore } from '@/features/feed/stores/usePostStore';
+import { usePostStore } from '@/stores/usePostStore';
 import type { Post } from '@/types/post';
 
 type SkeletonItem = {

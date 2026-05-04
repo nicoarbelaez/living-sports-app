@@ -8,7 +8,7 @@ build/
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
-# *.config.js
-# *.json
-# app.json
-# tsconfig.json
+*.config.js
+*.json
+app.json
+tsconfig.json

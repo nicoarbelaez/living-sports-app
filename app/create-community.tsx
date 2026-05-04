@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { ArrowLeft, Users } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
-import { useGroupsStore } from '@/features/communities/stores/useGroupsStore';
+import { useGroupsStore } from '@/stores/useGroupsStore';
 import { mapGroupRow } from '@/types/group';
 import { Input } from '@/components/ui/input';
 import GroupImagePicker from '@/components/community/GroupImagePicker';
@@ -72,6 +72,7 @@ export default function CreateCommunityScreen() {
     },
   });
 
+  const emoji = watch('emoji');
   const imageUri = watch('imageUri');
 
   const onSubmit = async (values: GroupFormValues) => {
