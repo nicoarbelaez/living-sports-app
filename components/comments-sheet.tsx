@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,9 @@ import {
   Image,
 } from 'react-native';
 import { X } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommentItem, { Comment } from './comment-item';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
-
-const STORAGE_KEY = 'post_comments';
 
 const CURRENT_USER = {
   user: 'Nico Arbelaez',
@@ -26,52 +23,81 @@ const CURRENT_USER = {
 interface CommentsSheetProps {
   isVisible: boolean;
   onClose: () => void;
-  postUser?: string;
-  postAvatar?: string;
-  postImage?: string;
-  postCaption?: string;
+  postId: string; // 🔥 IMPORTANTE
 }
 
-const DUMMY_COMMENTS: Comment[] = [
-  {
-    id: '1',
-    user: 'nicoarbelaez',
-    avatar: 'https://i.pravatar.cc/150?u=nico',
-    text: '¡Qué buena foto! 🔥',
-    time: '2h',
-    likes: 5,
-    isLiked: false,
-    replies: [
-      {
-        id: '1-1',
-        user: 'living.sports',
-        avatar: 'https://i.pravatar.cc/150?u=sports',
-        text: '¡Gracias Nico!',
-        time: '1h',
-        likes: 1,
-        isLiked: false,
-      },
-    ],
-  },
-];
-
-export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps) {
+export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSheetProps) {
   const { session } = useAuth();
   const user = session?.user;
 
-  const [comments, setComments] = useState<Comment[]>(DUMMY_COMMENTS);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [replyTo, setReplyTo] = useState<{ id: string; user: string } | null>(null);
+
   const inputRef = useRef<TextInput>(null);
+
+  // ===============================
+  // 🚀 FETCH COMMENTS REAL
+  // ===============================
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(
+          `
+          id,
+          body,
+          likes_count,
+          created_at,
+          profiles ( username, avatar_url ),
+          comment_replies (
+            id,
+            body,
+            likes_count,
+            created_at,
+            profiles ( username, avatar_url )
+          )
+        `
+        )
+        .eq('post_id', postId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const mapped: Comment[] = data.map((c: any) => ({
+        id: c.id,
+        user: c.profiles?.username || 'User',
+        avatar: c.profiles?.avatar_url,
+        text: c.body,
+        time: 'now',
+        likes: c.likes_count || 0,
+        isLiked: false,
+        replies: c.comment_replies?.map((r: any) => ({
+          id: r.id,
+          user: r.profiles?.username || 'User',
+          avatar: r.profiles?.avatar_url,
+          text: r.body,
+          time: 'now',
+          likes: r.likes_count || 0,
+          isLiked: false,
+        })),
+      }));
+
+      setComments(mapped);
+    };
+
+    if (isVisible) fetchComments();
+  }, [isVisible]);
 
   // ===============================
   // 🔥 HELPERS
   // ===============================
 
-  const findComment = (
-    list: Comment[],
-    id: string,
-    parentId: string | null = null
-  ): { comment: Comment; parentId: string | null } | null => {
+  const findComment = (list: Comment[], id: string, parentId: string | null = null): any => {
     for (const c of list) {
       if (c.id === id) return { comment: c, parentId };
 
@@ -106,7 +132,7 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
   };
 
   // ===============================
-  // 🔥 LIKE FUNCTION
+  // ❤️ LIKE (REAL)
   // ===============================
 
   const handleLike = async (id: string) => {
@@ -118,13 +144,11 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
     const { comment, parentId } = found;
     const wasLiked = comment.isLiked;
 
-    // ⚡ UI optimista
-    const updated = updateTree(comments, id);
-    setComments(updated);
+    setComments(updateTree(comments, id));
 
     try {
       if (parentId) {
-        // 🔥 ES REPLY
+        // reply
         if (wasLiked) {
           await supabase
             .from('comment_reply_likes')
@@ -138,7 +162,7 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
           });
         }
       } else {
-        // 🔥 ES COMMENT
+        // comment
         if (wasLiked) {
           await supabase.from('comment_likes').delete().eq('comment_id', id).eq('user_id', user.id);
         } else {
@@ -148,9 +172,86 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
           });
         }
       }
-    } catch (error) {
-      console.error('Like error:', error);
+    } catch (e) {
+      console.error(e);
     }
+  };
+
+  // ===============================
+  // 💬 CREATE COMMENT / REPLY
+  // ===============================
+
+  const handleSend = async () => {
+    if (!newComment.trim() || !user) return;
+
+    if (replyTo) {
+      // 🔥 REPLY
+      const { data, error } = await supabase
+        .from('comment_replies')
+        .insert({
+          body: newComment,
+          user_id: user.id,
+          comment_id: replyTo.id,
+        })
+        .select()
+        .single();
+
+      if (error) return console.error(error);
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === replyTo.id
+            ? {
+                ...c,
+                replies: [
+                  ...(c.replies || []),
+                  {
+                    id: data.id,
+                    user: CURRENT_USER.user,
+                    avatar: CURRENT_USER.avatar,
+                    text: newComment,
+                    time: 'now',
+                    likes: 0,
+                    isLiked: false,
+                  },
+                ],
+              }
+            : c
+        )
+      );
+
+      setReplyTo(null);
+      setNewComment('');
+      return;
+    }
+
+    // 🔥 COMMENT
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        body: newComment,
+        user_id: user.id,
+        post_id: postId,
+      })
+      .select()
+      .single();
+
+    if (error) return console.error(error);
+
+    setComments((prev) => [
+      {
+        id: data.id,
+        user: CURRENT_USER.user,
+        avatar: CURRENT_USER.avatar,
+        text: newComment,
+        time: 'now',
+        likes: 0,
+        isLiked: false,
+      },
+      ...prev,
+    ]);
+
+    setNewComment('');
   };
 
   // ===============================
@@ -160,10 +261,10 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
   return (
     <Modal transparent visible={isVisible} animationType="slide">
       <View className="flex-1 justify-end bg-black/50">
-        <View className="h-[85%] overflow-hidden rounded-t-3xl bg-white">
+        <View className="h-[85%] rounded-t-3xl bg-white">
           {/* HEADER */}
           <View className="flex-row justify-between border-b px-4 py-4">
-            <Text className="font-bold">Comments</Text>
+            <Text className="text-lg font-bold">Comments</Text>
             <TouchableOpacity onPress={onClose}>
               <X size={24} />
             </TouchableOpacity>
@@ -174,7 +275,15 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
             data={comments}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <CommentItem comment={item} onReply={() => {}} onLike={handleLike} />
+              <CommentItem
+                comment={item}
+                onReply={(user, id) => {
+                  setReplyTo({ user, id });
+                  setNewComment(`@${user} `);
+                  setTimeout(() => inputRef.current?.focus(), 100);
+                }}
+                onLike={handleLike}
+              />
             )}
           />
 
@@ -182,14 +291,16 @@ export default function CommentsSheet({ isVisible, onClose }: CommentsSheetProps
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View className="flex-row items-center border-t px-4 py-3">
               <Image source={{ uri: CURRENT_USER.avatar }} className="h-10 w-10 rounded-full" />
+
               <TextInput
                 ref={inputRef}
                 className="mx-3 flex-1"
-                placeholder="Add comment..."
+                placeholder={replyTo ? `Replying to ${replyTo.user}` : 'Add comment...'}
                 value={newComment}
                 onChangeText={setNewComment}
               />
-              <TouchableOpacity>
+
+              <TouchableOpacity onPress={handleSend}>
                 <Text className="font-bold text-blue-500">Post</Text>
               </TouchableOpacity>
             </View>
