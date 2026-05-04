@@ -41,7 +41,8 @@
           "microphonePermission": "Living Sports necesita acceso a tu micrófono para grabar videos."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
