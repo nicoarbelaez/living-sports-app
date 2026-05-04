@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const handlePostCreated = useCallback(
     (post: Post) => {
       prependPost(post);
-      // Wait for the list to re-render with the new item before scrolling
+
       requestAnimationFrame(() => {
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
       });
@@ -52,7 +52,10 @@ export default function HomeScreen() {
     []
   );
 
-  const data = isLoading && posts.length === 0 ? skeletonData : posts;
+  const data = useMemo(
+    () => (isLoading && posts.length === 0 ? skeletonData : posts),
+    [isLoading, posts, skeletonData]
+  );
 
   const renderItem: ListRenderItem<FeedItem> = useCallback(({ item }) => {
     if ('_skeleton' in item) {
@@ -64,23 +67,32 @@ export default function HomeScreen() {
 
   const keyExtractor = useCallback((item: FeedItem) => item.id, []);
 
-  const ListHeader = (
-    <>
-      <FormPost onPostCreated={handlePostCreated} />
-    </>
+  const ListHeader = useMemo(
+    () => <FormPost onPostCreated={handlePostCreated} />,
+    [handlePostCreated]
   );
 
-  const ListFooter = isFetchingMore ? (
-    <View className="items-center py-4">
-      <ActivityIndicator size="small" color="#10b981" />
-    </View>
-  ) : null;
+  const ListFooter = useMemo(() => {
+    if (!isFetchingMore) return null;
 
-  const ListEmpty = !isLoading ? (
-    <View className="items-center px-6 py-12">
-      <Text className="text-muted-foreground text-center">Sé el primero en publicar algo hoy.</Text>
-    </View>
-  ) : null;
+    return (
+      <View className="items-center py-4">
+        <ActivityIndicator size="small" color="#10b981" />
+      </View>
+    );
+  }, [isFetchingMore]);
+
+  const ListEmpty = useMemo(() => {
+    if (isLoading) return null;
+
+    return (
+      <View className="items-center px-6 py-12">
+        <Text className="text-muted-foreground text-center">
+          Sé el primero en publicar algo hoy.
+        </Text>
+      </View>
+    );
+  }, [isLoading]);
 
   return (
     <View className="bg-background dark:bg-background flex-1">
