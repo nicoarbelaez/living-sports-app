@@ -1,29 +1,64 @@
 import React from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, FlatList, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
-import { useRouter } from 'expo-router';
 
-type Post = {
-  id: string;
-  content: string;
-  created_at: string;
-  image_url?: string | null;
-};
+import { supabase } from '@/lib/supabase';
+import PostCard from '@/components/feed/post-card';
+import ExerciseModal from '@/components/profile/exercise-modal';
+import { formatRelativeTime, getRandomAvatarUrl } from '@/lib/utils';
+import { getProfileFullName } from '@/types/post';
+import type { Post, PostRow } from '@/types/post';
 
-const mockPosts: Post[] = [
-  {
-    id: '1',
-    content: 'Hoy fue un día brutal de pierna 🔥',
-    created_at: '2026-04-18',
-    image_url: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e',
-  },
-  {
-    id: '2',
-    content: 'Subiendo pesos en banca 💪',
-    created_at: '2026-04-17',
-    image_url: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61',
-  },
-];
+const PAGE_SIZE = 15;
+
+const POST_SELECT = `
+  id,
+  body,
+  created_at,
+  likes_count,
+  comments_count,
+  profiles (
+    username,
+    first_name,
+    last_name,
+    avatar_url
+  ),
+  post_media (
+    url,
+    media_type,
+    sort_order
+  )
+` as const;
+
+function rowToPost(row: PostRow): Post {
+  const profile = row.profiles;
+  const username = getProfileFullName(profile);
+  const avatarSeed = profile?.username ?? username;
+  const avatar =
+    profile?.avatar_url && !profile.avatar_url.includes('avatars.githubusercontent.com')
+      ? profile.avatar_url
+      : getRandomAvatarUrl(avatarSeed);
+
+  const media = [...(row.post_media ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((m) => ({
+      url: m.url,
+      type: (m.media_type === 'video' ? 'video' : 'image') as 'image' | 'video',
+    }));
+
+  return {
+    id: row.id,
+    user: username,
+    time: formatRelativeTime(row.created_at),
+    createdAt: row.created_at,
+    avatar,
+    media,
+    text: row.body ?? '',
+    likesCount: row.likes_count,
+    commentsCount: row.comments_count,
+  };
+}
 
 const featuredExercises = [
   {
@@ -33,6 +68,9 @@ const featuredExercises = [
     image:
       'https://www.myprotein.es/images?url=https://blogscdn.thehut.net/app/uploads/sites/450/2016/09/bench-press_1595337964_1595417256.jpg&auto=avif&width=700&fit=crop',
     pr: '135 kg',
+    description:
+      'Ejercicio compuesto fundamental para desarrollar la fuerza y el tamaño del pecho, hombros y tríceps.',
+    type: 'Fuerza / Hipertrofia',
   },
   {
     id: '2',
@@ -40,6 +78,9 @@ const featuredExercises = [
     muscle: 'Pierna',
     image: 'https://media.hearstapps.com/loop/coleman-ronnie-1645715649.mp4/poster.jpg',
     pr: '350 kg',
+    description:
+      'El rey de los ejercicios de tren inferior. Trabaja cuádriceps, glúteos y fortalece toda tu zona central (core).',
+    type: 'Fuerza / Hipertrofia',
   },
   {
     id: '3',
@@ -47,6 +88,9 @@ const featuredExercises = [
     muscle: 'Bíceps',
     image: 'https://intowellness.in/wp-content/uploads/2024/10/Into_Wellness_Biceps_Curl.jpg',
     pr: '60 kg',
+    description:
+      'Ejercicio de aislamiento perfecto para maximizar el desarrollo de los bíceps y antebrazos.',
+    type: 'Aislamiento',
   },
 ];
 
@@ -54,6 +98,41 @@ export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
   const router = useRouter();
+
+  const [posts, setPosts] = React.useState<Post[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [selectedExercise, setSelectedExercise] = React.useState<
+    (typeof featuredExercises)[0] | null
+  >(null);
+
+  const fetchUserPosts = React.useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(POST_SELECT)
+        .eq('user_id', user.id)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const rows = (data ?? []) as PostRow[];
+      setPosts(rows.map(rowToPost));
+    } catch (err) {
+      console.error('[ProfileScreen] Error fetching posts:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserPosts();
+    }, [fetchUserPosts])
+  );
 
   const displayName =
     user?.user_metadata?.full_name ||
@@ -63,34 +142,27 @@ export default function ProfileScreen() {
 
   const avatar = user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User';
 
-  const displayPosts = mockPosts;
-
-  const renderPost = ({ item }: { item: Post }) => (
-    <View className="mb-6 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900">
-      {item.image_url && (
-        <Image source={{ uri: item.image_url }} className="h-52 w-full rounded-2xl" />
-      )}
-
-      <Text className="mt-3 text-sm text-gray-700 dark:text-gray-300">{item.content}</Text>
-
-      <View className="mt-3 flex-row justify-between">
-        <Text className="text-xs text-gray-400">❤️ 34</Text>
-        <Text className="text-xs text-gray-400">💬 2</Text>
-      </View>
-    </View>
-  );
+  const renderPost = ({ item }: { item: Post }) => <PostCard post={item} />;
 
   return (
     <View className="flex-1 bg-gray-100 dark:bg-black">
       <FlatList
-        data={displayPosts}
+        data={posts}
         keyExtractor={(item) => item.id}
         renderItem={renderPost}
+        onRefresh={fetchUserPosts}
+        refreshing={isLoading}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingHorizontal: 16,
           paddingBottom: 120,
         }}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="mt-10 items-center py-10">
+              <Text className="text-gray-500 dark:text-gray-400">No has publicado nada aún</Text>
+            </View>
+          ) : null
+        }
         ListHeaderComponent={
           <View>
             <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-900">
@@ -112,9 +184,7 @@ export default function ProfileScreen() {
 
             <View className="mt-6 flex-row justify-between gap-3">
               <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
-                <Text className="text-lg font-bold text-black dark:text-white">
-                  {displayPosts.length}
-                </Text>
+                <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
                 <Text className="text-xs text-gray-500 dark:text-gray-400">POSTS</Text>
               </View>
 
@@ -152,7 +222,7 @@ export default function ProfileScreen() {
                     <Text className="text-sm font-bold text-blue-600">{item.pr}</Text>
                   </View>
 
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => setSelectedExercise(item)}>
                     <View className="mt-4 items-center rounded-full bg-blue-600 py-3">
                       <Text className="font-bold text-white">Ver ejercicio</Text>
                     </View>
@@ -301,6 +371,9 @@ export default function ProfileScreen() {
           </View>
         }
       />
+
+      {/* Exercise Details Modal */}
+      <ExerciseModal exercise={selectedExercise} onClose={() => setSelectedExercise(null)} />
     </View>
   );
 }
