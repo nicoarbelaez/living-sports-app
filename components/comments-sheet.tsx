@@ -33,23 +33,17 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
   const inputRef = useRef<TextInput>(null);
 
   // ===============================
-  // 👤 FETCH PROFILE
+  // 👤 PROFILE
   // ===============================
-
   useEffect(() => {
     if (!user) return;
 
     const fetchProfile = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('username, avatar_url')
         .eq('id', user.id)
         .single();
-
-      if (error) {
-        console.error('Profile error:', error);
-        return;
-      }
 
       setProfile(data);
     };
@@ -58,27 +52,25 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
   }, [user]);
 
   // ===============================
-  // 💬 FETCH COMMENTS
+  // 💬 FETCH COMMENTS + LIKES
   // ===============================
-
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !user) return;
 
     const fetchComments = async () => {
-      const { data, error } = await supabase
+      // 🔥 comments + replies
+      const { data } = await supabase
         .from('comments')
         .select(
           `
           id,
           body,
           likes_count,
-          created_at,
           profiles ( username, avatar_url ),
           comment_replies (
             id,
             body,
             likes_count,
-            created_at,
             profiles ( username, avatar_url )
           )
         `
@@ -86,13 +78,25 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
         .eq('post_id', postId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Comments error:', error);
-        return;
-      }
-
       if (!data) return;
 
+      // 🔥 likes comments
+      const { data: likedComments } = await supabase
+        .from('comment_likes')
+        .select('comment_id')
+        .eq('user_id', user.id);
+
+      const likedCommentIds = new Set(likedComments?.map((l) => l.comment_id));
+
+      // 🔥 likes replies
+      const { data: likedReplies } = await supabase
+        .from('comment_reply_likes')
+        .select('reply_id')
+        .eq('user_id', user.id);
+
+      const likedReplyIds = new Set(likedReplies?.map((l) => l.reply_id));
+
+      // 🔥 MAP REAL
       const mapped: Comment[] = data.map((c: any) => ({
         id: c.id,
         user: c.profiles?.username || 'Usuario',
@@ -100,7 +104,7 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
         text: c.body,
         time: 'now',
         likes: c.likes_count || 0,
-        isLiked: false,
+        isLiked: likedCommentIds.has(c.id),
         replies: c.comment_replies?.map((r: any) => ({
           id: r.id,
           user: r.profiles?.username || 'Usuario',
@@ -108,7 +112,7 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
           text: r.body,
           time: 'now',
           likes: r.likes_count || 0,
-          isLiked: false,
+          isLiked: likedReplyIds.has(r.id),
         })),
       }));
 
@@ -116,12 +120,11 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
     };
 
     fetchComments();
-  }, [isVisible, postId]);
+  }, [isVisible, postId, user]);
 
   // ===============================
   // ❤️ HELPERS
   // ===============================
-
   const findComment = (list: Comment[], id: string, parentId: string | null = null): any => {
     for (const c of list) {
       if (c.id === id) return { comment: c, parentId };
@@ -158,7 +161,6 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
   // ===============================
   // ❤️ LIKE
   // ===============================
-
   const handleLike = async (id: string) => {
     if (!user) return;
 
@@ -170,45 +172,39 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
 
     setComments(updateTree(comments, id));
 
-    try {
-      if (parentId) {
-        if (wasLiked) {
-          await supabase
-            .from('comment_reply_likes')
-            .delete()
-            .eq('reply_id', id)
-            .eq('user_id', user.id);
-        } else {
-          await supabase.from('comment_reply_likes').insert({
-            reply_id: id,
-            user_id: user.id,
-          });
-        }
+    if (parentId) {
+      if (wasLiked) {
+        await supabase
+          .from('comment_reply_likes')
+          .delete()
+          .eq('reply_id', id)
+          .eq('user_id', user.id);
       } else {
-        if (wasLiked) {
-          await supabase.from('comment_likes').delete().eq('comment_id', id).eq('user_id', user.id);
-        } else {
-          await supabase.from('comment_likes').insert({
-            comment_id: id,
-            user_id: user.id,
-          });
-        }
+        await supabase.from('comment_reply_likes').insert({
+          reply_id: id,
+          user_id: user.id,
+        });
       }
-    } catch (error) {
-      console.error('Like error:', error);
+    } else {
+      if (wasLiked) {
+        await supabase.from('comment_likes').delete().eq('comment_id', id).eq('user_id', user.id);
+      } else {
+        await supabase.from('comment_likes').insert({
+          comment_id: id,
+          user_id: user.id,
+        });
+      }
     }
   };
 
   // ===============================
-  // ✍️ CREATE COMMENT / REPLY
+  // ✍️ CREATE
   // ===============================
-
   const handleSend = async () => {
     if (!newComment.trim() || !user || !profile) return;
 
-    // 🔁 REPLY
     if (replyTo) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('comment_replies')
         .insert({
           body: newComment,
@@ -218,11 +214,6 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
         .select()
         .single();
 
-      if (error || !data) {
-        console.error('Reply error:', error);
-        return;
-      }
-
       setComments((prev) =>
         prev.map((c) =>
           c.id === replyTo.id
@@ -231,7 +222,7 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
                 replies: [
                   ...(c.replies || []),
                   {
-                    id: data.id,
+                    id: data?.id || Date.now().toString(),
                     user: profile.username,
                     avatar: profile.avatar_url,
                     text: newComment,
@@ -250,8 +241,7 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
       return;
     }
 
-    // 💬 COMMENT
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('comments')
       .insert({
         body: newComment,
@@ -261,14 +251,9 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
       .select()
       .single();
 
-    if (error || !data) {
-      console.error('Comment error:', error);
-      return;
-    }
-
     setComments((prev) => [
       {
-        id: data.id,
+        id: data?.id || Date.now().toString(),
         user: profile.username,
         avatar: profile.avatar_url,
         text: newComment,
@@ -285,12 +270,10 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
   // ===============================
   // UI
   // ===============================
-
   return (
     <Modal transparent visible={isVisible} animationType="slide">
       <View className="flex-1 justify-end bg-black/50">
         <View className="h-[85%] rounded-t-3xl bg-white">
-          {/* HEADER */}
           <View className="flex-row justify-between border-b px-4 py-4">
             <Text className="text-lg font-bold">Comentarios</Text>
             <TouchableOpacity onPress={onClose}>
@@ -298,7 +281,6 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
             </TouchableOpacity>
           </View>
 
-          {/* LIST */}
           <FlatList
             data={comments}
             keyExtractor={(item) => item.id}
@@ -315,20 +297,14 @@ export default function CommentsSheet({ isVisible, onClose, postId }: CommentsSh
             )}
           />
 
-          {/* INPUT */}
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View className="flex-row items-center border-t px-4 py-3">
-              <Image
-                source={{
-                  uri: profile?.avatar_url || 'https://ui-avatars.com/api/?name=User',
-                }}
-                className="h-10 w-10 rounded-full"
-              />
+              <Image source={{ uri: profile?.avatar_url }} className="h-10 w-10 rounded-full" />
 
               <TextInput
                 ref={inputRef}
                 className="mx-3 flex-1"
-                placeholder={replyTo ? `Respondiendo a ${replyTo.user}` : 'Añadir comentario...'}
+                placeholder="Añadir comentario..."
                 value={newComment}
                 onChangeText={setNewComment}
               />
