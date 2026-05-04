@@ -132,10 +132,7 @@ function PostCard({ post }: PostCardProps) {
       <CommentsSheet
         isVisible={showComments}
         onClose={() => setShowComments(false)}
-        postUser={post.user}
-        postAvatar={post.avatar}
-        postImage={post.media[0]?.url ?? ''}
-        postCaption={post.text}
+        postId={post.id}
       />
     </View>
   );
