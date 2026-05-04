@@ -47,18 +47,14 @@ export default function CreatePost() {
       if (image) {
         const fileName = `${user.id}-${Date.now()}.jpg`;
 
-        const base64 = await FileSystem.readAsStringAsync(image, {
-          encoding: 'base64',
+        // Obtener el blob de la imagen local
+        const response = await fetch(image);
+        const blob = await response.blob();
+
+        const { error: uploadError } = await supabase.storage.from('post').upload(fileName, blob, {
+          contentType: 'image/jpeg',
+          upsert: true,
         });
-
-        const arrayBuffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-
-        const { error: uploadError } = await supabase.storage
-          .from('post')
-          .upload(fileName, arrayBuffer, {
-            contentType: 'image/jpeg',
-            upsert: true,
-          });
 
         if (uploadError) {
           Alert.alert('Error', 'No se pudo subir la imagen');
@@ -70,15 +66,35 @@ export default function CreatePost() {
         imageUrl = data.publicUrl;
       }
 
-      const { error } = await supabase.from('posts').insert({
-        user_id: user.id,
-        content,
-        image_url: imageUrl,
-      } as any);
+      // 1. Insertar el post principal
+      const { data: newPost, error: postError } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          body: content,
+        })
+        .select()
+        .single();
 
-      if (error) {
+      if (postError || !newPost) {
+        console.error('Error insertando post:', postError);
         Alert.alert('Error', 'No se pudo crear el post');
         return;
+      }
+
+      // 2. Si hay imagen, insertarla en post_media
+      if (imageUrl) {
+        const { error: mediaError } = await supabase.from('post_media').insert({
+          post_id: newPost.id,
+          url: imageUrl,
+          media_type: 'image',
+          sort_order: 1,
+        });
+
+        if (mediaError) {
+          console.error('Error insertando media:', mediaError);
+          // Opcional: no bloqueamos si falla la imagen, o podemos mostrar alerta
+        }
       }
 
       router.back();
@@ -112,13 +128,13 @@ export default function CreatePost() {
             placeholder="¿Qué estás pensando?"
             placeholderTextColor="#9ca3af"
             multiline
+            className="text-black dark:text-white"
             style={{
               minHeight: 120,
               textAlignVertical: 'top',
               paddingHorizontal: 16,
               paddingVertical: 14,
               fontSize: 16,
-              color: '#fff',
             }}
           />
         </View>
