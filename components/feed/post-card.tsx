@@ -1,10 +1,12 @@
-import React, { useState, memo, useCallback } from 'react';
+import React, { useState, memo, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Heart, MessageCircle } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import MediaCarousel from './media-carousel';
 import { Image } from 'expo-image';
 import CommentsSheet from '../comments-sheet';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
 import type { Post } from '@/types/post';
 
 interface PostCardProps {
@@ -14,16 +16,61 @@ interface PostCardProps {
 function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
 
+  const { session } = useAuth();
+  const user = session?.user;
+
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likesCount);
+  const [loading, setLoading] = useState(false);
 
-  const handleLike = useCallback(() => {
-    setLiked((prev) => !prev);
+  // 🔥 Verificar si el usuario ya dio like
+  useEffect(() => {
+    const checkLike = async () => {
+      if (!user) return;
 
-    setLikes((prev) => (liked ? prev - 1 : prev + 1));
+      const { data } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    // 🔥 aquí luego conectamos Supabase
-  }, [liked]);
+      if (data) {
+        setLiked(true);
+      }
+    };
+
+    checkLike();
+  }, [post.id, user]);
+
+  const handleLike = useCallback(async () => {
+    if (!user || loading) return;
+
+    setLoading(true);
+
+    try {
+      if (liked) {
+        // ❌ quitar like
+        await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', user.id);
+
+        setLiked(false);
+        setLikes((prev) => prev - 1);
+      } else {
+        // ✅ dar like
+        await supabase.from('post_likes').insert({
+          post_id: post.id,
+          user_id: user.id,
+        });
+
+        setLiked(true);
+        setLikes((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.log('Error like:', error);
+    }
+
+    setLoading(false);
+  }, [liked, user, post.id, loading]);
 
   return (
     <View className="mx-4 mt-3 overflow-hidden rounded-2xl bg-white shadow dark:bg-[#111827]">
@@ -81,7 +128,7 @@ function PostCard({ post }: PostCardProps) {
         </TouchableOpacity>
       </View>
 
-      {/* COMMENTS SHEET */}
+      {/* COMMENTS */}
       <CommentsSheet
         isVisible={showComments}
         onClose={() => setShowComments(false)}
