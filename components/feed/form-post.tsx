@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, TextInput, TouchableOpacity, Text, Alert, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Text, Alert, ScrollView } from 'react-native';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Image as ImageIcon, Camera, Send, X, Video as VideoIcon } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { getRandomAvatarUrl } from '@/lib/utils';
@@ -50,7 +51,7 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
     control,
     handleSubmit,
     reset,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = useForm<PostFormValues>({
     resolver: zodResolver(PostFormSchema),
     defaultValues: { text: '', medias: [] },
@@ -125,20 +126,18 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
             control={control}
             name="text"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                multiline
+              <Textarea
                 placeholder="¿Qué tienes en mente, atleta?"
-                placeholderTextColor="#9ca3af"
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 editable={!isSubmitting}
-                className="mb-2 max-h-32 min-h-[40px] p-0 text-base text-gray-800 dark:text-gray-200"
+                maxChars={500}
+                className="mb-2 min-h-[40px] border-0 bg-transparent p-0"
+                style={{ maxHeight: 128 }}
               />
             )}
           />
-
-          {errors.text && <Text className="mb-1 text-xs text-red-500">{errors.text.message}</Text>}
 
           {fields.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2 mb-2">

@@ -48,14 +48,7 @@ function PostCard({ post }: PostCardProps) {
         </TouchableOpacity>
       </View>
 
-      <CommentsSheet
-        isVisible={showComments}
-        onClose={() => setShowComments(false)}
-        postUser={post.user}
-        postAvatar={post.avatar}
-        postImage={post.media[0]?.url ?? ''}
-        postCaption={post.text}
-      />
+      <CommentsSheet isVisible={showComments} onClose={() => setShowComments(false)} />
     </View>
   );
 }

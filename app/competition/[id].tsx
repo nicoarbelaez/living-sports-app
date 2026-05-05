@@ -7,7 +7,7 @@ import { useCompetitionDetail } from '@/features/competitions/hooks/useCompetiti
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import EntryCard from '@/components/competition/EntryCard';
-import EvidenceModal from '@/components/competition/EvidenceModal';
+import EvidenceModal from '@/features/competitions/components/evidence-modal';
 import type { CompetitionEntry } from '@/types/competition';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; text: string }> = {

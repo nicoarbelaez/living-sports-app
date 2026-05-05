@@ -11,7 +11,7 @@ import { useGroupsStore } from '@/features/communities/stores/useGroupsStore';
 import { mapGroupRow } from '@/types/group';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import GroupImagePicker from '@/components/community/GroupImagePicker';
+import GroupImagePicker from '@/features/communities/components/group-image-picker';
 
 const GYM_EMOJIS = [
   '🏋️',

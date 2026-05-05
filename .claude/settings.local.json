@@ -23,7 +23,9 @@
       "Bash(npm ls *)",
       "Bash(git restore *)",
       "Bash(grep -E \"\\(^[^/]*$|/\\(app|components|features|hooks|stores|lib|types|providers|constants|supabase\\)$\\)\")",
-      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
+      "Bash(grep -v \"^$\")",
+      "WebFetch(domain:gorhom.dev)"
     ]
   }
 }

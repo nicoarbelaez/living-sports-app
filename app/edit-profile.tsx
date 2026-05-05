@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, Image, Alert } from 'react-native';
+import { View, Text, Pressable, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Camera } from 'lucide-react-native';
-import { useTheme } from '@/providers/theme';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import * as ImagePicker from 'expo-image-picker';
-import { MotiView } from 'moti';
+
+const MAX_BIO = 80;
 
 export default function EditProfile() {
   const router = useRouter();
   const { session } = useAuth();
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
 
   const user = session?.user;
 
@@ -29,12 +29,12 @@ export default function EditProfile() {
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
-  const MAX_BIO = 80;
-
   const fallbackAvatar =
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
     'https://ui-avatars.com/api/?name=User';
+
+  const isOverLimit = bio.length > MAX_BIO;
 
   const hasChanges =
     username !== originalUsername || avatarUrl !== originalAvatar || bio !== originalBio;
@@ -173,9 +173,6 @@ export default function EditProfile() {
     }
   };
 
-  const remaining = MAX_BIO - bio.length;
-  const isOverLimit = remaining < 0;
-
   return (
     <View className="flex-1 bg-gray-100 px-5 pt-10 dark:bg-black">
       <View className="mb-8 flex-row items-center justify-between">
@@ -212,24 +209,19 @@ export default function EditProfile() {
       </Text>
 
       <View
-        className={`rounded-2xl border px-4 py-3 ${
+        className={`rounded-2xl border px-4 py-1 ${
           focused
             ? 'border-blue-500 bg-white dark:bg-gray-800'
             : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
         }`}
       >
-        <TextInput
+        <Input
           value={username}
           onChangeText={setUsername}
           placeholder="Tu nombre de usuario"
-          placeholderTextColor="#9ca3af"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={{
-            fontSize: 16,
-            color: isDark ? 'white' : 'black',
-            paddingVertical: 2,
-          }}
+          className="h-10 border-0 bg-transparent px-0"
         />
       </View>
 
@@ -245,35 +237,14 @@ export default function EditProfile() {
 
       <Text className="mt-6 mb-2 text-sm text-gray-500 dark:text-gray-400">Biografía</Text>
 
-      <View className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <TextInput
-          value={bio}
-          onChangeText={(text) => {
-            if (text.length <= MAX_BIO) setBio(text);
-          }}
-          placeholder="Cuéntanos algo sobre ti..."
-          placeholderTextColor="#9ca3af"
-          multiline
-          numberOfLines={4}
-          style={{
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            textAlignVertical: 'top',
-            color: isDark ? 'white' : 'black',
-          }}
-        />
-
-        <MotiView
-          from={{ scale: 1 }}
-          animate={{ scale: isOverLimit ? 1.1 : 1 }}
-          transition={{ type: 'timing', duration: 150 }}
-          className="items-end px-4 pb-2"
-        >
-          <Text className={`text-xs ${isOverLimit ? 'text-red-500' : 'text-gray-400'}`}>
-            {bio.length}/{MAX_BIO}
-          </Text>
-        </MotiView>
-      </View>
+      <Textarea
+        value={bio}
+        onChangeText={setBio}
+        placeholder="Cuéntanos algo sobre ti..."
+        numberOfLines={4}
+        maxChars={MAX_BIO}
+        className="min-h-24"
+      />
 
       <Button
         onPress={handleSave}
