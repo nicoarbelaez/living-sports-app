@@ -1,16 +1,56 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StatusBar,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function AiRoutineScreen() {
   const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+  const [routine, setRoutine] = useState('');
+
+  const generateRoutine = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        'https://ovtxiqrnhbkpkvobpwyd.supabase.co/functions/v1/generate-routine',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            goal: 'Hipertrofia',
+            experience: 'Intermedio',
+            days: 5,
+            duration: 90,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      setRoutine(data.routine);
+    } catch (error) {
+      console.log(error);
+    }
+
+    setLoading(false);
+  };
+
   return (
     <View className="flex-1 bg-gray-100 dark:bg-black">
       <StatusBar barStyle="light-content" />
 
-      {/* HEADER */}
       <LinearGradient colors={['#3b82f6', '#1d4ed8']} className="rounded-b-[32px] px-5 pt-16 pb-10">
         <Text className="text-xs text-blue-100">IA</Text>
 
@@ -21,27 +61,32 @@ export default function AiRoutineScreen() {
         </Text>
       </LinearGradient>
 
-      {/* CONTENT */}
-      <View className="flex-1 items-center justify-center px-6">
-        <View className="w-full rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-900">
-          <Text className="text-center text-xl font-bold text-black dark:text-white">
-            🚧 En desarrollo
-          </Text>
+      <ScrollView className="flex-1 px-5 py-6">
+        <TouchableOpacity
+          onPress={generateRoutine}
+          disabled={loading}
+          className="items-center rounded-2xl bg-blue-600 py-4"
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text className="font-bold text-white">Generar rutina IA</Text>
+          )}
+        </TouchableOpacity>
 
-          <Text className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
-            Esta opción se está implementando.
-            {'\n'}Muy pronto podrás generar rutinas con IA.
-          </Text>
-        </View>
+        {!!routine && (
+          <View className="mt-6 rounded-3xl bg-white p-5 dark:bg-zinc-900">
+            <Text className="text-base leading-6 text-black dark:text-white">{routine}</Text>
+          </View>
+        )}
 
-        {/* BOTÓN */}
         <TouchableOpacity
           onPress={() => router.back()}
-          className="mt-6 w-full items-center rounded-full bg-blue-600 py-4"
+          className="mt-6 items-center rounded-full bg-zinc-800 py-4"
         >
           <Text className="font-bold text-white">Volver</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }
