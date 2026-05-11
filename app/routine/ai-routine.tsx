@@ -39,9 +39,16 @@ export default function AiRoutineScreen() {
 
       const data = await response.json();
 
+      console.log('STATUS:', response.status);
+      console.log('DATA:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error generando rutina');
+      }
+
       setRoutine(data.routine);
     } catch (error) {
-      console.log(error);
+      console.log('AI ERROR:', error);
     }
 
     setLoading(false);
