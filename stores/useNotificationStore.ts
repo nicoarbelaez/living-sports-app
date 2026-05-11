@@ -4,6 +4,7 @@ import type { Notification } from '@/types/notification';
 // ---------------------------------------------------------------------------
 // Mock data – replace with Supabase query when the backend is ready
 // ---------------------------------------------------------------------------
+
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
@@ -77,6 +78,8 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Store types
+// ---------------------------------------------------------------------------
 
 interface NotificationState {
   notifications: Notification[];
@@ -89,6 +92,10 @@ interface NotificationActions {
 }
 
 type NotificationStore = NotificationState & NotificationActions;
+
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
 
 export const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: MOCK_NOTIFICATIONS,
