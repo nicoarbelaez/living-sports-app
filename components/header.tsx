@@ -92,12 +92,6 @@ export default function HeaderActions({ screen }: Props) {
 
       {screen === 'profile' && (
         <>
-          <View className="flex-1 items-start">
-            <Pressable onPress={() => router.push('/create-post')} className="p-1">
-              <Plus size={22} color={iconColor} />
-            </Pressable>
-          </View>
-
           <Pressable onPress={() => router.push('/edit-profile')} className="p-1">
             <Pencil size={22} color={iconColor} />
           </Pressable>
