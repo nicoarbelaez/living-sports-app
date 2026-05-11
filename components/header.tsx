@@ -17,7 +17,7 @@ export default function HeaderActions({ screen }: Props) {
 
   const isDark = theme === 'dark';
 
-  const iconColor = isDark ? '#f3f4f6' : '#111827';
+  const iconColor = isDark ? '#60a5fa' : '#2563eb';
 
   const [searchMode, setSearchMode] = useState(false);
   const [query, setQuery] = useState('');
