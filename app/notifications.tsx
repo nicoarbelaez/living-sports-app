@@ -2,41 +2,14 @@ import React, { useCallback } from 'react';
 import { View, Text, FlatList, Pressable, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, type Router } from 'expo-router';
-import {
-  Heart,
-  MessageCircle,
-  CornerDownRight,
-  Users,
-  UserPlus,
-  ArrowLeft,
-  Bell,
-  CheckCheck,
-} from 'lucide-react-native';
-import type { Notification, NotificationType } from '@/types/notification';
+import { Bell, ArrowLeft, CheckCheck } from 'lucide-react-native';
+import type { Notification } from '@/types/notification';
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import { getIconConfig } from '@/features/notifications/utils/notification-icons';
 
-// ─── Icon map ────────────────────────────────────────────────────────────────
+// ─── Section type ─────────────────────────────────────────────────────────────
 
-type IconConfig = {
-  icon: React.ComponentType<{ size: number; color: string }>;
-  bg: string;
-  color: string;
-};
-
-function getIconConfig(type: NotificationType, isDark: boolean): IconConfig {
-  switch (type) {
-    case 'like':
-      return { icon: Heart, bg: isDark ? '#3f1e1e' : '#fee2e2', color: '#ef4444' };
-    case 'comment':
-      return { icon: MessageCircle, bg: isDark ? '#1e2f3f' : '#dbeafe', color: '#3b82f6' };
-    case 'response':
-      return { icon: CornerDownRight, bg: isDark ? '#1e3a2f' : '#d1fae5', color: '#10b981' };
-    case 'community':
-      return { icon: Users, bg: isDark ? '#2f2a1e' : '#fef9c3', color: '#eab308' };
-    case 'profile':
-      return { icon: UserPlus, bg: isDark ? '#2e1e3f' : '#ede9fe', color: '#8b5cf6' };
-  }
-}
+type Section = { type: 'header'; title: string } | { type: 'item'; notification: Notification };
 
 // ─── Notification row ─────────────────────────────────────────────────────────
 
@@ -52,16 +25,14 @@ function NotificationItem({ item, router }: { item: Notification; router: Router
     router.push(`/notification/${item.id}` as never);
   }, [markAsRead, item.id, router]);
 
-  const bg_row = !item.read
-    ? isDark
-      ? 'rgba(16,185,129,0.06)'
-      : 'rgba(16,185,129,0.05)'
-    : 'transparent';
-
   return (
     <Pressable
       onPress={handlePress}
-      style={{ backgroundColor: bg_row }}
+      style={
+        !item.read
+          ? { backgroundColor: isDark ? 'rgba(16,185,129,0.06)' : 'rgba(16,185,129,0.05)' }
+          : undefined
+      }
       className="flex-row items-start px-4 py-3 active:opacity-70"
     >
       {/* Icon chip */}
@@ -74,23 +45,16 @@ function NotificationItem({ item, router }: { item: Notification; router: Router
 
       {/* Text block */}
       <View className="ml-3 flex-1">
-        <Text
-          className={`text-sm leading-snug font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
-        >
-          {item.actorName}{' '}
-          <Text className={`font-normal ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            {item.body}
-          </Text>
+        <Text className="text-foreground text-sm leading-snug font-semibold">
+          {item.actorName} <Text className="text-muted-foreground font-normal">{item.body}</Text>
         </Text>
-        <Text className={`mt-0.5 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-          {item.timeAgo}
-        </Text>
+        <Text className="text-muted-foreground mt-0.5 text-xs">{item.timeAgo}</Text>
       </View>
 
-      {/* Unread dot + arrow */}
-      <View className="ml-2 flex-row items-center gap-1.5" style={{ flexShrink: 0 }}>
-        {!item.read && <View className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500" />}
-      </View>
+      {/* Unread dot */}
+      {!item.read && (
+        <View className="bg-primary mt-1.5 ml-2 h-2 w-2 rounded-full" style={{ flexShrink: 0 }} />
+      )}
     </Pressable>
   );
 }
@@ -108,8 +72,6 @@ export default function NotificationsScreen() {
 
   const unread = notifications.filter((n) => !n.read);
   const read = notifications.filter((n) => n.read);
-
-  type Section = { type: 'header'; title: string } | { type: 'item'; notification: Notification };
 
   const listData: Section[] = [
     ...(unread.length > 0
@@ -130,12 +92,8 @@ export default function NotificationsScreen() {
     ({ item }: { item: Section }) => {
       if (item.type === 'header') {
         return (
-          <View className={`px-4 pt-4 pb-1 ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
-            <Text
-              className={`text-xs font-bold tracking-wide uppercase ${
-                isDark ? 'text-gray-500' : 'text-gray-400'
-              }`}
-            >
+          <View className="bg-background px-4 pt-4 pb-1">
+            <Text className="text-muted-foreground text-xs font-bold tracking-wide uppercase">
               {item.title}
             </Text>
           </View>
@@ -143,7 +101,7 @@ export default function NotificationsScreen() {
       }
       return <NotificationItem item={item.notification} router={router} />;
     },
-    [isDark, router]
+    [router]
   );
 
   const keyExtractor = useCallback(
@@ -153,28 +111,21 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <View className={`flex-1 ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
+    <View className="bg-background flex-1">
       {/* Header */}
-      <SafeAreaView edges={['top']} className={isDark ? 'bg-black' : 'bg-white'}>
-        <View
-          className={
-            isDark
-              ? 'h-14 flex-row items-center border-b border-gray-800 px-4'
-              : 'h-14 flex-row items-center border-b border-gray-200 bg-white px-4 shadow-sm'
-          }
-        >
+      <SafeAreaView edges={['top']} className="bg-background">
+        <View className="border-border bg-background h-14 flex-row items-center border-b px-4">
           <Pressable onPress={() => router.back()} className="p-1">
             <ArrowLeft size={22} color={isDark ? '#e5e7eb' : '#374151'} />
           </Pressable>
 
           <View className="ml-3 flex-1 flex-row items-center">
             <Bell size={18} color={isDark ? '#e5e7eb' : '#374151'} />
-            <Text className={`ml-2 text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Notificaciones
-            </Text>
+            <Text className="text-foreground ml-2 text-base font-bold">Notificaciones</Text>
+
             {unreadCount > 0 && (
-              <View className="ml-2 min-w-5 items-center rounded-full bg-emerald-500 px-1.5 py-0.5">
-                <Text className="text-xs font-bold text-white">{unreadCount}</Text>
+              <View className="bg-primary ml-2 min-w-5 items-center rounded-full px-1.5 py-0.5">
+                <Text className="text-primary-foreground text-xs font-bold">{unreadCount}</Text>
               </View>
             )}
           </View>
@@ -182,7 +133,7 @@ export default function NotificationsScreen() {
           {unreadCount > 0 && (
             <Pressable onPress={markAllAsRead} className="flex-row items-center gap-1 p-1">
               <CheckCheck size={18} color="#10b981" />
-              <Text className="text-sm font-medium text-emerald-500">Leer todo</Text>
+              <Text className="text-primary text-sm font-medium">Leer todo</Text>
             </Pressable>
           )}
         </View>
@@ -192,9 +143,7 @@ export default function NotificationsScreen() {
       {notifications.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-3">
           <Bell size={48} color={isDark ? '#374151' : '#d1d5db'} />
-          <Text className={`text-base ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            No tienes notificaciones aún
-          </Text>
+          <Text className="text-muted-foreground text-base">No tienes notificaciones aún</Text>
         </View>
       ) : (
         <FlatList
@@ -203,9 +152,7 @@ export default function NotificationsScreen() {
           keyExtractor={keyExtractor}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 32 }}
-          ItemSeparatorComponent={() => (
-            <View className={`mx-4 h-px ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`} />
-          )}
+          ItemSeparatorComponent={() => <View className="bg-border mx-4 h-px" />}
         />
       )}
     </View>
