@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Pressable, TextInput, Text, useColorScheme } from 'react-native';
-import { Search, Bell, Settings, ArrowLeft, Pencil, Plus } from 'lucide-react-native';
+import { View, Pressable, TextInput, Text } from 'react-native';
+import { Search, Bell, Settings, ArrowLeft, Pencil } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import { useTheme } from '@/providers/theme';
 
 type Props = {
   screen: 'home' | 'comunidades' | 'profile';
@@ -10,9 +12,12 @@ type Props = {
 
 export default function HeaderActions({ screen }: Props) {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const iconColor = isDark ? '#e5e7eb' : '#374151';
+
+  const { theme } = useTheme();
+
+  const isDark = theme === 'dark';
+
+  const iconColor = isDark ? '#60a5fa' : '#2563eb';
 
   const [searchMode, setSearchMode] = useState(false);
   const [query, setQuery] = useState('');
@@ -21,7 +26,7 @@ export default function HeaderActions({ screen }: Props) {
 
   if (searchMode) {
     return (
-      <View className="flex-1 flex-row items-center rounded-xl bg-gray-100 px-2 dark:bg-gray-900">
+      <View className="flex-1 flex-row items-center rounded-xl bg-gray-100 px-2 dark:bg-zinc-900">
         <Pressable onPress={() => setSearchMode(false)} className="p-2">
           <ArrowLeft size={20} color={iconColor} />
         </Pressable>
@@ -31,7 +36,7 @@ export default function HeaderActions({ screen }: Props) {
           value={query}
           onChangeText={setQuery}
           placeholder="Buscar..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={isDark ? '#71717a' : '#9ca3af'}
           className="flex-1 px-2 text-black dark:text-white"
         />
       </View>
@@ -41,6 +46,7 @@ export default function HeaderActions({ screen }: Props) {
   const BellWithBadge = () => (
     <Pressable onPress={() => router.push('/notifications')} className="relative p-1">
       <Bell size={22} color={iconColor} />
+
       {unreadCount > 0 && (
         <View
           style={{
@@ -56,7 +62,14 @@ export default function HeaderActions({ screen }: Props) {
             paddingHorizontal: 2,
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700', lineHeight: 11 }}>
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 9,
+              fontWeight: '700',
+              lineHeight: 11,
+            }}
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Text>
         </View>
@@ -66,19 +79,7 @@ export default function HeaderActions({ screen }: Props) {
 
   return (
     <View className="flex-row items-center">
-      {screen === 'home' && (
-        <>
-          <Pressable onPress={() => setSearchMode(true)} className="p-1">
-            <Search size={22} color={iconColor} />
-          </Pressable>
-
-          <View className="w-3" />
-
-          <BellWithBadge />
-        </>
-      )}
-
-      {screen === 'comunidades' && (
+      {(screen === 'home' || screen === 'comunidades') && (
         <>
           <Pressable onPress={() => setSearchMode(true)} className="p-1">
             <Search size={22} color={iconColor} />
@@ -92,12 +93,6 @@ export default function HeaderActions({ screen }: Props) {
 
       {screen === 'profile' && (
         <>
-          <View className="flex-1 items-start">
-            <Pressable onPress={() => router.push('/create-post')} className="p-1">
-              <Plus size={22} color={iconColor} />
-            </Pressable>
-          </View>
-
           <Pressable onPress={() => router.push('/edit-profile')} className="p-1">
             <Pencil size={22} color={iconColor} />
           </Pressable>
