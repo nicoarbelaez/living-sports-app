@@ -55,5 +55,6 @@
       "\\bclassName\\s*=\\s*[\"'`]([^\"'`]*)[\"'`]",
       ""
     ]
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "interactive"
 }
