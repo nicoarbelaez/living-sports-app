@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, Alert, ScrollView } from 'react-native';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -183,33 +182,33 @@ export default function FormPost({ onPostCreated }: FormPostProps) {
           <Button
             variant="ghost"
             size="sm"
-            icon={<ImageIcon color="#10b981" size={20} />}
+            icon={<ImageIcon color="#9fe870" size={20} />}
             onPress={handlePickMedia}
             disabled={isSubmitting || fields.length >= 5}
           >
-            <Text className="text-muted-foreground font-medium">Galería</Text>
+            <Text className="text-primary-foreground font-medium">Galería</Text>
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
-            icon={<Camera color="#10b981" size={20} />}
+            icon={<Camera color="#9fe870" size={20} />}
             onPress={handleTakeMedia}
             disabled={isSubmitting || fields.length >= 5}
           >
-            <Text className="text-muted-foreground font-medium">Cámara</Text>
+            <Text className="text-primary-foreground font-medium">Cámara</Text>
           </Button>
         </View>
 
         <Button
-          variant="success"
+          variant="default"
           onPress={handleSubmit(onSubmit)}
           loading={isSubmitting}
           disabled={!canSubmit}
-          icon={<Send size={16} />}
+          icon={<Send size={16} color="#0e0f0c" />}
           className="rounded-full px-4 py-2"
         >
-          <Text className="font-semibold text-white">Publicar</Text>
+          <Text className="font-semibold">Publicar</Text>
         </Button>
       </View>
     </View>

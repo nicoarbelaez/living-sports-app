@@ -1,12 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Button } from '@/components/ui/button';
-import { Image as ImageIcon } from 'lucide-react-native';
+import React, { useRef } from 'react';
+import { Text, TouchableOpacity } from 'react-native';
 import { BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useMediaPicker } from '@/hooks/useMediaPicker';
 import ActionSheet from '@/components/ui/action-sheet';
 import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
-import AvatarWithEmoji from '@/components/ui/avatar-with-emoji';
+import EditableAvatar from './editable-avatar';
 
 const GYM_EMOJIS = [
   '🏋️',
@@ -39,11 +37,12 @@ export default function GroupImagePicker({
   emoji,
   onImageChange,
   onEmojiChange,
-  disabled = false,
+  disabled,
 }: GroupImagePickerProps) {
-  const [showActionSheet, setShowActionSheet] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiPickerRef = useRef<BottomSheetModal>(null);
+  const actionSheetRef = useRef<BottomSheetModal>(null);
+
+  const emojiSheetRef = useRef<BottomSheetModal>(null);
+
   const { handlePickFromGallery, handlePickFromCamera } = useMediaPicker({
     multiple: false,
     allowVideo: false,
@@ -51,80 +50,85 @@ export default function GroupImagePicker({
     compressQuality: 0.8,
   });
 
-  const handleChooseFromGallery = async () => {
+  const openActions = () => {
+    actionSheetRef.current?.present();
+  };
+
+  const openEmojiPicker = () => {
+    actionSheetRef.current?.dismiss();
+
+    requestAnimationFrame(() => {
+      emojiSheetRef.current?.present();
+    });
+  };
+
+  const handleGallery = async () => {
     const items = await handlePickFromGallery();
+
     if (items.length > 0) {
       onImageChange(items[0].uri);
       onEmojiChange('');
     }
   };
 
-  const handleChooseFromCamera = async () => {
+  const handleCamera = async () => {
     const item = await handlePickFromCamera();
+
     if (item) {
       onImageChange(item.uri);
       onEmojiChange('');
     }
   };
 
-  const handleChooseEmoji = (selected: string) => {
+  const handleEmoji = (selected: string) => {
     onImageChange(null);
+
     onEmojiChange(selected);
-    setShowEmojiPicker(false);
+
+    emojiSheetRef.current?.dismiss();
   };
 
   return (
     <>
-      <TouchableOpacity
-        onPress={() => setShowActionSheet(true)}
-        disabled={disabled}
-        activeOpacity={0.7}
-        className="mb-4 self-center"
-      >
-        <AvatarWithEmoji imageUrl={imageUri} emoji={emoji || '🏋️'} size="xl" />
-      </TouchableOpacity>
+      <EditableAvatar imageUri={imageUri} emoji={emoji} disabled={disabled} onPress={openActions} />
 
-      <View className="flex-row items-center justify-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={<ImageIcon size={16} color="#64748b" />}
-          onPress={() => setShowActionSheet(true)}
-          disabled={disabled}
-          className="rounded-lg"
-        >
-          <Text className="text-secondary-foreground text-xs font-medium">Cambiar</Text>
-        </Button>
-      </View>
-
-      {/* Action Sheet for image/emoji selection */}
       <ActionSheet
-        visible={showActionSheet}
-        title="Cambiar imagen del grupo"
-        onClose={() => setShowActionSheet(false)}
+        ref={actionSheetRef}
+        title="Imagen del grupo"
         actions={[
-          { label: '📷 Galería', onPress: handleChooseFromGallery },
-          { label: '📸 Cámara', onPress: handleChooseFromCamera },
-          { label: '😀 Emoji', onPress: () => setShowEmojiPicker(true) },
+          {
+            label: '📷 Galería',
+            onPress: handleGallery,
+          },
+          {
+            label: '📸 Cámara',
+            onPress: handleCamera,
+          },
+          {
+            label: '😀 Emoji',
+            onPress: openEmojiPicker,
+          },
         ]}
       />
 
-      {/* Emoji Picker Bottom Sheet Modal */}
       <BottomSheetModalComponent
-        visible={showEmojiPicker}
+        ref={emojiSheetRef}
         title="Selecciona emoji"
-        onClose={() => setShowEmojiPicker(false)}
-        config={{ snapPoints: ['50%', '90%'] }}
-        bottomSheetRef={emojiPickerRef}
+        config={{
+          snapPoints: ['55%'],
+        }}
       >
         <BottomSheetFlatList
           data={GYM_EMOJIS}
-          keyExtractor={(item) => item}
           numColumns={5}
+          keyExtractor={(item) => item}
+          contentContainerStyle={{
+            paddingBottom: 20,
+          }}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => handleChooseEmoji(item)}
-              className="flex-1 items-center justify-center py-3"
+              className="flex-1 items-center justify-center py-5"
+              onPress={() => handleEmoji(item)}
             >
               <Text className="text-5xl">{item}</Text>
             </TouchableOpacity>
