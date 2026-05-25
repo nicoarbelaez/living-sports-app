@@ -1,6 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/lib/async/withTimeout';
 import type { EvidenceFormValues } from '../schemas/evidence.schema';
+
+const UPLOAD_TIMEOUT_MS = 3 * 60 * 1000; // 3 min — enough for a compressed video at low bandwidth
 
 interface SubmitEvidenceInput {
   competitionId: string;
@@ -24,7 +27,14 @@ async function submitEvidence({ competitionId, exerciseId, values }: SubmitEvide
     type: 'video/mp4',
   } as unknown as Blob);
 
-  const { error } = await supabase.functions.invoke('submit-evidence', { body: formData });
+  const invoke = supabase.functions.invoke('submit-evidence', { body: formData });
+
+  const { error } = await withTimeout(
+    invoke,
+    UPLOAD_TIMEOUT_MS,
+    'La subida tardó demasiado. Verifica tu conexión e intenta de nuevo.'
+  );
+
   if (error) throw new Error(error.message);
 }
 
