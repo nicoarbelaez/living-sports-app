@@ -1,3 +1,5 @@
+import { ProfileRow } from "@/features/posts/hooks/useComments";
+
 export type CompetitionStatus = 'draft' | 'active' | 'finished' | 'cancelled';
 export type EntryValidationStatus = 'pending' | 'approved' | 'rejected' | 'resubmitted';
 
@@ -13,6 +15,10 @@ export interface Competition {
   endDate: string;
   status: CompetitionStatus;
   createdAt: string;
+  points?: number;
+  isDeprecated?: boolean;
+  attemptNumber?: number;
+  dayDate?: string;
 }
 
 export interface CompetitionEntry {
@@ -26,10 +32,7 @@ export interface CompetitionEntry {
   approvalsCount: number;
   rejectionsCount: number;
   createdAt: string;
-  user?: {
-    username: string;
-    avatarUrl: string | null;
-  };
+  user?: ProfileRow
 }
 
 export interface RankingEntry {
@@ -37,6 +40,7 @@ export interface RankingEntry {
   username: string;
   avatarUrl: string | null;
   points: number;
+  movement?: 'up' | 'down' | 'none';
 }
 
 export function mapCompetition(row: any): Competition {
@@ -68,7 +72,7 @@ export function mapEntry(row: any): CompetitionEntry {
     rejectionsCount: row.rejections_count ?? 0,
     createdAt: row.created_at,
     user: row.profiles
-      ? { username: row.profiles.username, avatarUrl: row.profiles.avatar_url }
+      ? { id: row.profiles.id, username: row.profiles.username, avatar_url: row.profiles.avatar_url, first_name: row.profiles.first_name, last_name: row.profiles.last_name }
       : undefined,
   };
 }
