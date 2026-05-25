@@ -2,6 +2,7 @@ import React, { forwardRef, useMemo, useCallback, useRef, useEffect } from 'reac
 import { View, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
+import { useTheme } from '@/providers/theme';
 
 export interface BottomSheetModalConfig {
   snapPoints?: (string | number)[];
@@ -14,22 +15,48 @@ export interface BottomSheetModalProps {
   children: React.ReactNode;
   onClose?: () => void;
   config?: BottomSheetModalConfig;
-  // visible-controlled pattern (alternative to forwardRef pattern)
   visible?: boolean;
   bottomSheetRef?: React.RefObject<BottomSheetModal | null>;
+  /** Prevent dismiss/pan/backdrop-close while true (e.g. during upload) */
+  locked?: boolean;
 }
 
 export type BottomSheetRef = BottomSheetModal | null;
 
+const COLORS = {
+  light: {
+    background: '#ffffff',
+    handle: '#0e0f0c33',
+    closeIcon: '#868685',
+    closeIconDisabled: '#d1d5db',
+  },
+  dark: {
+    background: '#1a1c18',
+    handle: '#ffffff33',
+    closeIcon: '#6b6e6a',
+    closeIconDisabled: '#374151',
+  },
+} as const;
+
 const BottomSheetModalComponent = forwardRef<BottomSheetRef, BottomSheetModalProps>(
   (
-    { title, subtitle, children, onClose, config, visible, bottomSheetRef: externalRef },
+    {
+      title,
+      subtitle,
+      children,
+      onClose,
+      config,
+      visible,
+      bottomSheetRef: externalRef,
+      locked = false,
+    },
     forwardedRef
   ) => {
+    const { theme } = useTheme();
+    const colors = COLORS[theme];
+
     const internalRef = useRef<BottomSheetModal>(null);
 
-    // Pattern A (forwardRef): parent holds ref and calls .present() directly
-    // Pattern B (visible): component handles present/dismiss via useEffect
     const resolvedRef = useMemo<React.RefObject<BottomSheetModal>>(() => {
       if (forwardedRef && typeof forwardedRef !== 'function') {
         return forwardedRef as React.RefObject<BottomSheetModal>;
@@ -55,35 +82,36 @@ const BottomSheetModalComponent = forwardRef<BottomSheetRef, BottomSheetModalPro
           disappearsOnIndex={-1}
           appearsOnIndex={0}
           opacity={0.5}
-          pressBehavior="close"
+          pressBehavior={locked ? 'none' : 'close'}
         />
       ),
-      []
+      [locked]
     );
 
     const handleClose = useCallback(() => {
+      if (locked) return;
       resolvedRef.current?.dismiss();
-    }, [resolvedRef]);
+    }, [resolvedRef, locked]);
 
     return (
       <BottomSheetModal
         ref={resolvedRef}
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
-        enablePanDownToClose={config?.enablePanDownToClose ?? true}
+        enablePanDownToClose={!locked && (config?.enablePanDownToClose ?? true)}
         onDismiss={onClose}
-        backgroundStyle={{ backgroundColor: '#0f172a' }}
-        handleIndicatorStyle={{ backgroundColor: '#64748b' }}
+        backgroundStyle={{ backgroundColor: colors.background }}
+        handleIndicatorStyle={{ backgroundColor: colors.handle }}
       >
         <BottomSheetView className="flex-1 px-5 pb-6">
           {(title || subtitle) && (
             <View className="mb-5 flex-row items-start justify-between">
               <View className="flex-1">
-                {title && <Text className="text-xl font-semibold text-white">{title}</Text>}
-                {subtitle && <Text className="mt-1 text-sm text-slate-400">{subtitle}</Text>}
+                {title && <Text className="text-foreground text-xl font-semibold">{title}</Text>}
+                {subtitle && <Text className="text-muted-foreground mt-1 text-sm">{subtitle}</Text>}
               </View>
-              <TouchableOpacity onPress={handleClose} className="p-1">
-                <X size={22} color="#94a3b8" />
+              <TouchableOpacity onPress={handleClose} disabled={locked} className="p-1">
+                <X size={22} color={locked ? colors.closeIconDisabled : colors.closeIcon} />
               </TouchableOpacity>
             </View>
           )}
