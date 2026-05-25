@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Image } from 'expo-image';
@@ -8,6 +8,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface MediaCarouselProps {
   media: Media[];
+  isPostActive?: boolean;
 }
 
 export default function MediaCarousel({ media }: MediaCarouselProps) {
@@ -16,52 +17,66 @@ export default function MediaCarousel({ media }: MediaCarouselProps) {
 
   if (!media?.length) return null;
 
-  const renderMediaItem = (item: Media, index: number) => {
+  const renderItem = (item: Media, index: number) => {
     const key = item.url || `media-${index}`;
 
-    // VIDEO
     if (item.type === 'video') {
       const isPlaying = playingVideo === item.url;
 
       return (
-        <View key={key} className="flex-1 bg-black">
-          {!isPlaying ? (
-            <Pressable
-              onPress={() => setPlayingVideo(item.url)}
-              className="flex-1 items-center justify-center"
-            >
+        <View key={key} style={{ flex: 1, backgroundColor: '#000' }}>
+          {isPlaying ? (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 14 }}>▶ Reproduciendo video...</Text>
+            </View>
+          ) : (
+            <Pressable onPress={() => setPlayingVideo(item.url)} style={{ flex: 1 }}>
               <Image
-                source={{
-                  uri:
-                    item.type === 'video'
-                      ? item.url // fallback temporal
-                      : item.url,
-                }}
+                source={{ uri: item.url }}
                 style={{ width: '100%', height: '100%' }}
                 contentFit="cover"
               />
-
-              <View className="absolute inset-0 items-center justify-center bg-black/30">
-                <View className="h-14 w-14 items-center justify-center rounded-full bg-white/25">
+              <View
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(0,0,0,0.3)',
+                }}
+              >
+                <View
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <Play size={28} color="white" fill="white" />
                 </View>
-
-                <Text className="mt-2 text-xs font-bold text-white uppercase">Video</Text>
+                <Text
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    fontWeight: '700',
+                    color: '#fff',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Video
+                </Text>
               </View>
             </Pressable>
-          ) : (
-            <View className="flex-1 items-center justify-center bg-black">
-              {/* Aquí podrías integrar expo-av o react-native-video */}
-              <Text className="text-white">▶ Playing video...</Text>
-            </View>
           )}
         </View>
       );
     }
 
-    // IMAGE
     return (
-      <View key={key} className="flex-1">
+      <View key={key} style={{ flex: 1 }}>
         <Image
           source={{ uri: item.url }}
           style={{ width: '100%', height: '100%' }}
@@ -77,12 +92,14 @@ export default function MediaCarousel({ media }: MediaCarouselProps) {
       <PagerView
         style={{ flex: 1 }}
         initialPage={0}
-        onPageSelected={(e) => setCurrentPage(e.nativeEvent.position)}
+        onPageSelected={(e) => {
+          setCurrentPage(e.nativeEvent.position);
+          setPlayingVideo(null);
+        }}
       >
-        {media.map(renderMediaItem)}
+        {media.map(renderItem)}
       </PagerView>
 
-      {/* Counter */}
       {media.length > 1 && (
         <View className="absolute top-3 right-3 rounded-full bg-black/60 px-2.5 py-1">
           <Text className="text-xs font-semibold text-white">
