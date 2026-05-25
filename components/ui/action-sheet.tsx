@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { forwardRef } from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
+import BottomSheetModalComponent from './bottom-sheet-modal';
 
 export interface ActionSheetAction {
   label: string;
@@ -9,40 +9,34 @@ export interface ActionSheetAction {
   destructive?: boolean;
 }
 
-export interface ActionSheetProps {
-  visible: boolean;
+interface Props {
   title?: string;
   actions: ActionSheetAction[];
-  onClose: () => void;
 }
 
-export default function ActionSheet({ visible, title, actions, onClose }: ActionSheetProps) {
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
-
+const ActionSheet = forwardRef<BottomSheetModal, Props>(({ title, actions }, ref) => {
   return (
     <BottomSheetModalComponent
-      visible={visible}
+      ref={ref}
       title={title}
-      onClose={onClose}
-      config={{ snapPoints: [Math.min(80 + actions.length * 50, 300)] }}
-      bottomSheetRef={bottomSheetRef}
+      config={{
+        snapPoints: ['32%'],
+      }}
     >
-      {/* Actions */}
       <View className="gap-2">
         {actions.map((action, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => {
               action.onPress();
-              onClose();
+
+              (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss();
             }}
-            className="rounded-xl px-4 py-3 active:bg-gray-100 dark:active:bg-slate-800"
+            className="rounded-2xl px-4 py-4"
           >
             <Text
               className={`text-base font-medium ${
-                action.destructive
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-900 dark:text-white'
+                action.destructive ? 'text-red-400' : 'text-white'
               }`}
             >
               {action.label}
@@ -52,4 +46,8 @@ export default function ActionSheet({ visible, title, actions, onClose }: Action
       </View>
     </BottomSheetModalComponent>
   );
-}
+});
+
+ActionSheet.displayName = 'ActionSheet';
+
+export default ActionSheet;

@@ -1,13 +1,14 @@
-import React, { useState, memo, useCallback, useEffect } from 'react';
+import { useState, memo, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Heart, MessageCircle } from 'lucide-react-native';
 import { MotiView } from 'moti';
+import { useRouter } from 'expo-router';
 import MediaCarousel from './media-carousel';
-import { Image } from 'expo-image';
+import PostAuthorHeader from './post-author-header';
 import CommentsSheet from '@/components/shared/comments-sheet';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
-import { usePostStore } from '@/features/feed/stores/usePostStore';
+import { usePostStore, usePostById } from '@/features/feed/stores/usePostStore';
 import type { Post } from '@/types/post';
 
 interface PostCardProps {
@@ -16,58 +17,17 @@ interface PostCardProps {
 
 function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
+  const router = useRouter();
 
   const { session } = useAuth();
   const user = session?.user;
 
-  const updatedPost = usePostStore((state) => state.posts.find((p) => p.id === post.id));
-
+  const updatedPost = usePostById(post.id);
   const currentPost = updatedPost || post;
 
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(currentPost.likesCount);
-  const [commentsTotal, setCommentsTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  const fetchCommentsCount = useCallback(async () => {
-    try {
-      const { data: commentsData, error: commentsError } = await supabase
-        .from('comments')
-        .select('id')
-        .eq('post_id', post.id);
-
-      if (commentsError) {
-        console.log('Error comments:', commentsError);
-        return;
-      }
-
-      const commentIds = commentsData?.map((c) => c.id) || [];
-      const commentsCount = commentIds.length;
-
-      let repliesCount = 0;
-
-      if (commentIds.length > 0) {
-        const { count, error } = await supabase
-          .from('comment_replies')
-          .select('*', { count: 'exact', head: true })
-          .in('comment_id', commentIds);
-
-        if (error) {
-          console.log('Error replies:', error);
-        } else {
-          repliesCount = count || 0;
-        }
-      }
-
-      setCommentsTotal(commentsCount + repliesCount);
-    } catch (err) {
-      console.log('Error total:', err);
-    }
-  }, [post.id]);
-
-  useEffect(() => {
-    fetchCommentsCount();
-  }, [fetchCommentsCount]);
+  const [isLiking, setIsLiking] = useState(false);
 
   useEffect(() => {
     setLikes(currentPost.likesCount);
@@ -91,9 +51,9 @@ function PostCard({ post }: PostCardProps) {
   }, [post.id, user]);
 
   const handleLike = useCallback(async () => {
-    if (!user || loading) return;
+    if (!user || isLiking) return;
 
-    setLoading(true);
+    setIsLiking(true);
 
     try {
       if (liked) {
@@ -101,6 +61,7 @@ function PostCard({ post }: PostCardProps) {
 
         setLiked(false);
         setLikes((prev) => prev - 1);
+        usePostStore.getState().applyLike(post.id, !liked, liked ? -1 : 1);
       } else {
         await supabase.from('post_likes').insert({
           post_id: post.id,
@@ -109,26 +70,26 @@ function PostCard({ post }: PostCardProps) {
 
         setLiked(true);
         setLikes((prev) => prev + 1);
+        usePostStore.getState().applyLike(post.id, !liked, liked ? -1 : 1);
       }
     } catch (error) {
       console.log('Error like:', error);
     }
 
-    setLoading(false);
-  }, [liked, user, post.id, loading]);
+    setIsLiking(false);
+  }, [liked, user, post.id, isLiking]);
 
   return (
     <View className="mx-4 mt-3 overflow-hidden rounded-2xl bg-white shadow dark:bg-[#111827]">
-      <View className="flex-row items-center px-4 py-3">
-        <Image
-          source={{ uri: currentPost.avatar }}
-          style={{ width: 40, height: 40, borderRadius: 20 }}
-          contentFit="cover"
+      <View className="px-4 py-3">
+        <PostAuthorHeader
+          avatarUrl={currentPost.avatar}
+          name={currentPost.user}
+          isoOrRelativeDate={currentPost.createdAt}
+          onPress={
+            currentPost.authorId ? () => router.push(`/profile/${currentPost.authorId}`) : undefined
+          }
         />
-        <View className="ml-3">
-          <Text className="font-semibold text-gray-900 dark:text-white">{currentPost.user}</Text>
-          <Text className="text-xs text-gray-500 dark:text-gray-400">{currentPost.time}</Text>
-        </View>
       </View>
 
       <MediaCarousel media={currentPost.media} />
@@ -160,13 +121,10 @@ function PostCard({ post }: PostCardProps) {
 
         <TouchableOpacity
           className="flex-row items-center gap-1"
-          onPress={() => {
-            setShowComments(true);
-            fetchCommentsCount();
-          }}
+          onPress={() => setShowComments(true)}
         >
           <MessageCircle size={18} color="#6b7280" />
-          <Text className="text-gray-700 dark:text-gray-300">{commentsTotal}</Text>
+          <Text className="text-gray-700 dark:text-gray-300">{currentPost.commentsCount}</Text>
         </TouchableOpacity>
       </View>
 
@@ -174,6 +132,7 @@ function PostCard({ post }: PostCardProps) {
         isVisible={showComments}
         onClose={() => setShowComments(false)}
         postId={post.id}
+        onCommentPosted={() => usePostStore.getState().bumpCommentCount(post.id, 1)}
       />
     </View>
   );

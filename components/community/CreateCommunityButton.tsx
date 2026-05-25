@@ -11,9 +11,6 @@ export default function CreateCommunityButton() {
       title="Crear comunidad"
       subtitle="Empieza tu propio grupo"
       onPress={() => router.push('/create-community')}
-      contextMenuItems={[
-        { label: 'Crear comunidad', onPress: () => router.push('/create-community') },
-      ]}
     />
   );
 }
