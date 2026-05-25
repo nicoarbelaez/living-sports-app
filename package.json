@@ -10,7 +10,8 @@
     "prepare": "husky",
     "update-types": "node scripts/update-types.js",
     "semantic:dry": "semantic-release --dry-run --no-ci",
-    "supabase:functions:deploy": "supabase functions deploy create-competition --no-verify-jwt"
+    "supabase:functions:deploy": "supabase functions deploy create-competition --no-verify-jwt",
+    "ios": "expo run:ios"
   },
   "overrides": {
     "lightningcss": "1.30.1"
