@@ -8,116 +8,496 @@
 @source './src/**/*.{js,ts,tsx,jsx}';
 @source './app/**/*';
 
+/* ─────────────────────────────────────────────────────────────
+   WISE DESIGN SYSTEM — inspired by DESIGN.md
+   Brand: lime-green CTA · sage canvas · near-black ink · Inter
+   ───────────────────────────────────────────────────────────── */
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-primary-soft: var(--primary-soft);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* ── Tailwind color aliases → CSS custom properties ── */
+  --color-background:               var(--background);
+  --color-foreground:               var(--foreground);
+
+  /* Brand: Wise Green scale */
+  --color-primary:                  var(--primary);
+  --color-primary-foreground:       var(--primary-foreground);
+  --color-primary-soft:             var(--primary-soft);
+  --color-primary-active:           var(--primary-active);
+  --color-primary-neutral:          var(--primary-neutral);
+  --color-primary-pale:             var(--primary-pale);
+
+  /* Surface neutrals */
+  --color-canvas:                   var(--canvas);
+  --color-canvas-soft:              var(--canvas-soft);
+
+  /* Text hierarchy */
+  --color-ink:                      var(--ink);
+  --color-ink-deep:                 var(--ink-deep);
+  --color-body:                     var(--body);
+  --color-mute:                     var(--mute);
+
+  /* Semantic: positive */
+  --color-positive:                 var(--positive);
+  --color-positive-deep:            var(--positive-deep);
+
+  /* Semantic: warning */
+  --color-warning:                  var(--warning);
+  --color-warning-deep:             var(--warning-deep);
+  --color-warning-content:          var(--warning-content);
+
+  /* Semantic: negative / destructive */
+  --color-negative:                 var(--negative);
+  --color-negative-deep:            var(--negative-deep);
+  --color-negative-darkest:         var(--negative-darkest);
+  --color-negative-bg:              var(--negative-bg);
+  --color-destructive:              var(--negative);
+
+  /* Brand tertiary accents */
+  --color-accent-orange:            var(--accent-orange);
+  --color-accent-cyan:              var(--accent-cyan);
+
+  /* shadcn / Radix role aliases (mapped to Wise primitives) */
+  --color-card:                     var(--canvas);
+  --color-card-foreground:          var(--ink);
+  --color-popover:                  var(--canvas);
+  --color-popover-foreground:       var(--ink);
+  --color-secondary:                var(--canvas-soft);
+  --color-secondary-foreground:     var(--ink);
+  --color-muted:                    var(--canvas-soft);
+  --color-muted-foreground:         var(--mute);
+  --color-accent:                   var(--primary-pale);
+  --color-accent-foreground:        var(--ink);
+  --color-border:                   var(--border);
+  --color-input:                    var(--border);
+  --color-ring:                     var(--primary);
+
+  /* Sidebar */
+  --color-sidebar:                  var(--canvas);
+  --color-sidebar-foreground:       var(--ink);
+  --color-sidebar-primary:          var(--primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent:           var(--canvas-soft);
+  --color-sidebar-accent-foreground: var(--ink);
+  --color-sidebar-border:           var(--border);
+  --color-sidebar-ring:             var(--primary);
+
+  /* Chart palette (brand-harmonised) */
+  --color-chart-1:                  var(--primary);
+  --color-chart-2:                  var(--accent-cyan);
+  --color-chart-3:                  var(--accent-orange);
+  --color-chart-4:                  var(--positive);
+  --color-chart-5:                  var(--warning);
+
+  /* ── Typography ── */
+  /* Display face: Manrope 900 (open-source Wise Sans substitute) */
+  --font-display: 'Manrope', 'Inter', system-ui, -apple-system, sans-serif;
+  /* Body / UI face: Inter */
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    ui-monospace, 'Cascadia Code', 'Fira Mono', monospace;
+
+  /* ── Border-radius scale (from DESIGN.md rounded tokens) ── */
+  --radius-none:  0px;
+  --radius-sm:    8px;   /* inline pills, small badges */
+  --radius-md:    12px;  /* form inputs */
+  --radius-lg:    16px;  /* mid-size cards */
+  --radius-xl:    24px;  /* canonical card + button radius */
+  --radius-pill:  9999px;
+  --radius-full:  9999px;
+
+  /* Legacy alias used by shadcn components */
+  --radius: 24px;        /* xl as default */
+
+  /* ── Spacing scale (4 px base) ── */
+  --spacing-xxs:  2px;
+  --spacing-xs:   4px;
+  --spacing-sm:   8px;
+  --spacing-md:   12px;
+  --spacing-lg:   16px;
+  --spacing-xl:   24px;
+  --spacing-2xl:  32px;
+  --spacing-3xl:  48px;
 }
 
+/* ═══════════════════════════════════════════════════
+   LIGHT MODE  (default — Wise brand palette)
+   ═══════════════════════════════════════════════════ */
 :root {
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.723 0.219 149.579);
-  --primary-foreground: oklch(0.982 0.018 155.826);
-  --primary-soft: oklch(0.723 0.219 149.579 / 0.25);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.723 0.219 149.579);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.723 0.219 149.579);
-  --sidebar-primary-foreground: oklch(0.982 0.018 155.826);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.723 0.219 149.579);
+  color-scheme: light;
+
+  /* ── Brand: Wise Green ── */
+  --primary:          #9fe870;   /* lime-green CTA  */
+  --primary-foreground: #0e0f0c; /* on-primary: near-black */
+  --primary-soft:     #9fe87040; /* 25 % tinted overlay */
+  --primary-active:   #cdffad;   /* hover / active state */
+  --primary-neutral:  #c5edab;   /* mid-saturation fill */
+  --primary-pale:     #e2f6d5;   /* softest tint — badge bg */
+
+  /* ── Surface ── */
+  --background:       #e8ebe6;   /* canvas-soft — page bg */
+  --foreground:       #0e0f0c;   /* default text */
+  --canvas:           #ffffff;   /* pure white — card interior */
+  --canvas-soft:      #e8ebe6;   /* sage-tinted canvas */
+
+  /* ── Text hierarchy ── */
+  --ink:              #0e0f0c;   /* near-black, olive warmth */
+  --ink-deep:         #163300;   /* deep forest green */
+  --body:             #454745;   /* secondary body text */
+  --mute:             #868685;   /* captions / placeholders */
+
+  /* ── Semantic: positive ── */
+  --positive:         #2ead4b;
+  --positive-deep:    #054d28;
+
+  /* ── Semantic: warning ── */
+  --warning:          #ffd11a;
+  --warning-deep:     #b86700;
+  --warning-content:  #4a3b1c;
+
+  /* ── Semantic: negative ── */
+  --negative:         #d03238;
+  --negative-deep:    #a72027;
+  --negative-darkest: #a7000d;
+  --negative-bg:      #320707;
+
+  /* ── Brand tertiary accents ── */
+  --accent-orange:    #ffc091;
+  --accent-cyan:      #38c8ff;
+
+  /* ── Border / input ── */
+  --border:           #0e0f0c1a; /* ink at ~10 % */
+  --border-strong:    #0e0f0c;   /* 1 px solid ink border (inputs, outline buttons) */
 }
 
+/* ═══════════════════════════════════════════════════
+   DARK MODE  (polarity-flipped — ink surface + green text)
+   ═══════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.696 0.17 162.48);
-    --primary-foreground: oklch(0.393 0.095 152.535);
-    --primary-soft: oklch(0.696 0.17 162.48 / 0.25);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.527 0.154 150.069);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.696 0.17 162.48);
-    --sidebar-primary-foreground: oklch(0.393 0.095 152.535);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.527 0.154 150.069);
+    color-scheme: dark;
+
+    /* ── Surfaces ── */
+    --background:       #0e0f0c;   /* ink canvas */
+    --foreground:       #e8ebe6;   /* sage-soft text */
+    --canvas:           #1a1c18;   /* slightly lifted card */
+    --canvas-soft:      #252720;   /* card-feature-sage equivalent */
+
+    /* ── Brand: Wise Green (slightly brighter for contrast) ── */
+    --primary:          #9fe870;
+    --primary-foreground: #0e0f0c;
+    --primary-soft:     #9fe87033;
+    --primary-active:   #cdffad;
+    --primary-neutral:  #c5edab;
+    --primary-pale:     #1e3512;   /* inverted pale — dark surface tint */
+
+    /* ── Text ── */
+    --ink:              #e8ebe6;
+    --ink-deep:         #9fe870;   /* green accent on dark surfaces */
+    --body:             #abaead;
+    --mute:             #6b6e6a;
+
+    /* ── Semantic: positive ── */
+    --positive:         #4eca6a;
+    --positive-deep:    #9fe870;
+
+    /* ── Semantic: warning ── */
+    --warning:          #ffd11a;
+    --warning-deep:     #ffb347;
+    --warning-content:  #ffe599;
+
+    /* ── Semantic: negative ── */
+    --negative:         #ff5c63;
+    --negative-deep:    #d03238;
+    --negative-darkest: #ff1c26;
+    --negative-bg:      #2a0608;
+
+    /* ── Brand tertiary accents ── */
+    --accent-orange:    #ffc091;
+    --accent-cyan:      #38c8ff;
+
+    /* ── Border ── */
+    --border:           #ffffff1a; /* white at 10 % */
+    --border-strong:    #e8ebe6;
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-feature-settings: "calt" 1; /* Inter contextual alternates */
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 16px;          /* body-md base */
+  line-height: 1.5;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES  (mirrors DESIGN.md tokens)
+   ═══════════════════════════════════════════════════ */
+
+/* Display — Manrope weight 900 (Wise Sans substitute) */
+.text-display-mega  { font-family: var(--font-display); font-size: 126px; font-weight: 900; line-height: 107.1px; }
+.text-display-xxl   { font-family: var(--font-display); font-size: 96px;  font-weight: 900; line-height: 81.6px; }
+.text-display-xl    { font-family: var(--font-display); font-size: 64px;  font-weight: 900; line-height: 54.4px; }
+.text-display-lg    { font-family: var(--font-display); font-size: 47px;  font-weight: 400; line-height: 70.5px;  letter-spacing: -0.108px; }
+.text-display-md    { font-family: var(--font-display); font-size: 40px;  font-weight: 900; line-height: 34px; }
+.text-display-sm    { font-family: var(--font-sans);    font-size: 32px;  font-weight: 600; line-height: 38.4px;  letter-spacing: -0.96px; }
+.text-display-xs    { font-family: var(--font-sans);    font-size: 24px;  font-weight: 600; line-height: 31.2px;  letter-spacing: -0.48px; }
+
+/* Body — Inter */
+.text-body-lg       { font-family: var(--font-sans); font-size: 20px; font-weight: 400; line-height: 30px; }
+.text-body-md       { font-family: var(--font-sans); font-size: 16px; font-weight: 400; line-height: 24px; }
+.text-body-md-strong{ font-family: var(--font-sans); font-size: 16px; font-weight: 600; line-height: 24px; }
+.text-body-sm       { font-family: var(--font-sans); font-size: 14px; font-weight: 400; line-height: 20px; }
+.text-body-sm-strong{ font-family: var(--font-sans); font-size: 14px; font-weight: 600; line-height: 20px; }
+.text-caption       { font-family: var(--font-sans); font-size: 12px; font-weight: 400; line-height: 16px; }
+.text-button-md     { font-family: var(--font-sans); font-size: 16px; font-weight: 600; line-height: 24px; }
+
+/* ═══════════════════════════════════════════════════
+   COMPONENT PRIMITIVES  (from DESIGN.md components)
+   ═══════════════════════════════════════════════════ */
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  border-radius: var(--radius-xl);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.btn-primary:hover  { background-color: var(--primary-active); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--canvas-soft);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  border-radius: var(--radius-xl);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.btn-secondary:hover { background-color: var(--primary-neutral); }
+
+.btn-tertiary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.btn-tertiary:hover { background-color: var(--canvas-soft); }
+
+.btn-icon-circular {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: var(--spacing-sm);
+  background-color: var(--canvas);
+  color: var(--ink);
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-icon-circular:hover { background-color: var(--canvas-soft); }
+
+/* ── Cards ── */
+.card {
+  background-color: var(--canvas);
+  color: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+}
+
+.card-sage {
+  background-color: var(--canvas-soft);
+  color: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+}
+
+.card-green {
+  background-color: var(--primary-pale);
+  color: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+}
+
+.card-dark {
+  background-color: var(--ink);
+  color: var(--primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+}
+
+.card-outlined {
+  background-color: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+}
+
+/* ── Badges ── */
+.badge-positive {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--primary-pale);
+  color: var(--positive-deep);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: var(--radius-pill);
+}
+
+.badge-negative {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--negative-bg);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: var(--radius-pill);
+}
+
+.badge-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--warning);
+  color: var(--warning-content);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Form Inputs ── */
+.input {
+  background-color: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input::placeholder        { color: var(--mute); }
+.input:focus               { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+/* ── Bands (full-width sections) ── */
+.band-hero {
+  background-color: var(--canvas-soft);
+  color: var(--ink);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.band-hero-dark {
+  background-color: var(--ink);
+  color: var(--primary);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.band-content {
+  background-color: var(--canvas);
+  color: var(--ink);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+/* ── Navigation ── */
+.navbar {
+  background-color: var(--canvas);
+  color: var(--ink);
+  padding: var(--spacing-md) var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.nav-link {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.nav-link:hover { color: var(--positive-deep); }
+.nav-link.active { color: var(--primary-foreground); }
+
+/* ── Footer ── */
+.footer {
+  background-color: var(--ink);
+  color: var(--canvas-soft);
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--spacing-xl) 0;
+}
+
+/* ── Focus ring (accessibility) ── */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
