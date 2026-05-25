@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/AuthProvider';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGroupsStore } from '@/features/communities/stores/useGroupsStore';
 import { mapGroupRow } from '@/types/group';
 
@@ -25,6 +26,7 @@ export type CommunityFormValues = z.infer<typeof communitySchema>;
 export function useCreateCommunity() {
   const router = useRouter();
   const { session } = useAuth();
+  const qc = useQueryClient();
   const prependGroup = useGroupsStore((s) => s.prependGroup);
 
   const randomEmoji = useMemo(
@@ -67,7 +69,13 @@ export function useCreateCommunity() {
       throw new Error(error?.message || data?.message || 'No se pudo crear el grupo');
     }
 
+    const userId = session.user.id;
     prependGroup(mapGroupRow(data.group));
+
+    qc.invalidateQueries({ queryKey: ['communities', 'owned-group', userId] });
+    qc.invalidateQueries({ queryKey: ['communities', 'owned', userId] });
+    qc.invalidateQueries({ queryKey: ['communities', 'memberships', userId] });
+
     router.back();
   };
 

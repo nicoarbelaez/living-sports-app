@@ -1,111 +1,29 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { Controller } from 'react-hook-form';
 import { ArrowLeft, Users } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/providers/AuthProvider';
-import { useGroupsStore } from '@/features/communities/stores/useGroupsStore';
-import { mapGroupRow } from '@/types/group';
+import { useCreateCommunity } from '@/features/communities/hooks/useCreateCommunity';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import GroupImagePicker from '@/components/community/GroupImagePicker';
 
-const GYM_EMOJIS = [
-  '🏋️',
-  '💪',
-  '🤸',
-  '🏃',
-  '🚴',
-  '⚽',
-  '🏀',
-  '🎯',
-  '🏊',
-  '🥊',
-  '🏆',
-  '⚡',
-  '🔥',
-  '🎽',
-  '🏅',
-];
-
-const GroupSchema = z.object({
-  name: z.string().min(3, 'Mínimo 3 caracteres').max(80, 'Máximo 80 caracteres'),
-  description: z.string().max(300, 'Máximo 300 caracteres'),
-  isPublic: z.boolean(),
-  emoji: z.string(),
-  imageUri: z.string().nullable(),
-});
-
-type GroupFormValues = z.infer<typeof GroupSchema>;
-
 export default function CreateCommunityScreen() {
   const router = useRouter();
-  const { session } = useAuth();
-  const prependGroup = useGroupsStore((s) => s.prependGroup);
-
-  const randomEmoji = useMemo(() => GYM_EMOJIS[Math.floor(Math.random() * GYM_EMOJIS.length)], []);
-
+  const { form, onSubmit } = useCreateCommunity();
   const {
     control,
     handleSubmit,
-    watch,
     formState: { isSubmitting, errors },
-  } = useForm<GroupFormValues>({
-    resolver: zodResolver(GroupSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      isPublic: true,
-      emoji: randomEmoji,
-      imageUri: null,
-    },
-  });
+  } = form;
 
-  const imageUri = watch('imageUri');
-
-  const onSubmit = async (values: GroupFormValues) => {
-    if (!session?.user) {
-      Alert.alert('Error', 'Debes estar autenticado');
-      return;
-    }
-
+  const handleSubmitWithAlert = handleSubmit(async (values) => {
     try {
-      const formData = new FormData();
-      formData.append('name', values.name);
-      if (values.description) formData.append('description', values.description);
-      formData.append('is_public', String(values.isPublic));
-
-      if (imageUri) {
-        // Get file extension from URI
-        const uriParts = imageUri.split('.');
-        const ext = uriParts[uriParts.length - 1] || 'jpg';
-        formData.append('file', {
-          uri: imageUri,
-          name: `cover.${ext}`,
-          type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
-        } as unknown as Blob);
-      } else {
-        formData.append('emoji', values.emoji);
-      }
-
-      const { data, error } = await supabase.functions.invoke('create-group', { body: formData });
-
-      if (error || !data?.group) {
-        throw new Error(error?.message || data?.message || 'No se pudo crear el grupo');
-      }
-
-      // Add to store
-      prependGroup(mapGroupRow(data.group));
-
-      // Navigate back
-      router.back();
+      await onSubmit(values);
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Error inesperado');
     }
-  };
+  });
 
   return (
     <KeyboardAvoidingView
@@ -202,7 +120,7 @@ export default function CreateCommunityScreen() {
         </View>
 
         <Button
-          onPress={handleSubmit(onSubmit)}
+          onPress={handleSubmitWithAlert}
           loading={isSubmitting}
           disabled={isSubmitting}
           icon={<Users size={20} />}
