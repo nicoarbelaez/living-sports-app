@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Living Sports ",
+    "name": "Living Sports",
     "slug": "living-sports-app",
     "version": "1.2.0",
     "orientation": "portrait",
@@ -26,9 +26,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "platforms": [
-      "android"
-    ],
+    "platforms": ["android"],
     "scheme": "livingsports",
     "plugins": [
       "expo-router",
