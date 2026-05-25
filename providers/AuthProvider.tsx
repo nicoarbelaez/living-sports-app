@@ -55,6 +55,10 @@ export const AuthProvider = ({ children }: Props) => {
       console.log(`[Auth] State Change Event: ${event}`);
       console.log(`[Auth] User: ${session?.user?.email ?? 'No User'}`);
 
+      if (event === 'INITIAL_SESSION' && !session) {
+        supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      }
+
       if (isMounted) {
         setSession(session);
         setIsLoading(false);

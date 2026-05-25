@@ -87,7 +87,7 @@ features/communities/
 | `providers/`                  | Context providers globales                          |
 | `hooks/`                      | Hooks globales que no pertenecen a una sola feature |
 | `stores/`                     | Estado global o persistente                         |
-| `lib/`                        | Supabase, helpers y utilidades técnicas    |
+| `lib/`                        | Supabase, helpers y utilidades técnicas             |
 | `constants/`                  | Constantes de la app                                |
 | `types/`                      | Tipos compartidos                                   |
 | `supabase/migrations/`        | Migraciones, RLS, triggers y SQL                    |
@@ -170,20 +170,20 @@ Los tokens están definidos en `global.css` como variables CSS (`--primary`, `--
 
 **Regla:** Nunca usar colores arbitrarios de Tailwind (`bg-blue-500`, `text-gray-900`, `border-gray-300`, etc.) en componentes base de `components/ui/`. Siempre usar los tokens del sistema:
 
-| Token Tailwind              | Uso                                      |
-| --------------------------- | ---------------------------------------- |
-| `bg-primary`                | Acción principal                         |
-| `text-primary-foreground`   | Texto sobre fondo primary                |
-| `bg-secondary`              | Acción secundaria o superficie neutra    |
-| `text-secondary-foreground` | Texto sobre fondo secondary              |
-| `bg-destructive`            | Acción destructiva                       |
-| `bg-muted`                  | Superficie apagada                       |
-| `text-muted-foreground`     | Texto secundario o placeholder           |
-| `bg-background`             | Fondo de la app                          |
-| `text-foreground`           | Texto principal                          |
-| `border-border`             | Bordes de inputs, cards y divisores      |
-| `bg-accent`                 | Hover / estado activo                    |
-| `text-accent-foreground`    | Texto sobre fondo accent                 |
+| Token Tailwind              | Uso                                   |
+| --------------------------- | ------------------------------------- |
+| `bg-primary`                | Acción principal                      |
+| `text-primary-foreground`   | Texto sobre fondo primary             |
+| `bg-secondary`              | Acción secundaria o superficie neutra |
+| `text-secondary-foreground` | Texto sobre fondo secondary           |
+| `bg-destructive`            | Acción destructiva                    |
+| `bg-muted`                  | Superficie apagada                    |
+| `text-muted-foreground`     | Texto secundario o placeholder        |
+| `bg-background`             | Fondo de la app                       |
+| `text-foreground`           | Texto principal                       |
+| `border-border`             | Bordes de inputs, cards y divisores   |
+| `bg-accent`                 | Hover / estado activo                 |
+| `text-accent-foreground`    | Texto sobre fondo accent              |
 
 Colores arbitrarios solo están permitidos cuando no existe un token equivalente y el valor es estrictamente presentacional (ej: color de un ícono SVG hardcodeado).
 
