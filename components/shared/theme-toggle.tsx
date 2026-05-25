@@ -1,4 +1,5 @@
 import { Appearance, Pressable, useColorScheme } from 'react-native';
+import { useEffect } from 'react';
 
 import Animated, {
   interpolateColor,
@@ -6,8 +7,6 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-
-import { useEffect } from 'react';
 
 import Feather from '@expo/vector-icons/Feather';
 
@@ -17,28 +16,32 @@ const SWITCH_HEIGHT = 32;
 const THUMB_SIZE = 26;
 const PADDING = 3;
 
+const MAX_TRANSLATE = SWITCH_WIDTH - THUMB_SIZE - PADDING * 2;
+
 export default function ThemeToggle() {
   const colorScheme = useColorScheme();
 
   const isDark = colorScheme === 'dark';
 
-  const translateX = useSharedValue(isDark ? SWITCH_WIDTH - THUMB_SIZE - PADDING * 2 : 0);
+  const progress = useSharedValue(isDark ? 1 : 0);
 
   useEffect(() => {
-    translateX.value = withSpring(isDark ? SWITCH_WIDTH - THUMB_SIZE - PADDING * 2 : 0, {
-      damping: 12,
-      stiffness: 140,
+    progress.value = withSpring(isDark ? 1 : 0, {
+      damping: 14,
+      stiffness: 180,
       mass: 0.8,
-      overshootClamping: false,
     });
-  }, [isDark]);
+  }, [isDark, progress]);
 
   const trackStyle = useAnimatedStyle(() => {
     return {
       backgroundColor: interpolateColor(
-        translateX.value,
-        [0, SWITCH_WIDTH - THUMB_SIZE - PADDING * 2],
-        ['#27272a', '#3f3f46']
+        progress.value,
+        [0, 1],
+        [
+          '#e2f6d5', // primary-neutral light
+          '#1e3512', // primary-pale dark
+        ]
       ),
     };
   });
@@ -47,9 +50,18 @@ export default function ThemeToggle() {
     return {
       transform: [
         {
-          translateX: translateX.value,
+          translateX: progress.value * MAX_TRANSLATE,
         },
       ],
+
+      backgroundColor: interpolateColor(
+        progress.value,
+        [0, 1],
+        [
+          '#9fe870', // primary
+          '#cdffad', // primary-active
+        ]
+      ),
     };
   });
 
@@ -58,7 +70,7 @@ export default function ThemeToggle() {
   };
 
   return (
-    <Pressable onPress={toggleTheme} className="active:opacity-80">
+    <Pressable onPress={toggleTheme} hitSlop={8} className="active:opacity-80">
       <Animated.View
         style={[
           {
@@ -77,14 +89,13 @@ export default function ThemeToggle() {
               width: THUMB_SIZE,
               height: THUMB_SIZE,
               borderRadius: THUMB_SIZE / 2,
-              backgroundColor: '#fff',
               alignItems: 'center',
               justifyContent: 'center',
             },
             thumbStyle,
           ]}
         >
-          <Feather name={isDark ? 'moon' : 'sun'} size={14} color="#18181b" />
+          <Feather name={isDark ? 'moon' : 'sun'} size={14} color="#0e0f0c" />
         </Animated.View>
       </Animated.View>
     </Pressable>
