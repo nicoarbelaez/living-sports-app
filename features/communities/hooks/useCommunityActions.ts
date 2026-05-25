@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -7,16 +6,69 @@ export const useJoinCommunity = () => {
   return useMutation({
     mutationFn: (group_id: string) =>
       supabase.functions.invoke('join-public-community', { body: { group_id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['communities'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['communities'] });
+    },
   });
 };
 
 export const useLeaveCommunity = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (group_id: string) =>
-      supabase.functions.invoke('leave-community', { body: { group_id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['communities'] }),
+    mutationFn: async (group_id: string) => {
+      const { data, error } = await supabase.functions.invoke('leave-community', {
+        body: { group_id },
+      });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['communities'] });
+    },
+  });
+};
+
+export const useDeleteCommunity = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (groupId: string) => {
+      const { data, error } = await supabase.functions.invoke('delete-community', {
+        body: { group_id: groupId },
+      });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['communities'] });
+    },
+  });
+};
+
+export const useUpdateCommunity = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      groupId: string;
+      name?: string;
+      description?: string;
+      isPublic?: boolean;
+    }) => {
+      const formData = new FormData();
+      formData.append('group_id', params.groupId);
+      if (params.name !== undefined) formData.append('name', params.name);
+      if (params.description !== undefined) formData.append('description', params.description);
+      if (params.isPublic !== undefined) formData.append('is_public', String(params.isPublic));
+
+      const { data, error } = await supabase.functions.invoke('update-community', {
+        body: formData,
+      });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['community', variables.groupId] });
+      qc.invalidateQueries({ queryKey: ['communities'] });
+    },
   });
 };
 
@@ -37,29 +89,3 @@ export const useRedeemInvite = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['communities'] }),
   });
 };
-
-interface UseDeleteCommunityOptions {
-  onSuccess?: () => void;
-}
-
-export function useDeleteCommunity({ onSuccess }: UseDeleteCommunityOptions = {}) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const deleteCommunity = async (groupId: string) => {
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase.functions.invoke('delete-community', {
-        body: { group_id: groupId },
-      });
-      if (error) throw new Error(error.message);
-      onSuccess?.();
-    } catch (e) {
-      console.error('[useDeleteCommunity]', e);
-      throw e;
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  return { deleteCommunity, isDeleting };
-}
