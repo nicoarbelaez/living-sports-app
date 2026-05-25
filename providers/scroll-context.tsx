@@ -49,7 +49,7 @@ export function ScrollProvider({ children }: { children: React.ReactNode }) {
 export function useScrollContext() {
   const context = useContext(ScrollContext);
   if (context === undefined) {
-    throw new Error('useScrollContext must be used within a ScrollProvider');
+    return { shouldHideNavbar: false, handleScroll: () => {}, resetNavbar: () => {} };
   }
   return context;
 }
