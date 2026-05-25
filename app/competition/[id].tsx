@@ -80,6 +80,9 @@ export default function CompetitionDetailScreen() {
 
   return (
     <View className="flex-1 bg-gray-100 dark:bg-black">
+      <View>
+        <Text>Hola</Text>
+      </View>
       <View className="bg-white px-4 pt-14 pb-4 dark:bg-gray-900">
         <View className="mb-3 flex-row items-center gap-3">
           <Button

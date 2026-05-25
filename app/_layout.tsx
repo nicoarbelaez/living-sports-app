@@ -15,6 +15,8 @@ import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/providers/theme';
 import { useProfileSync } from '@/features/profile/hooks/useProfileSync';
 import { usePostStore } from '@/features/feed/stores/usePostStore';
+import QueryProvider from '@/providers/QueryProvider';
+import { registerForPushNotifications } from '@/lib/notifications/registerForPush';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -32,6 +34,9 @@ function RootLayoutContent() {
   useEffect(() => {
     if (!isLoading && !session) {
       usePostStore.getState().reset();
+    }
+    if (session && session.user && !__DEV__) {
+      registerForPushNotifications(session.user.id).catch(() => {});
     }
   }, [session, isLoading]);
 
@@ -90,15 +95,17 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <ThemeProvider>
-          <ScrollProvider>
-            <AuthProvider>
-              <RootLayoutContent />
-            </AuthProvider>
-          </ScrollProvider>
-        </ThemeProvider>
-      </BottomSheetModalProvider>
+      <QueryProvider>
+        <BottomSheetModalProvider>
+          <ThemeProvider>
+            <ScrollProvider>
+              <AuthProvider>
+                <RootLayoutContent />
+              </AuthProvider>
+            </ScrollProvider>
+          </ThemeProvider>
+        </BottomSheetModalProvider>
+      </QueryProvider>
     </GestureHandlerRootView>
   );
 }

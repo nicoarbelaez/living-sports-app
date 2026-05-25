@@ -1,21 +1,14 @@
 import React, { useState } from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, StatusBar, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import { Mail, Github } from 'lucide-react-native';
 import { MotiView, MotiText } from 'moti';
-import { supabase } from '@/lib/supabase';
-import AuthButton, { AuthButtonProps } from '@/components/shared/auth-button';
 import type { Provider } from '@supabase/supabase-js';
-import { makeRedirectUri } from 'expo-auth-session';
+import { supabase } from '@/lib/supabase';
 import ThemeToggle from '@/components/shared/theme-toggle';
-import { LucideIcon } from '@/types/icons';
-
-type LoginButtonProps = {
-  variant?: AuthButtonProps['variant'];
-  provider: Provider;
-  icon: LucideIcon;
-  text: string;
-};
+import { Button } from '@/components/ui/button';
 
 const LoginScreen = () => {
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
@@ -23,8 +16,8 @@ const LoginScreen = () => {
   const handleProviderLogin = async (provider: Provider) => {
     try {
       setLoadingProvider(provider);
+
       const redirectTo = makeRedirectUri();
-      console.log(`[OAuth] Using redirect URI: ${redirectTo}`);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -35,139 +28,216 @@ const LoginScreen = () => {
       });
 
       if (error) {
-        console.error(`[OAuth] Error starting ${provider} flow:`, error.message);
+        console.error(error.message);
         setLoadingProvider(null);
         return;
       }
 
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-        if (result.type !== 'success') {
-          console.log('[OAuth] Browser closed before success.');
-          setLoadingProvider(null);
-        }
-      } else {
-        console.error('[OAuth] No URL returned from signInWithOAuth');
+      if (!data?.url) {
+        setLoadingProvider(null);
+        return;
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+      if (result.type !== 'success') {
         setLoadingProvider(null);
       }
-    } catch (err) {
-      console.error('[OAuth] Error in handleProviderLogin:', err);
+    } catch (error) {
+      console.error(error);
       setLoadingProvider(null);
     }
   };
 
-  const LoginButton = ({ variant, provider, icon, text }: LoginButtonProps) => {
-    return (
-      <AuthButton
-        variant={variant}
-        icon={icon}
-        text={text}
-        onPress={() => handleProviderLogin(provider)}
-        loading={loadingProvider === provider}
-        disabled={loadingProvider !== null && loadingProvider !== provider}
-        className="p-5"
-        textClassName="dark:text-white text-xl"
-      />
-    );
-  };
-
   return (
-    <View className="bg-secondary-foreground flex-1">
-      {/* Oscurecimiento base para legibilidad */}
-      <View className="absolute inset-0 bg-black/50" />
+    <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
 
-      <View className="flex-1 px-6 py-12">
-        {/* Contenido principal más abajo */}
-        <View className="flex-1 items-center justify-end pb-12">
-          <View className="flex w-full items-center gap-48">
-            <View className="items-center">
-              {/* Logo */}
-              <MotiView
-                from={{ opacity: 0, translateY: -24 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: 'timing',
-                  duration: 500,
-                }}
-                className="mb-8"
-              >
-                <View className="size-32 items-center justify-center rounded-2xl">
-                  <View className="bg-primary absolute inset-0 rounded-2xl blur-xl" />
-                  <Image source={require('@/assets/icon.png')} className="size-32" />
-                </View>
-              </MotiView>
+      <View style={styles.container}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <ThemeToggle />
+        </View>
 
-              {/* Título */}
-              <MotiView
-                from={{ opacity: 0, translateY: 16 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: 'timing',
-                  duration: 500,
-                }}
-                className="mb-2 items-center"
-              >
-                <View className="flex-row items-baseline justify-center">
-                  <MotiText className="text-secondary-foreground text-4xl font-black tracking-tight">
-                    Living
-                  </MotiText>
-                  <MotiText className="ml-1 text-4xl font-black tracking-tight text-green-400">
-                    Sports
-                  </MotiText>
-                </View>
-              </MotiView>
-            </View>
-
-            {/* Auth */}
+        {/* CONTENT */}
+        <View style={styles.content}>
+          {/* HERO */}
+          <View style={styles.heroSection}>
             <MotiView
-              from={{ opacity: 0, translateY: 24 }}
-              animate={{ opacity: 1, translateY: 0 }}
+              from={{
+                opacity: 0,
+                translateY: -20,
+              }}
+              animate={{
+                opacity: 1,
+                translateY: 0,
+              }}
               transition={{
                 type: 'timing',
                 duration: 500,
               }}
-              className="w-full max-w-sm pt-4"
             >
-              <MotiText className="text-md text-secondary-foreground mb-6 text-center font-semibold tracking-wide">
-                Inicia sesión para continuar
-              </MotiText>
+              <View style={styles.logoWrapper}>
+                <View style={styles.logoGlow} />
 
-              <View className="gap-3">
-                <LoginButton
-                  variant="outline"
-                  provider="google"
-                  icon={<Mail size={20} />}
-                  text="Continuar con Google"
-                />
-
-                <LoginButton
-                  variant="secondary"
-                  provider="github"
-                  icon={<Github size={20} />}
-                  text="Continuar con GitHub"
+                <Image
+                  source={require('@/assets/icon.png')}
+                  resizeMode="contain"
+                  style={styles.logo}
                 />
               </View>
             </MotiView>
+
+            <MotiView
+              from={{
+                opacity: 0,
+                translateY: 10,
+              }}
+              animate={{
+                opacity: 1,
+                translateY: 0,
+              }}
+              transition={{
+                type: 'timing',
+                duration: 500,
+                delay: 100,
+              }}
+              style={styles.brandSection}
+            >
+              <View className="flex-row items-center">
+                <MotiText className="text-4xl font-black text-white">Living</MotiText>
+
+                <MotiText className="ml-2 text-4xl font-black text-green-400">Sports</MotiText>
+              </View>
+
+              <MotiText className="mt-4 text-center text-base text-zinc-400">
+                Inicia sesión para continuar
+              </MotiText>
+            </MotiView>
           </View>
+
+          {/* AUTH */}
+          <MotiView
+            from={{
+              opacity: 0,
+              translateY: 20,
+            }}
+            animate={{
+              opacity: 1,
+              translateY: 0,
+            }}
+            transition={{
+              type: 'timing',
+              duration: 500,
+              delay: 200,
+            }}
+            style={styles.authSection}
+          >
+            <Button
+              size="lg"
+              className="mb-4 h-14 rounded-2xl border border-zinc-700 bg-zinc-900"
+              loading={loadingProvider === 'google'}
+              disabled={loadingProvider !== null}
+              onPress={() => handleProviderLogin('google')}
+            >
+              <View className="flex-row items-center">
+                <Mail size={20} color="white" />
+
+                <MotiText className="ml-3 text-base font-semibold text-white">
+                  Continuar con Google
+                </MotiText>
+              </View>
+            </Button>
+
+            <Button
+              size="lg"
+              className="h-14 rounded-2xl bg-green-500"
+              loading={loadingProvider === 'github'}
+              disabled={loadingProvider !== null}
+              onPress={() => handleProviderLogin('github')}
+            >
+              <View className="flex-row items-center">
+                <Github size={20} color="black" />
+
+                <MotiText className="ml-3 text-base font-semibold text-black">
+                  Continuar con GitHub
+                </MotiText>
+              </View>
+            </Button>
+          </MotiView>
         </View>
 
-        {/* Footer */}
-        <MotiView
-          from={{ opacity: 0, translateY: 24 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{
-            type: 'timing',
-            duration: 500,
-          }}
-          className="w-full max-w-sm self-center"
-        >
-          <View className="items-end px-6">
-            <ThemeToggle />
-          </View>
-        </MotiView>
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          <MotiText className="text-center text-xs text-zinc-500">
+            Al continuar aceptas los términos y políticas de privacidad
+          </MotiText>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 export default LoginScreen;
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+
+  container: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+
+  header: {
+    alignItems: 'flex-end',
+    paddingTop: 8,
+  },
+
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingTop: 24,
+    paddingBottom: 24,
+  },
+
+  heroSection: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
+
+  logoWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+
+  logoGlow: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 28,
+    backgroundColor: '#22c55e',
+    opacity: 0.2,
+  },
+
+  logo: {
+    width: 128,
+    height: 128,
+  },
+
+  brandSection: {
+    alignItems: 'center',
+  },
+
+  authSection: {
+    width: '100%',
+  },
+
+  footer: {
+    paddingBottom: 12,
+  },
+});

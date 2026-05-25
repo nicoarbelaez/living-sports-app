@@ -116,7 +116,7 @@ export default function CreatePost() {
           className="bg-muted rounded-full"
         />
 
-        <Text className="text-lg font-bold text-black dark:text-white">Crear post</Text>
+        <Text className="text-lg font-bold text-black dark:text-white">Crear posta</Text>
 
         <View className="w-8" />
       </View>

@@ -13,6 +13,7 @@ const POST_SELECT = `
   likes_count,
   comments_count,
   profiles (
+    id,
     username,
     first_name,
     last_name,
@@ -43,6 +44,7 @@ function rowToPost(row: PostRow): Post {
 
   return {
     id: row.id,
+    authorId: row.profiles?.id ?? '',
     user: username,
     time: formatRelativeTime(row.created_at),
     createdAt: row.created_at,
@@ -56,6 +58,7 @@ function rowToPost(row: PostRow): Post {
 
 interface PostState {
   posts: Post[];
+  byId: Record<string, Post>;
   isLoading: boolean;
   isFetchingMore: boolean;
   hasMore: boolean;
@@ -67,11 +70,15 @@ interface PostActions {
   fetchPosts: () => Promise<void>;
   fetchMorePosts: () => Promise<void>;
   prependPost: (post: Post) => void;
+  upsertPost: (post: Post) => void;
+  applyLike: (postId: string, liked: boolean, delta: number) => void;
+  bumpCommentCount: (postId: string, delta: number) => void;
   reset: () => void;
 }
 
 const initialState: PostState = {
   posts: [],
+  byId: {},
   isLoading: false,
   isFetchingMore: false,
   hasMore: true,
@@ -104,6 +111,10 @@ export const usePostStore = create<PostState & PostActions>()((set, get) => ({
         hasMore: rows.length === PAGE_SIZE,
         cursor: rows.at(-1)?.created_at ?? null,
       });
+
+      const byId: Record<string, Post> = {};
+      posts.forEach((p) => { byId[p.id] = p; });
+      set({ byId: { ...get().byId, ...byId } });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
       console.error('[PostStore] fetchPosts:', message);
@@ -133,10 +144,14 @@ export const usePostStore = create<PostState & PostActions>()((set, get) => ({
       const rows = (data ?? []) as PostRow[];
       const newPosts = rows.map(rowToPost);
 
+      const moreById: Record<string, Post> = {};
+      newPosts.forEach((p) => { moreById[p.id] = p; });
+
       set((state) => ({
         posts: [...state.posts, ...newPosts],
         hasMore: rows.length === PAGE_SIZE,
         cursor: rows.at(-1)?.created_at ?? state.cursor,
+        byId: { ...state.byId, ...moreById },
       }));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido';
@@ -147,7 +162,35 @@ export const usePostStore = create<PostState & PostActions>()((set, get) => ({
     }
   },
 
-  prependPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
+  prependPost: (post) =>
+    set((state) => ({
+      posts: [post, ...state.posts],
+      byId: { ...state.byId, [post.id]: post },
+    })),
+
+  upsertPost: (post) =>
+    set((state) => ({ byId: { ...state.byId, [post.id]: post } })),
+
+  applyLike: (postId, _liked, delta) =>
+    set((state) => {
+      const post = state.byId[postId];
+      if (!post) return state;
+      const updated = { ...post, likesCount: post.likesCount + delta };
+      const posts = state.posts.map((p) => (p.id === postId ? updated : p));
+      return { byId: { ...state.byId, [postId]: updated }, posts };
+    }),
+
+  bumpCommentCount: (postId, delta) =>
+    set((state) => {
+      const post = state.byId[postId];
+      if (!post) return state;
+      const updated = { ...post, commentsCount: post.commentsCount + delta };
+      const posts = state.posts.map((p) => (p.id === postId ? updated : p));
+      return { byId: { ...state.byId, [postId]: updated }, posts };
+    }),
 
   reset: () => set(initialState),
 }));
+
+export const usePostById = (postId: string) =>
+  usePostStore((state) => state.byId[postId]);

@@ -8,6 +8,7 @@ export type Media = {
 /** UI model — flat, display-ready. */
 export interface Post {
   id: string;
+  authorId: string;
   user: string;
   time: string; // Relative (e.g. "hace 2 min")
   createdAt: string; // ISO timestamp
@@ -24,7 +25,7 @@ export interface Post {
  * profiles comes as a single object (many-to-one).
  */
 export type PostRow = Tables<'posts'> & {
-  profiles: Pick<Tables<'profiles'>, 'username' | 'first_name' | 'last_name' | 'avatar_url'> | null;
+  profiles: Pick<Tables<'profiles'>, 'id' | 'username' | 'first_name' | 'last_name' | 'avatar_url'> | null;
   post_media: Pick<Tables<'post_media'>, 'url' | 'media_type' | 'sort_order'>[];
 };
 
