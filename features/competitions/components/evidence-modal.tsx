@@ -1,13 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { Text, TouchableOpacity, Alert, View } from 'react-native';
+import React, { useRef } from 'react';
+import { Text, TouchableOpacity, View, Alert } from 'react-native';
+import { Controller } from 'react-hook-form';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { Upload, Video } from 'lucide-react-native';
+import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
-import { Upload } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
-import { useMediaPicker } from '@/hooks/useMediaPicker';
+import { useEvidenceForm } from '../hooks/useEvidenceForm';
+import { useSubmitEvidence } from '../hooks/useSubmitEvidence';
 import type { Competition } from '@/types/competition';
 
 interface EvidenceModalProps {
@@ -24,57 +25,43 @@ export default function EvidenceModal({
   onSuccess,
 }: EvidenceModalProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const { form, pickVideo } = useEvidenceForm();
 
-  const [prValue, setPrValue] = useState('');
-  const [description, setDescription] = useState('');
-  const [videoUri, setVideoUri] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = form;
 
-  const { handlePickFromGallery } = useMediaPicker({ allowVideo: true, multiple: false });
+  const { mutateAsync, isPending } = useSubmitEvidence({
+    onSuccess: () => {
+      reset();
+      onClose();
+      onSuccess();
+    },
+  });
 
-  const handlePickVideo = async () => {
-    const result = await handlePickFromGallery();
-    if (result.length > 0) setVideoUri(result[0].uri);
-  };
+  const videoUri = watch('videoUri');
+  const videoDurationMs = watch('videoDurationMs');
+
+  const durationLabel = videoDurationMs
+    ? `${Math.floor(videoDurationMs / 60000)}:${String(Math.floor((videoDurationMs % 60000) / 1000)).padStart(2, '0')}`
+    : null;
 
   const handleClose = () => {
-    setPrValue('');
-    setDescription('');
-    setVideoUri(null);
+    reset();
     onClose();
   };
 
-  const handleSubmit = async () => {
-    if (!videoUri || !prValue) return;
-    if (isNaN(Number(prValue)) || Number(prValue) <= 0) {
-      Alert.alert('Error', 'El valor debe ser un número mayor a 0');
-      return;
-    }
-
-    setSubmitting(true);
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      const body = new FormData();
-      body.append('competition_id', competition.id);
-      body.append('exercise_id', competition.exerciseId);
-      body.append('pr_value', prValue);
-      if (description) body.append('description', description);
-      body.append('file', {
-        uri: videoUri,
-        name: `evidence-${Date.now()}.mp4`,
-        type: 'video/mp4',
-      } as any);
-
-      const { error } = await supabase.functions.invoke('submit-evidence', { body });
-      if (error) throw new Error(error.message);
-
-      handleClose();
-      onSuccess();
-    } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo enviar la evidencia');
-    } finally {
-      setSubmitting(false);
+      await mutateAsync({ competitionId: competition.id, exerciseId: competition.exerciseId, values });
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'No se pudo enviar la evidencia');
     }
-  };
+  });
 
   return (
     <BottomSheetModalComponent
@@ -82,43 +69,88 @@ export default function EvidenceModal({
       title="Subir evidencia"
       onClose={handleClose}
       bottomSheetRef={bottomSheetRef}
+      locked={isPending}
     >
       <View className="flex-1 gap-4">
         <TouchableOpacity
-          onPress={handlePickVideo}
-          className="border-border mb-4 items-center justify-center rounded-2xl border-2 border-dashed py-6"
+          onPress={pickVideo}
+          disabled={isPending}
+          className={`items-center justify-center rounded-2xl border-2 border-dashed py-6 ${
+            errors.videoUri ? 'border-destructive bg-destructive/5' : 'border-border'
+          }`}
         >
-          <Upload size={24} color="#6b7280" />
-          <Text className="text-muted-foreground mt-2 text-sm">
-            {videoUri ? '✓ Video seleccionado' : 'Seleccionar video'}
-          </Text>
+          {videoUri ? (
+            <View className="items-center gap-1">
+              <Video size={24} color="#22c55e" />
+              <Text className="mt-1 text-sm font-semibold text-green-600">Video seleccionado</Text>
+              {durationLabel && (
+                <Text className="text-muted-foreground text-xs">Duración: {durationLabel}</Text>
+              )}
+              <Text className="text-muted-foreground mt-1 text-xs">Toca para cambiar</Text>
+            </View>
+          ) : (
+            <View className="items-center gap-1">
+              <Upload size={24} color="#6b7280" />
+              <Text className="text-muted-foreground mt-1 text-sm">
+                Seleccionar video (máx. 3 min)
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
+        {errors.videoUri && (
+          <Text className="text-destructive text-xs">{errors.videoUri.message}</Text>
+        )}
 
-        <Text className="text-muted-foreground text-sm font-semibold">
-          {competition.exerciseName} — valor (kg / reps / seg)
-        </Text>
-        <Input
-          value={prValue}
-          onChangeText={setPrValue}
-          placeholder="Ej: 100"
-          keyboardType="numeric"
-          className="mb-4"
-        />
+        <View>
+          <Text className="text-foreground mb-2 text-sm font-semibold">
+            {competition.exerciseName} — valor (kg / reps / seg)
+          </Text>
+          <Controller
+            control={control}
+            name="prValue"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Ej: 100"
+                keyboardType="decimal-pad"
+                editable={!isPending}
+                error={!!errors.prValue}
+              />
+            )}
+          />
+          {errors.prValue && (
+            <Text className="text-destructive mt-1 text-xs">{errors.prValue.message}</Text>
+          )}
+        </View>
 
-        <Text className="text-muted-foreground text-sm font-semibold">Descripción (opcional)</Text>
-        <Textarea
-          value={description}
-          maxChars={500}
-          onChangeText={setDescription}
-          placeholder="Contexto, condiciones, etc."
-          numberOfLines={2}
-          className="min-h-16"
-        />
+        <View>
+          <Text className="text-foreground mb-2 text-sm font-semibold">Descripción (opcional)</Text>
+          <Controller
+            control={control}
+            name="description"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Textarea
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Contexto, condiciones, etc."
+                numberOfLines={2}
+                className="min-h-16"
+                editable={!isPending}
+              />
+            )}
+          />
+          {errors.description && (
+            <Text className="text-destructive mt-1 text-xs">{errors.description.message}</Text>
+          )}
+        </View>
 
         <Button
-          onPress={handleSubmit}
-          loading={submitting}
-          disabled={submitting || !videoUri || !prValue}
+          onPress={onSubmit}
+          loading={isPending}
+          disabled={isPending}
           className="rounded-2xl"
           size="lg"
         >

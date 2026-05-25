@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useEvidenceForm } from '../hooks/useEvidenceForm';
+import { useSubmitEvidence } from '../hooks/useSubmitEvidence';
 
 interface EvidenceSheetProps {
   onClose?: () => void;
@@ -18,21 +19,23 @@ interface EvidenceSheetProps {
 
 const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
   ({ onClose, competitionId, exerciseId, onSuccess }, ref) => {
-    const { form, pickVideo, submit } = useEvidenceForm({
-      competitionId,
-      exerciseId,
-      onSuccess: () => {
-        handleClose();
-        onSuccess?.();
-      },
-    });
+    const { form, pickVideo } = useEvidenceForm();
 
     const {
       control,
       handleSubmit,
       watch,
-      formState: { errors, isSubmitting },
+      reset,
+      formState: { errors },
     } = form;
+
+    const { mutateAsync, isPending } = useSubmitEvidence({
+      onSuccess: () => {
+        reset();
+        onClose?.();
+        onSuccess?.();
+      },
+    });
 
     const videoUri = watch('videoUri');
     const videoDurationMs = watch('videoDurationMs');
@@ -43,24 +46,23 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
 
     const onSubmit = handleSubmit(async (values) => {
       try {
-        await submit(values);
+        await mutateAsync({ competitionId, exerciseId, values });
       } catch (err) {
         Alert.alert('Error', err instanceof Error ? err.message : 'No se pudo enviar la evidencia');
       }
     });
 
     const handleClose = () => {
-      form.reset();
+      reset();
       onClose?.();
     };
 
     return (
-      <BottomSheetModalComponent ref={ref} title="Subir evidencia" onClose={handleClose}>
+      <BottomSheetModalComponent ref={ref} title="Subir evidencia" onClose={handleClose} locked={isPending}>
         <View className="flex-1 gap-4">
-          {/* Video picker */}
           <TouchableOpacity
             onPress={pickVideo}
-            disabled={isSubmitting}
+            disabled={isPending}
             className={`items-center justify-center rounded-2xl border-2 border-dashed py-6 ${
               errors.videoUri ? 'border-destructive bg-destructive/5' : 'border-border'
             }`}
@@ -68,9 +70,7 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
             {videoUri ? (
               <View className="items-center gap-1">
                 <Video size={24} color="#22c55e" />
-                <Text className="mt-1 text-sm font-semibold text-green-600">
-                  Video seleccionado
-                </Text>
+                <Text className="mt-1 text-sm font-semibold text-green-600">Video seleccionado</Text>
                 {durationLabel && (
                   <Text className="text-muted-foreground text-xs">Duración: {durationLabel}</Text>
                 )}
@@ -89,7 +89,6 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
             <Text className="text-destructive text-xs">{errors.videoUri.message}</Text>
           )}
 
-          {/* PR Value */}
           <View>
             <Text className="text-foreground mb-2 text-sm font-semibold">
               Valor (kg / reps / seg)
@@ -104,7 +103,7 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
                   onBlur={onBlur}
                   placeholder="Ej: 100"
                   keyboardType="decimal-pad"
-                  editable={!isSubmitting}
+                  editable={!isPending}
                   error={!!errors.prValue}
                 />
               )}
@@ -114,7 +113,6 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
             )}
           </View>
 
-          {/* Description */}
           <View>
             <Text className="text-foreground mb-2 text-sm font-semibold">
               Descripción (opcional)
@@ -130,7 +128,7 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
                   placeholder="Contexto, condiciones, etc."
                   numberOfLines={3}
                   className="min-h-20"
-                  editable={!isSubmitting}
+                  editable={!isPending}
                 />
               )}
             />
@@ -141,8 +139,8 @@ const EvidenceSheet = forwardRef<BottomSheetModal, EvidenceSheetProps>(
 
           <Button
             onPress={onSubmit}
-            loading={isSubmitting}
-            disabled={isSubmitting}
+            loading={isPending}
+            disabled={isPending}
             className="rounded-2xl"
             size="lg"
           >
