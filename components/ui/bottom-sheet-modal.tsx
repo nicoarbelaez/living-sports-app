@@ -46,7 +46,7 @@ const BottomSheetModalComponent = forwardRef<BottomSheetRef, BottomSheetModalPro
       } else {
         resolvedRef.current?.dismiss();
       }
-    }, [visible]);
+    }, [visible, resolvedRef]);
 
     const renderBackdrop = useCallback(
       (props: any) => (
