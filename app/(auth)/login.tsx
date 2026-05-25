@@ -1,30 +1,37 @@
-import React, { useState } from 'react';
-import { View, Image } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import { Mail, Github } from 'lucide-react-native';
-import { MotiView, MotiText } from 'moti';
-import { supabase } from '@/lib/supabase';
-import AuthButton, { AuthButtonProps } from '@/components/shared/auth-button';
-import type { Provider } from '@supabase/supabase-js';
-import { makeRedirectUri } from 'expo-auth-session';
-import ThemeToggle from '@/components/shared/theme-toggle';
-import { LucideIcon } from '@/types/icons';
+import { useState, useCallback } from 'react';
+import { View, Image, useColorScheme } from 'react-native';
 
-type LoginButtonProps = {
-  variant?: AuthButtonProps['variant'];
-  provider: Provider;
-  icon: LucideIcon;
-  text: string;
-};
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
+
+import { Mail, Github } from 'lucide-react-native';
+
+import { MotiView, MotiText } from 'moti';
+
+import { supabase } from '@/lib/supabase';
+
+import AuthButton from '@/components/shared/auth-button';
+
+import type { Provider } from '@supabase/supabase-js';
+
+import { makeRedirectUri } from 'expo-auth-session';
+
+import ThemeToggle from '@/components/shared/theme-toggle';
 
 const LoginScreen = () => {
+  const colorScheme = useColorScheme();
+
+  const isDark = colorScheme === 'dark';
+
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
-  const handleProviderLogin = async (provider: Provider) => {
+  const handleProviderLogin = useCallback(async (provider: Provider) => {
     try {
       setLoadingProvider(provider);
+
       const redirectTo = makeRedirectUri();
-      console.log(`[OAuth] Using redirect URI: ${redirectTo}`);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -35,138 +42,189 @@ const LoginScreen = () => {
       });
 
       if (error) {
-        console.error(`[OAuth] Error starting ${provider} flow:`, error.message);
+        console.error(error.message);
         setLoadingProvider(null);
         return;
       }
 
       if (data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
         if (result.type !== 'success') {
-          console.log('[OAuth] Browser closed before success.');
           setLoadingProvider(null);
         }
-      } else {
-        console.error('[OAuth] No URL returned from signInWithOAuth');
-        setLoadingProvider(null);
       }
     } catch (err) {
-      console.error('[OAuth] Error in handleProviderLogin:', err);
+      console.error(err);
       setLoadingProvider(null);
     }
-  };
+  }, []);
 
-  const LoginButton = ({ variant, provider, icon, text }: LoginButtonProps) => {
-    return (
-      <AuthButton
-        variant={variant}
-        icon={icon}
-        text={text}
-        onPress={() => handleProviderLogin(provider)}
-        loading={loadingProvider === provider}
-        disabled={loadingProvider !== null && loadingProvider !== provider}
-        className="p-5"
-        textClassName="dark:text-white text-xl"
-      />
-    );
-  };
+  const isLoading = loadingProvider !== null;
 
   return (
-    <View className="bg-secondary-foreground flex-1">
-      {/* Oscurecimiento base para legibilidad */}
-      <View className="absolute inset-0 bg-black/50" />
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} animated />
 
-      <View className="flex-1 px-6 py-12">
-        {/* Contenido principal más abajo */}
-        <View className="flex-1 items-center justify-end pb-12">
-          <View className="flex w-full items-center gap-48">
-            <View className="items-center">
-              {/* Logo */}
-              <MotiView
-                from={{ opacity: 0, translateY: -24 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: 'timing',
-                  duration: 500,
-                }}
-                className="mb-8"
-              >
-                <View className="size-32 items-center justify-center rounded-2xl">
-                  <View className="bg-primary absolute inset-0 rounded-2xl blur-xl" />
-                  <Image source={require('@/assets/icon.png')} className="size-32" />
-                </View>
-              </MotiView>
-
-              {/* Título */}
-              <MotiView
-                from={{ opacity: 0, translateY: 16 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: 'timing',
-                  duration: 500,
-                }}
-                className="mb-2 items-center"
-              >
-                <View className="flex-row items-baseline justify-center">
-                  <MotiText className="text-secondary-foreground text-4xl font-black tracking-tight">
-                    Living
-                  </MotiText>
-                  <MotiText className="ml-1 text-4xl font-black tracking-tight text-green-400">
-                    Sports
-                  </MotiText>
-                </View>
-              </MotiView>
-            </View>
-
-            {/* Auth */}
-            <MotiView
-              from={{ opacity: 0, translateY: 24 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{
-                type: 'timing',
-                duration: 500,
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? '#0e0f0c' : '#ffffff',
+        }}
+        edges={['top', 'bottom']}
+      >
+        <View className="bg-background flex-1">
+          {/* Background */}
+          <View className="absolute inset-0 overflow-hidden">
+            {/* Top glow */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -120,
+                left: -40,
+                width: 260,
+                height: 260,
+                borderRadius: 999,
+                backgroundColor: isDark ? '#9fe87020' : '#9fe87040',
               }}
-              className="w-full max-w-sm pt-4"
+            />
+
+            {/* Bottom glow */}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: -160,
+                right: -60,
+                width: 320,
+                height: 320,
+                borderRadius: 999,
+                backgroundColor: isDark ? '#c5edab10' : '#9fe87025',
+              }}
+            />
+          </View>
+
+          {/* Header */}
+          <View className="flex-row justify-end px-6 pt-2">
+            <ThemeToggle />
+          </View>
+
+          {/* Hero */}
+          <View className="flex-1 items-center justify-center px-6">
+            <MotiView
+              from={{
+                opacity: 0,
+                scale: 0.85,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                type: 'spring',
+                damping: 16,
+                stiffness: 180,
+              }}
             >
-              <MotiText className="text-md text-secondary-foreground mb-6 text-center font-semibold tracking-wide">
-                Inicia sesión para continuar
-              </MotiText>
-
-              <View className="gap-3">
-                <LoginButton
-                  variant="outline"
-                  provider="google"
-                  icon={<Mail size={20} />}
-                  text="Continuar con Google"
-                />
-
-                <LoginButton
-                  variant="secondary"
-                  provider="github"
-                  icon={<Github size={20} />}
-                  text="Continuar con GitHub"
+              <View
+                className="bg-primary size-28 items-center justify-center rounded-[32px] border border-white/10"
+                style={{
+                  shadowColor: '#9fe870',
+                  shadowOpacity: 0.35,
+                  shadowRadius: 24,
+                  shadowOffset: {
+                    width: 0,
+                    height: 12,
+                  },
+                  elevation: 12,
+                }}
+              >
+                <Image
+                  source={require('@/assets/icon.png')}
+                  style={{
+                    width: 82,
+                    height: 82,
+                    borderRadius: 20,
+                  }}
                 />
               </View>
             </MotiView>
-          </View>
-        </View>
 
-        {/* Footer */}
-        <MotiView
-          from={{ opacity: 0, translateY: 24 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{
-            type: 'timing',
-            duration: 500,
-          }}
-          className="w-full max-w-sm self-center"
-        >
-          <View className="items-end px-6">
-            <ThemeToggle />
+            <MotiView
+              from={{
+                opacity: 0,
+                translateY: 18,
+              }}
+              animate={{
+                opacity: 1,
+                translateY: 0,
+              }}
+              transition={{
+                delay: 120,
+                duration: 500,
+              }}
+              className="mt-8 items-center"
+            >
+              <View className="flex-row items-baseline">
+                <MotiText className="text-foreground text-5xl font-black tracking-tight">
+                  Living
+                </MotiText>
+
+                <MotiText className="text-primary text-5xl font-black tracking-tight">
+                  Sports
+                </MotiText>
+              </View>
+
+              <MotiText className="text-muted-foreground mt-3 text-center text-sm leading-6">
+                La comunidad fitness que
+                {'\n'}
+                impulsa tu progreso
+              </MotiText>
+            </MotiView>
           </View>
-        </MotiView>
-      </View>
-    </View>
+
+          {/* Auth Card */}
+          <MotiView
+            from={{
+              opacity: 0,
+              translateY: 30,
+            }}
+            animate={{
+              opacity: 1,
+              translateY: 0,
+            }}
+            transition={{
+              delay: 250,
+              duration: 450,
+            }}
+            className="border-border bg-card/95 mx-5 mb-5 gap-3 rounded-[28px] border p-5"
+          >
+            <MotiText className="text-muted-foreground mb-1 text-center text-sm font-medium">
+              Inicia sesión para continuar
+            </MotiText>
+
+            <AuthButton
+              variant="default"
+              icon={<Mail size={20} color="#0e0f0c" />}
+              text="Continuar con Google"
+              onPress={() => handleProviderLogin('google')}
+              loading={loadingProvider === 'google'}
+              disabled={isLoading && loadingProvider !== 'google'}
+              className="h-14 rounded-2xl"
+            />
+
+            <AuthButton
+              variant="outline"
+              icon={<Github size={20} />}
+              text="Continuar con GitHub"
+              onPress={() => handleProviderLogin('github')}
+              loading={loadingProvider === 'github'}
+              disabled={isLoading && loadingProvider !== 'github'}
+              className="border-border bg-primary-pale h-14 rounded-2xl"
+            />
+          </MotiView>
+        </View>
+      </SafeAreaView>
+    </>
   );
 };
 
