@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Pressable, TextInput, Text, useColorScheme } from 'react-native';
-import { Search, Bell, Settings, ArrowLeft, Pencil, Plus } from 'lucide-react-native';
+import { Search, Bell, Settings, ArrowLeft, Pencil } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useNotificationStore } from '@/features/notifications/stores/useNotificationStore';
 
@@ -92,11 +92,12 @@ export default function HeaderActions({ screen }: Props) {
 
       {screen === 'profile' && (
         <>
-          <View className="flex-1 items-start">
+          {/* TODO: Esto no se usa */}
+          {/* <View className="flex-1 items-start">
             <Pressable onPress={() => router.push('/create-post')} className="p-1">
               <Plus size={22} color={iconColor} />
             </Pressable>
-          </View>
+          </View> */}
 
           <Pressable onPress={() => router.push('/edit-profile')} className="p-1">
             <Pencil size={22} color={iconColor} />

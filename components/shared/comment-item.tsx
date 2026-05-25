@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react-native';
+import PostAuthorHeader from '@/components/feed/post-author-header';
 
 export interface Comment {
   id: string;
@@ -16,46 +17,47 @@ export interface Comment {
 
 interface CommentItemProps {
   comment: Comment;
-  level?: number;
+  depth?: 0 | 1;
   onReply: (user: string, id: string) => void;
   onLike: (id: string) => void;
 }
 
-export default function CommentItem({ comment, level = 0, onReply, onLike }: CommentItemProps) {
-  const isReply = level > 0;
+export default function CommentItem({ comment, depth = 0, onReply, onLike }: CommentItemProps) {
+  const isReply = depth === 1;
 
   return (
     <View className={`mt-4 ${isReply ? 'ml-6' : 'px-4'}`}>
       <View className="flex-row">
-        <Image
-          source={{ uri: comment.avatar }}
-          className={`${isReply ? 'h-6 w-6' : 'h-8 w-8'} rounded-full`}
-        />
-
-        <View className="ml-3 flex-1">
+        <View className="flex-1">
           <View className="flex-row justify-between">
-            {/* Texto y detalles ocupan máximo espacio disponible menos el margen del corazón */}
             <View className="flex-1 pr-3">
-              <Text className="text-sm">
-                <Text className="font-bold text-gray-900">{comment.user}</Text>
-                {'  '}
-                <Text className="text-gray-800">{comment.text}</Text>
-              </Text>
+              <PostAuthorHeader
+                avatarUrl={comment.avatar}
+                name={comment.user}
+                isoOrRelativeDate={comment.time}
+                size={isReply ? 'sm' : 'sm'}
+              />
+
+              <Text className="text-foreground mt-1 text-sm">{comment.text}</Text>
 
               <View className="mt-1 flex-row items-center gap-4">
-                <Text className="text-xs text-gray-500">{comment.time}</Text>
                 {comment.likes > 0 && (
-                  <Text className="text-xs font-semibold text-gray-500">
-                    {comment.likes} {comment.likes === 1 ? 'like' : 'likes'}
+                  <Text className="text-muted-foreground text-xs font-semibold">
+                    {comment.likes} {comment.likes === 1 ? 'Me gusta' : 'Me gustas'}
                   </Text>
                 )}
-                <Button variant="ghost" size="sm" onPress={() => onReply(comment.user, comment.id)}>
-                  <Text className="text-muted-foreground text-xs font-semibold">Reply</Text>
-                </Button>
+                {!isReply && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => onReply(comment.user, comment.id)}
+                  >
+                    <Text className="text-muted-foreground text-xs font-semibold">Responder</Text>
+                  </Button>
+                )}
               </View>
             </View>
 
-            {/* Columna del corazón con contador debajo */}
             <Button
               variant="ghost"
               size="icon"
@@ -79,16 +81,15 @@ export default function CommentItem({ comment, level = 0, onReply, onLike }: Com
             </Button>
           </View>
 
-          {/* Render Replies Recursively */}
           {comment.replies && comment.replies.length > 0 && (
             <View>
               {comment.replies.map((reply) => (
                 <CommentItem
                   key={reply.id}
                   comment={reply}
-                  level={level + 1}
+                  depth={1}
                   onReply={onReply}
-                  onLike={onLike} // Pasa la función exacta para que los hijos envíen su propio ID
+                  onLike={onLike}
                 />
               ))}
             </View>

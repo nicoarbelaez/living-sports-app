@@ -6,6 +6,7 @@ import { MotiView } from 'moti';
 import { MotiPressable as OriginalMotiPressable } from 'moti/interactions';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useScrollContext } from '@/providers/scroll-context';
+import { cn } from '@/lib/utils';
 
 // Add TypeScript support for className
 type MotiPressableProps = ComponentProps<typeof OriginalMotiPressable> & {
@@ -75,7 +76,10 @@ export function FloatingNavbar({
           const showPlus = showPlusBottom ? index === 1 : false;
 
           return (
-            <React.Fragment key={route.key}>
+            <View
+              className={cn('rounded-full p-2 px-6', isFocused && 'bg-primary')}
+              key={route.key}
+            >
               <MotiPressable
                 onPress={() => onTabPress(route, isFocused)}
                 animate={({ hovered, pressed }) => {
@@ -87,11 +91,7 @@ export function FloatingNavbar({
                 }}
                 className="p-2"
               >
-                <MaterialIcons
-                  name={iconName}
-                  size={30}
-                  color={isFocused ? '#0a7ea4' : '#9BA1A6'}
-                />
+                <MaterialIcons name={iconName} size={30} color="#0e0f0c" />
               </MotiPressable>
 
               {showPlus && (
@@ -111,7 +111,7 @@ export function FloatingNavbar({
                   <MaterialIcons name="add" size={32} color="white" />
                 </MotiPressable>
               )}
-            </React.Fragment>
+            </View>
           );
         })}
       </View>

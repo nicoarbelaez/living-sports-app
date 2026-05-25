@@ -5,6 +5,7 @@ import AvatarWithEmoji from '@/components/ui/avatar-with-emoji';
 import { Button } from '@/components/ui/button';
 import type { CompetitionEntry } from '@/types/competition';
 import { useTheme } from '@/providers/theme';
+import { getFullName } from '@/features/posts/hooks/useComments';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; text: string }> = {
   pending: {
@@ -46,13 +47,13 @@ export default function EntryCard({ entry, isOwn, isVoting, onVote }: EntryCardP
     <View className="mb-4 rounded-2xl bg-white p-4 dark:bg-gray-900">
       <View className="mb-3 flex-row items-center gap-3">
         <AvatarWithEmoji
-          imageUrl={entry.user?.avatarUrl}
-          fallback={entry.user?.username?.[0]?.toUpperCase() ?? '?'}
+          imageUrl={entry.user?.avatar_url}
+          fallback={getFullName(entry.user) ?? 'Usuario'}
           size="sm"
         />
         <View className="flex-1">
           <Text className="text-sm font-semibold text-black dark:text-white">
-            {entry.user?.username ?? 'Usuario'}
+            {getFullName(entry.user) ?? 'Usuario'}
             {isOwn && <Text className="font-normal text-blue-500"> (tú)</Text>}
           </Text>
         </View>
