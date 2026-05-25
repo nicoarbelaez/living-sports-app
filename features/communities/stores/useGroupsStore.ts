@@ -37,6 +37,7 @@ export const useGroupsStore = create<GroupsState>((set) => ({
       if (error) throw error;
 
       const myGroups = (data ?? [])
+        .filter((row: any) => row.groups && !row.groups.is_deleted)
         .map((row: any) => mapGroupRow(row.groups))
         .sort(
           (a: Group, b: Group) =>
@@ -59,6 +60,7 @@ export const useGroupsStore = create<GroupsState>((set) => ({
         .from('groups')
         .select('*')
         .eq('is_public', true)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
