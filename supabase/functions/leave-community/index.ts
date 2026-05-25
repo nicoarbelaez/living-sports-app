@@ -1,6 +1,6 @@
 import { handleCors } from '../_shared/cors.ts';
 import { jsonResponse, errorResponse } from '../_shared/response.ts';
-import { createSupabaseClient, extractBearerToken } from '../_shared/supabase-client.ts';
+import { authenticateUser } from '../_shared/auth.ts';
 
 interface LeaveBody {
   group_id: string;
@@ -12,12 +12,7 @@ export async function handler(req: Request): Promise<Response> {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    const token = extractBearerToken(authHeader);
-    const supabase = createSupabaseClient(authHeader!);
-
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData?.user) throw new Error('Usuario no autenticado.');
-    const userId = userData.user.id;
+    const { userId, supabase } = await authenticateUser(authHeader, { request: req });
 
     const body: LeaveBody = await req.json();
     const groupId = body.group_id?.trim();
