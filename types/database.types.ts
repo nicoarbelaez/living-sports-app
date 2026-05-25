@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_routine_drafts: {
+        Row: {
+          applied_at: string | null
+          created_at: string | null
+          id: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string | null
+          id?: string
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_routine_drafts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_routine_drafts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_roles: {
         Row: {
           created_at: string
@@ -371,12 +410,16 @@ export type Database = {
       competition_entries: {
         Row: {
           approvals_count: number
+          attempt_number: number
           competition_day_id: string
           competition_id: string
           created_at: string
+          day_date: string | null
           description: string | null
           exercise_id: string
           id: string
+          is_deprecated: boolean
+          points: number
           pr_value: number
           rejections_count: number
           resulting_pr_id: string | null
@@ -387,12 +430,16 @@ export type Database = {
         }
         Insert: {
           approvals_count?: number
+          attempt_number?: number
           competition_day_id: string
           competition_id: string
           created_at?: string
+          day_date?: string | null
           description?: string | null
           exercise_id: string
           id?: string
+          is_deprecated?: boolean
+          points?: number
           pr_value: number
           rejections_count?: number
           resulting_pr_id?: string | null
@@ -403,12 +450,16 @@ export type Database = {
         }
         Update: {
           approvals_count?: number
+          attempt_number?: number
           competition_day_id?: string
           competition_id?: string
           created_at?: string
+          day_date?: string | null
           description?: string | null
           exercise_id?: string
           id?: string
+          is_deprecated?: boolean
+          points?: number
           pr_value?: number
           rejections_count?: number
           resulting_pr_id?: string | null
@@ -440,13 +491,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "competition_entries_exercise_valid"
-            columns: ["competition_id", "exercise_id"]
-            isOneToOne: false
-            referencedRelation: "competition_exercises"
-            referencedColumns: ["competition_id", "exercise_id"]
-          },
-          {
             foreignKeyName: "competition_entries_resulting_pr_id_fkey"
             columns: ["resulting_pr_id"]
             isOneToOne: false
@@ -472,36 +516,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competition_exercises: {
-        Row: {
-          competition_id: string
-          exercise_id: string
-        }
-        Insert: {
-          competition_id: string
-          exercise_id: string
-        }
-        Update: {
-          competition_id?: string
-          exercise_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competition_exercises_competition_id_fkey"
-            columns: ["competition_id"]
-            isOneToOne: false
-            referencedRelation: "competitions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competition_exercises_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "exercises"
             referencedColumns: ["id"]
           },
         ]
@@ -630,10 +644,10 @@ export type Database = {
           created_by: string
           description: string | null
           end_date: string
+          exercise_id: string | null
           group_id: string
           id: string
           participant_scope: string
-          rules: Json
           start_date: string
           status: string
           title: string
@@ -644,10 +658,10 @@ export type Database = {
           created_by: string
           description?: string | null
           end_date: string
+          exercise_id?: string | null
           group_id: string
           id?: string
           participant_scope?: string
-          rules?: Json
           start_date: string
           status?: string
           title: string
@@ -658,10 +672,10 @@ export type Database = {
           created_by?: string
           description?: string | null
           end_date?: string
+          exercise_id?: string | null
           group_id?: string
           id?: string
           participant_scope?: string
-          rules?: Json
           start_date?: string
           status?: string
           title?: string
@@ -680,6 +694,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
             referencedColumns: ["id"]
           },
           {
@@ -794,6 +815,124 @@ export type Database = {
           },
         ]
       }
+      group_invite_redemptions: {
+        Row: {
+          id: string
+          invite_id: string
+          redeemed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          invite_id: string
+          redeemed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          invite_id?: string
+          redeemed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_invite_redemptions_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "group_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invite_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invite_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_invites: {
+        Row: {
+          channel: string
+          created_at: string | null
+          created_by: string
+          expires_at: string
+          group_id: string
+          id: string
+          max_uses: number
+          target_user_id: string | null
+          token: string
+          used_count: number
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          created_by: string
+          expires_at?: string
+          group_id: string
+          id?: string
+          max_uses?: number
+          target_user_id?: string | null
+          token?: string
+          used_count?: number
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string
+          group_id?: string
+          id?: string
+          max_uses?: number
+          target_user_id?: string | null
+          token?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invites_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invites_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
@@ -839,6 +978,74 @@ export type Database = {
           },
           {
             foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_ranking_snapshots: {
+        Row: {
+          competition_id: string | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          movement: string | null
+          points: number
+          position: number | null
+          snapshot_date: string
+          snapshot_type: string
+          user_id: string | null
+        }
+        Insert: {
+          competition_id?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          movement?: string | null
+          points?: number
+          position?: number | null
+          snapshot_date?: string
+          snapshot_type: string
+          user_id?: string | null
+        }
+        Update: {
+          competition_id?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          movement?: string | null
+          points?: number
+          position?: number | null
+          snapshot_date?: string
+          snapshot_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_ranking_snapshots_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_ranking_snapshots_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_ranking_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_ranking_snapshots_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public_view"
@@ -901,6 +1108,7 @@ export type Database = {
           emoji: string | null
           id: string
           image_url: string | null
+          is_deleted: boolean
           is_public: boolean
           members_count: number
           name: string
@@ -913,6 +1121,7 @@ export type Database = {
           emoji?: string | null
           id?: string
           image_url?: string | null
+          is_deleted?: boolean
           is_public?: boolean
           members_count?: number
           name: string
@@ -925,6 +1134,7 @@ export type Database = {
           emoji?: string | null
           id?: string
           image_url?: string | null
+          is_deleted?: boolean
           is_public?: boolean
           members_count?: number
           name?: string
@@ -972,12 +1182,56 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          payload: Json
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       personal_records: {
         Row: {
           achieved_on: string
           created_at: string
+          description: string | null
           exercise_id: string
           id: string
+          is_featured: boolean
           media_type: string | null
           media_url: string | null
           notes: string | null
@@ -989,8 +1243,10 @@ export type Database = {
         Insert: {
           achieved_on?: string
           created_at?: string
+          description?: string | null
           exercise_id: string
           id?: string
+          is_featured?: boolean
           media_type?: string | null
           media_url?: string | null
           notes?: string | null
@@ -1002,8 +1258,10 @@ export type Database = {
         Update: {
           achieved_on?: string
           created_at?: string
+          description?: string | null
           exercise_id?: string
           id?: string
+          is_featured?: boolean
           media_type?: string | null
           media_url?: string | null
           notes?: string | null
@@ -1178,6 +1436,7 @@ export type Database = {
           created_at: string
           dark_mode: boolean
           date_of_birth: string
+          expo_push_token: string | null
           first_name: string
           followers_count: number
           following_count: number
@@ -1197,6 +1456,7 @@ export type Database = {
           created_at?: string
           dark_mode?: boolean
           date_of_birth: string
+          expo_push_token?: string | null
           first_name: string
           followers_count?: number
           following_count?: number
@@ -1216,6 +1476,7 @@ export type Database = {
           created_at?: string
           dark_mode?: boolean
           date_of_birth?: string
+          expo_push_token?: string | null
           first_name?: string
           followers_count?: number
           following_count?: number
@@ -1294,7 +1555,9 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_rest: boolean
           name: string
+          title: string | null
           updated_at: string
           user_id: string
         }
@@ -1306,7 +1569,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_rest?: boolean
           name: string
+          title?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1318,7 +1583,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_rest?: boolean
           name?: string
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1440,6 +1707,72 @@ export type Database = {
         }
         Relationships: []
       }
+      v_competition_ranking: {
+        Row: {
+          avatar_url: string | null
+          competition_id: string | null
+          position: number | null
+          total_points: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_entries_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_group_ranking_total: {
+        Row: {
+          avatar_url: string | null
+          group_id: string | null
+          position: number | null
+          total_points: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_personal_records_best: {
         Row: {
           achieved_on: string | null
@@ -1477,11 +1810,26 @@ export type Database = {
       }
     }
     Functions: {
+      bogota_now: { Args: never; Returns: string }
       can_view_full_profile: {
         Args: { p_profile_id: string }
         Returns: boolean
       }
       can_view_user_content: { Args: { p_user_id: string }; Returns: boolean }
+      close_competition: {
+        Args: { p_competition_id: string }
+        Returns: undefined
+      }
+      close_due_competitions: { Args: never; Returns: undefined }
+      count_failed_attempts: {
+        Args: {
+          p_competition_id: string
+          p_day_date: string
+          p_user_id: string
+        }
+        Returns: number
+      }
+      deprecate_pending_entries: { Args: never; Returns: undefined }
       has_role: { Args: { p_role: string }; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
       resubmit_entry: {
@@ -1495,6 +1843,7 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      today_bogota: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
