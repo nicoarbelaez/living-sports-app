@@ -35,7 +35,7 @@ console.log(`🚀 Generando tipos de Supabase para el proyecto: ${projectRef}...
 try {
   // Ejecutar el comando de la CLI de Supabase
   // Usamos el comando nativo para mayor compatibilidad
-  execSync(`npx supabase gen types typescript --project-id ${projectRef} --schema public > database.types.ts`, { 
+  execSync(`npx supabase gen types typescript --project-id ${projectRef} --schema public > types/database.types.ts`, { 
     stdio: 'inherit',
     shell: true 
   });

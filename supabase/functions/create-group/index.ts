@@ -3,7 +3,7 @@ import { jsonResponse, errorResponse } from '../_shared/response.ts';
 import { createSupabaseClient, extractBearerToken } from '../_shared/supabase-client.ts';
 import { uploadMedia } from '../_shared/cloudinary.ts';
 
-Deno.serve(async (req) => {
+export async function handler(req: Request): Promise<Response> {
   const preflight = handleCors(req);
   if (preflight) return preflight;
 
@@ -58,4 +58,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     return errorResponse(error);
   }
-});
+}
+
+Deno.serve(handler);
