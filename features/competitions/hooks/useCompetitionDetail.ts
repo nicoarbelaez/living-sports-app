@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import type { Competition, CompetitionEntry } from '@/types/competition';
@@ -19,7 +18,9 @@ export function useCompetitionDetail(id: string | undefined, currentUserId: stri
         supabase.from('competitions').select('*, exercises(name)').eq('id', id).single(),
         supabase
           .from('competition_entries')
-          .select('*, profiles!competition_entries_user_id_fkey(username, avatar_url)')
+          .select(
+            '*, profiles!competition_entries_user_id_fkey(username, avatar_url, first_name, last_name)'
+          )
           .eq('competition_id', id)
           .order('created_at', { ascending: false }),
       ]);
@@ -50,15 +51,41 @@ export function useCompetitionDetail(id: string | undefined, currentUserId: stri
       const { error } = await supabase
         .from('competition_validations')
         .insert({ entry_id: entryId, vote, validator_id: currentUserId! });
-
       if (error) throw new Error(error.message);
       fetchData();
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo votar');
+      console.error('[useCompetitionDetail] vote error:', e);
+      throw e;
     } finally {
       setVoting(null);
     }
   };
 
-  return { competition, entries, loading, voting, canSubmitToday, fetchData, handleVote };
+  const handleForceClose = async () => {
+    if (!id) return;
+    const { error } = await supabase.functions.invoke('force-close-competition', {
+      body: { competition_id: id },
+    });
+    if (error) {
+      let message = error.message;
+      try {
+        const body = await (error as any).context?.json?.();
+        if (body?.error) message = body.error;
+      } catch {}
+      console.error('[handleForceClose]', message);
+      throw new Error(message);
+    }
+    fetchData();
+  };
+
+  return {
+    competition,
+    entries,
+    loading,
+    voting,
+    canSubmitToday,
+    fetchData,
+    handleVote,
+    handleForceClose,
+  };
 }
