@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/providers/theme';
 import { useProfileSync } from '@/features/profile/hooks/useProfileSync';
 import { usePostStore } from '@/features/feed/stores/usePostStore';
+import QueryProvider from '@/providers/QueryProvider';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -92,11 +93,13 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <ThemeProvider>
-          <ScrollProvider>
-            <AuthProvider>
-              <RootLayoutContent />
-            </AuthProvider>
-          </ScrollProvider>
+          <QueryProvider>
+            <ScrollProvider>
+              <AuthProvider>
+                <RootLayoutContent />
+              </AuthProvider>
+            </ScrollProvider>
+          </QueryProvider>
         </ThemeProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
