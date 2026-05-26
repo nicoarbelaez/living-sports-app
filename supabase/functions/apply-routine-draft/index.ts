@@ -1,6 +1,6 @@
 import { handleCors } from '../_shared/cors.ts';
 import { jsonResponse, errorResponse } from '../_shared/response.ts';
-import { createSupabaseClient, extractBearerToken } from '../_shared/supabase-client.ts';
+import { authenticateUser } from '../_shared/auth.ts';
 
 interface RoutineExercise {
   exercise_id: string;
@@ -30,21 +30,19 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    const token = extractBearerToken(authHeader);
-    const supabase = createSupabaseClient(authHeader!);
+    const { userId, supabase } = await authenticateUser(authHeader, { request: req });
 
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData?.user) throw new Error('Usuario no autenticado.');
-    const userId = userData.user.id;
+    console.log('[apply-routine-draft] Auth OK, userId:', userId);
 
     const body: ApplyDraftBody = await req.json();
     const { draft_id, days } = body;
+
+    console.log('[apply-routine-draft] draft_id:', draft_id, '| días recibidos:', days?.length);
 
     if (!draft_id?.trim()) throw new Error('draft_id es requerido.');
     if (!days || !Array.isArray(days) || days.length === 0)
       throw new Error('days es requerido y no puede estar vacío.');
 
-    // Verify draft belongs to user
     const { data: draft, error: draftError } = await supabase
       .from('ai_routine_drafts')
       .select('id')
@@ -54,7 +52,8 @@ Deno.serve(async (req) => {
 
     if (draftError || !draft) throw new Error('Borrador no encontrado o no te pertenece.');
 
-    // Apply each day: upsert routine + replace exercises
+    console.log('[apply-routine-draft] Draft verificado, aplicando', days.length, 'días...');
+
     for (const day of days) {
       const { day_of_week, title, description, duration_sec, is_rest, exercises } = day;
 
@@ -113,8 +112,11 @@ Deno.serve(async (req) => {
       .update({ applied_at: new Date().toISOString() })
       .eq('id', draft_id);
 
+    console.log('[apply-routine-draft] Rutina aplicada exitosamente, draft_id:', draft_id);
+
     return jsonResponse({ message: 'Rutina aplicada exitosamente.' });
   } catch (error) {
+    console.error('[apply-routine-draft] Error:', error);
     return errorResponse(error);
   }
 });

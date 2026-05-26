@@ -33,15 +33,10 @@ export const useDeleteRoutineDay = (userId: string) => {
   });
 };
 
-export const useGenerateRoutine = () =>
-  useMutation({
-    mutationFn: (body: object) => supabase.functions.invoke('generate-routine', { body }),
-  });
-
-export const useApplyRoutineDraft = (userId: string) => {
+export const useGenerateRoutine = (userId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: object) => supabase.functions.invoke('apply-routine-draft', { body }),
+    mutationFn: (body: object) => supabase.functions.invoke('generate-routine', { body }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['routine', userId] }),
   });
 };

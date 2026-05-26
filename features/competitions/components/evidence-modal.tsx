@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Text, TouchableOpacity, View, Alert } from 'react-native';
 import { Controller } from 'react-hook-form';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Upload, Video } from 'lucide-react-native';
+import { Upload, Video, Loader } from 'lucide-react-native';
 import BottomSheetModalComponent from '@/components/ui/bottom-sheet-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ export default function EvidenceModal({
   onSuccess,
 }: EvidenceModalProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const { form, pickVideo } = useEvidenceForm();
+  const { form, pickVideo, isCompressing, compressionProgress } = useEvidenceForm();
 
   const {
     control,
@@ -50,6 +50,8 @@ export default function EvidenceModal({
     ? `${Math.floor(videoDurationMs / 60000)}:${String(Math.floor((videoDurationMs % 60000) / 1000)).padStart(2, '0')}`
     : null;
 
+  const busy = isCompressing || isPending;
+
   const handleClose = () => {
     reset();
     onClose();
@@ -69,20 +71,28 @@ export default function EvidenceModal({
       title="Subir evidencia"
       onClose={handleClose}
       bottomSheetRef={bottomSheetRef}
-      locked={isPending}
+      locked={busy}
     >
       <View className="flex-1 gap-4">
         <TouchableOpacity
           onPress={pickVideo}
-          disabled={isPending}
+          disabled={busy}
           className={`items-center justify-center rounded-2xl border-2 border-dashed py-6 ${
             errors.videoUri ? 'border-destructive bg-destructive/5' : 'border-border'
           }`}
         >
-          {videoUri ? (
+          {isCompressing ? (
+            <View className="items-center gap-1">
+              <Loader size={24} color="#9fe870" />
+              <Text className="text-foreground mt-1 text-sm font-semibold">
+                Comprimiendo... {compressionProgress}%
+              </Text>
+              <Text className="text-muted-foreground text-xs">Esto puede tardar unos segundos</Text>
+            </View>
+          ) : videoUri ? (
             <View className="items-center gap-1">
               <Video size={24} color="#22c55e" />
-              <Text className="mt-1 text-sm font-semibold text-green-600">Video seleccionado</Text>
+              <Text className="mt-1 text-sm font-semibold text-green-600">Video listo</Text>
               {durationLabel && (
                 <Text className="text-muted-foreground text-xs">Duración: {durationLabel}</Text>
               )}
@@ -115,7 +125,7 @@ export default function EvidenceModal({
                 onBlur={onBlur}
                 placeholder="Ej: 100"
                 keyboardType="decimal-pad"
-                editable={!isPending}
+                editable={!busy}
                 error={!!errors.prValue}
               />
             )}
@@ -138,7 +148,7 @@ export default function EvidenceModal({
                 placeholder="Contexto, condiciones, etc."
                 numberOfLines={2}
                 className="min-h-16"
-                editable={!isPending}
+                editable={!busy}
               />
             )}
           />
@@ -149,12 +159,14 @@ export default function EvidenceModal({
 
         <Button
           onPress={onSubmit}
-          loading={isPending}
-          disabled={isPending}
+          loading={busy}
+          disabled={busy}
           className="rounded-2xl"
           size="lg"
         >
-          <Text className="text-primary-foreground text-base font-bold">Enviar evidencia</Text>
+          <Text className="text-primary-foreground text-base font-bold">
+            {isCompressing ? `Comprimiendo ${compressionProgress}%…` : isPending ? 'Subiendo…' : 'Enviar evidencia'}
+          </Text>
         </Button>
       </View>
     </BottomSheetModalComponent>

@@ -95,6 +95,13 @@ async function uploadSingleFile(
   form.append('upload_preset', uploadPreset);
   form.append('folder', folder);
 
+  if (isVideo) {
+    // Store at 720p max with auto quality — reduces Cloudinary storage and CDN delivery size.
+    // Client already compressed before upload so this is a lightweight re-encode guardrail.
+    // form.append('eager', 'q_auto:good,vc_h264,w_1280,h_720,c_limit');
+    // form.append('eager_async', 'true'); // async: don't wait for transcode, return original URL immediately
+  }
+
   const res = await fetch(endpoint, { method: 'POST', body: form });
 
   if (!res.ok) {

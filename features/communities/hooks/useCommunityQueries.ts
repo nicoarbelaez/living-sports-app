@@ -33,7 +33,7 @@ export function useMyMemberships(userId?: string) {
         .eq('user_id', userId!)
         .eq('status', 'active');
       if (error) throw error;
-      return new Set((data ?? []).map((r) => r.group_id as string));
+      return (data ?? []).map((r) => r.group_id as string);
     },
     enabled: !!userId,
     staleTime: 30_000,

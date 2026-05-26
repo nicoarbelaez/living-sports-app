@@ -37,6 +37,14 @@ export default function VoteButtons({ entryId, canVote, onVoted }: VoteButtonsPr
     );
   }
 
+  if (voted) {
+    return (
+      <View className="items-center rounded-xl bg-muted py-3">
+        <Text className="text-sm font-semibold text-muted-foreground">✓ Ya votaste esta evidencia</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-row gap-3">
       <TouchableOpacity
@@ -51,7 +59,7 @@ export default function VoteButtons({ entryId, canVote, onVoted }: VoteButtonsPr
             isDisabled ? 'text-muted-foreground' : 'text-primary-foreground'
           }`}
         >
-          {voted ? '✓ Avalado' : '✓ Avalar'}
+          ✓ Avalar
         </Text>
       </TouchableOpacity>
 

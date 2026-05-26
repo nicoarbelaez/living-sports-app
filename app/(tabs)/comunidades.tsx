@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
 import { MotiView } from 'moti';
@@ -29,8 +29,12 @@ export default function Comunidades() {
     refetch: refetchPublic,
   } = usePublicCommunities(profile?.id ?? undefined);
 
-  const { data: joinedIds = new Set<string>(), refetch: refetchMemberships } = useMyMemberships(
+  const { data: joinedIdsData = [], refetch: refetchMemberships } = useMyMemberships(
     profile?.id ?? undefined
+  );
+  const joinedIds = useMemo(
+    () => new Set<string>(Array.isArray(joinedIdsData) ? joinedIdsData : []),
+    [joinedIdsData]
   );
   const { data: ownedCommunity, refetch: refetchOwned } = useMyOwnedCommunity(
     profile?.id ?? undefined
