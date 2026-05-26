@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { ThemeProvider } from '@/providers/theme';
 import { useProfileSync } from '@/features/profile/hooks/useProfileSync';
 import { usePostStore } from '@/features/feed/stores/usePostStore';
+import QueryProvider from '@/providers/QueryProvider';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -74,14 +75,9 @@ function RootLayoutContent() {
     <>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
-        {!session ? (
-          <Stack.Screen name="(auth)" />
-        ) : (
-          <>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </>
-        )}
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );
@@ -92,11 +88,13 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <ThemeProvider>
-          <ScrollProvider>
-            <AuthProvider>
-              <RootLayoutContent />
-            </AuthProvider>
-          </ScrollProvider>
+          <QueryProvider>
+            <ScrollProvider>
+              <AuthProvider>
+                <RootLayoutContent />
+              </AuthProvider>
+            </ScrollProvider>
+          </QueryProvider>
         </ThemeProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

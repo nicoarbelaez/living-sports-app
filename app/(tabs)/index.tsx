@@ -8,6 +8,7 @@ import PostCardSkeleton from '@/components/feed/post-card-skeleton';
 import FormPost from '@/components/feed/form-post';
 import { useNavbarScroll } from '@/hooks/use-navbar-scroll';
 import { usePostStore } from '@/features/feed/stores/usePostStore';
+import { useAuth } from '@/providers/AuthProvider';
 import type { Post } from '@/types/post';
 
 type SkeletonItem = {
@@ -20,6 +21,7 @@ type FeedItem = Post | SkeletonItem;
 export default function HomeScreen() {
   const { onScroll } = useNavbarScroll();
   const listRef = useRef<FlashListRef<FeedItem>>(null);
+  const { session } = useAuth();
 
   const posts = usePostStore((s) => s.posts);
   const isLoading = usePostStore((s) => s.isLoading);
@@ -29,8 +31,9 @@ export default function HomeScreen() {
   const prependPost = usePostStore((s) => s.prependPost);
 
   useEffect(() => {
+    if (!session) return;
     fetchPosts();
-  }, [fetchPosts]);
+  }, [session, fetchPosts]);
 
   const handlePostCreated = useCallback(
     (post: Post) => {

@@ -16,3 +16,5 @@ export function getRandomAvatarUrl(seed: string) {
   const nickname = seed.trim() || 'atleta';
   return `https://api.dicebear.com/9.x/toon-head/svg?backgroundType=gradientLinear,solid&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&seed=${encodeURIComponent(nickname)}`;
 }
+
+export { formatRelativeEs } from '@/lib/date/formatRelativeEs';

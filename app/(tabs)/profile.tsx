@@ -1,14 +1,23 @@
 import React from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { Edit2 } from 'lucide-react-native';
 import { useAuth } from '@/providers/AuthProvider';
-
+import { useProfileStore } from '@/features/profile/stores/useProfileStore';
 import { supabase } from '@/lib/supabase';
-import PostCard from '@/components/feed/post-card';
-import ExerciseModal from '@/components/profile/exercise-modal';
+import { useRoutine } from '@/features/profile/hooks/useRoutine';
+import { usePrs } from '@/features/profile/hooks/usePrs';
 import { formatRelativeTime, getRandomAvatarUrl } from '@/lib/utils';
 import { getProfileFullName } from '@/types/post';
 import type { Post, PostRow } from '@/types/post';
+import type { PersonalRecord } from '@/features/profile/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import PrBentoGrid from '@/components/profile/PrBentoGrid';
+import PrDetailDialog from '@/components/profile/PrDetailDialog';
+import WeeklyRoutineScroll from '@/components/profile/WeeklyRoutineScroll';
+import PostsGrid from '@/components/profile/PostsGrid';
+import PostFullscreenDialog from '@/components/profile/PostFullscreenDialog';
 
 const POST_SELECT = `
   id,
@@ -17,6 +26,7 @@ const POST_SELECT = `
   likes_count,
   comments_count,
   profiles (
+    id,
     username,
     first_name,
     last_name,
@@ -47,6 +57,7 @@ function rowToPost(row: PostRow): Post {
 
   return {
     id: row.id,
+    authorId: profile?.id ?? '',
     user: username,
     time: formatRelativeTime(row.created_at),
     createdAt: row.created_at,
@@ -58,320 +69,236 @@ function rowToPost(row: PostRow): Post {
   };
 }
 
-const featuredExercises = [
-  {
-    id: '1',
-    name: 'Press Banca',
-    muscle: 'Pecho',
-    image:
-      'https://www.myprotein.es/images?url=https://blogscdn.thehut.net/app/uploads/sites/450/2016/09/bench-press_1595337964_1595417256.jpg&auto=avif&width=700&fit=crop',
-    pr: '135 kg',
-    description:
-      'Ejercicio compuesto fundamental para desarrollar la fuerza y el tamaño del pecho, hombros y tríceps.',
-    type: 'Fuerza / Hipertrofia',
-  },
-  {
-    id: '2',
-    name: 'Sentadilla',
-    muscle: 'Pierna',
-    image: 'https://media.hearstapps.com/loop/coleman-ronnie-1645715649.mp4/poster.jpg',
-    pr: '350 kg',
-    description:
-      'El rey de los ejercicios de tren inferior. Trabaja cuádriceps, glúteos y fortalece toda tu zona central (core).',
-    type: 'Fuerza / Hipertrofia',
-  },
-  {
-    id: '3',
-    name: 'Curl Bíceps',
-    muscle: 'Bíceps',
-    image: 'https://intowellness.in/wp-content/uploads/2024/10/Into_Wellness_Biceps_Curl.jpg',
-    pr: '60 kg',
-    description:
-      'Ejercicio de aislamiento perfecto para maximizar el desarrollo de los bíceps y antebrazos.',
-    type: 'Aislamiento',
-  },
-];
-
 export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
   const router = useRouter();
+  const profile = useProfileStore((s) => s.profile);
+
+  const userId = user?.id ?? '';
+  const isOwner = true; // own profile tab
+
+  const { data: prs, isLoading: prsLoading, refetch: refetchPrs } = usePrs(userId);
+  const { data: routine, isLoading: routineLoading, refetch: refetchRoutine } = useRoutine(userId);
 
   const [posts, setPosts] = React.useState<Post[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [selectedExercise, setSelectedExercise] = React.useState<
-    (typeof featuredExercises)[0] | null
-  >(null);
+  const [postsLoading, setPostsLoading] = React.useState(true);
 
-  const fetchUserPosts = React.useCallback(async () => {
-    if (!user) return;
-    setIsLoading(true);
-
+  const refetchPosts = React.useCallback(async () => {
+    if (!userId) return;
+    setPostsLoading(true);
     try {
       const { data, error } = await supabase
         .from('posts')
         .select(POST_SELECT)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
-
       if (error) throw error;
-
-      const rows = (data ?? []) as PostRow[];
-      setPosts(rows.map(rowToPost));
+      setPosts((data ?? []).map((row) => rowToPost(row as PostRow)));
     } catch (err) {
-      console.error('[ProfileScreen] Error fetching posts:', err);
+      console.log('Error fetching posts:', err);
     } finally {
-      setIsLoading(false);
+      setPostsLoading(false);
     }
-  }, [user]);
+  }, [userId]);
+
+  React.useEffect(() => {
+    refetchPosts();
+  }, [userId, refetchPosts]);
+
+  const [selectedPr, setSelectedPr] = React.useState<PersonalRecord | null>(null);
+  const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
+  const [refreshing, setRefreshing] = React.useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchUserPosts();
-    }, [fetchUserPosts])
+      refetchPosts();
+    }, [refetchPosts])
   );
 
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchPrs(), refetchRoutine(), refetchPosts()]);
+    setRefreshing(false);
+  }, [refetchPrs, refetchRoutine, refetchPosts]);
+
+
+  const handleDayPress = (dayOfWeek: number) => {
+    router.push({
+      pathname: '/routine/[day]',
+      params: { day: String(dayOfWeek) },
+    });
+  };
+
   const displayName =
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.email?.split('@')[0] ||
-    'Usuario';
+    profile?.first_name || profile?.last_name
+      ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+      : user?.user_metadata?.full_name ||
+        user?.user_metadata?.name ||
+        user?.email?.split('@')[0] ||
+        'Usuario';
 
-  const avatar = user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User';
+  const avatarUrl =
+    profile?.avatar_url ||
+    user?.user_metadata?.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`;
 
-  const renderPost = ({ item }: { item: Post }) => <PostCard post={item} />;
+  const featuredPrs = (prs ?? []).filter((pr) => pr.isFeatured).slice(0, 3);
+  const allPrs = featuredPrs.length > 0 ? featuredPrs : (prs ?? []).slice(0, 3);
 
   return (
-    <View className="flex-1 bg-gray-100 dark:bg-black">
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={renderPost}
-        onRefresh={fetchUserPosts}
-        refreshing={isLoading}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: 120,
-        }}
-        ListEmptyComponent={
-          !isLoading ? (
-            <View className="mt-10 items-center py-10">
-              <Text className="text-gray-500 dark:text-gray-400">No has publicado nada aún</Text>
-            </View>
-          ) : null
-        }
-        ListHeaderComponent={
-          <View>
-            <View className="mt-6 items-center rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-900">
-              <Image
-                source={{ uri: avatar }}
-                className="h-24 w-24 rounded-full border-4 border-blue-600"
-              />
-
-              <Text className="mt-3 text-xl font-bold text-black dark:text-white">
-                {displayName}
-              </Text>
-
-              <Text className="text-xs text-blue-600">POWERLIFTER • CALI</Text>
-
-              <Text className="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
-                Sin biografía aún
-              </Text>
-            </View>
-
-            <View className="mt-6 flex-row justify-between gap-3">
-              <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
-                <Text className="text-lg font-bold text-black dark:text-white">{posts.length}</Text>
-                <Text className="text-xs text-gray-500 dark:text-gray-400">POSTS</Text>
+    <ScrollView
+      className="flex-1 bg-background"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
+      {/* ── Header ── */}
+      <View className="mx-4 mt-6 overflow-hidden rounded-3xl bg-secondary p-6">
+        <View className="items-center">
+          <TouchableOpacity
+            onPress={() => isOwner && router.push('/profile/edit-pr')}
+            activeOpacity={isOwner ? 0.8 : 1}
+            className="relative"
+          >
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{ width: 96, height: 96, borderRadius: 48 }}
+              contentFit="cover"
+            />
+            {isOwner && (
+              <View className="absolute bottom-0 right-0 rounded-full bg-primary p-1.5">
+                <Edit2 size={12} color="#0e0f0c" />
               </View>
+            )}
+          </TouchableOpacity>
 
-              <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
-                <Text className="text-lg font-bold text-black dark:text-white">10.923</Text>
-                <Text className="text-xs text-gray-500 dark:text-gray-400">SEGUIDORES</Text>
-              </View>
+          <Text className="mt-3 text-xl font-bold text-foreground">{displayName}</Text>
 
-              <View className="flex-1 items-center rounded-2xl bg-white p-4 dark:bg-zinc-900">
-                <Text className="text-lg font-bold text-black dark:text-white">312</Text>
-                <Text className="text-xs text-gray-500 dark:text-gray-400">SIGUIENDO</Text>
-              </View>
-            </View>
+          {profile?.username && (
+            <Text className="text-sm text-muted-foreground">@{profile.username}</Text>
+          )}
+        </View>
 
-            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
-              Ejercicios destacados
-            </Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
-              {featuredExercises.map((item) => (
-                <View
-                  key={item.id}
-                  className="mr-4 w-64 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900"
-                >
-                  <Image source={{ uri: item.image }} className="h-40 w-full rounded-2xl" />
-
-                  <Text className="mt-3 text-base font-bold text-black dark:text-white">
-                    {item.name}
-                  </Text>
-
-                  <Text className="text-xs text-gray-500 dark:text-gray-400">{item.muscle}</Text>
-
-                  <View className="mt-3 flex-row justify-between">
-                    <Text className="text-xs text-gray-400">PR personal</Text>
-                    <Text className="text-sm font-bold text-blue-600">{item.pr}</Text>
-                  </View>
-
-                  <TouchableOpacity onPress={() => setSelectedExercise(item)}>
-                    <View className="mt-4 items-center rounded-full bg-blue-600 py-3">
-                      <Text className="font-bold text-white">Ver ejercicio</Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-
-            <View className="mt-8 rounded-3xl bg-blue-600 p-5 shadow-lg">
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1 pr-3">
-                  <Text className="text-2xl font-extrabold text-white">Crea tu rutina con IA</Text>
-
-                  <Text className="mt-2 text-sm text-blue-100">
-                    Genera un plan personalizado según tus objetivos en segundos
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => router.push('/routine/ai-routine')}
-                activeOpacity={0.8}
-                className="mt-5 items-center rounded-full bg-white py-3"
-              >
-                <Text className="font-bold text-blue-600">✨ Crear rutina ahora</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text className="mt-8 text-lg font-bold text-black dark:text-white">
-              Rutina semanal
-            </Text>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-5">
-              {[
-                {
-                  day: 'LUN',
-                  full: 'Lunes',
-                  routine: 'Push Day',
-                  desc: 'Pecho • Tríceps • Hombro',
-                  rest: false,
-                },
-                {
-                  day: 'MAR',
-                  full: 'Martes',
-                  routine: 'Pull Day',
-                  desc: 'Espalda • Bíceps',
-                  rest: false,
-                },
-                {
-                  day: 'MIE',
-                  full: 'Miércoles',
-                  routine: 'Leg Day',
-                  desc: 'Pierna • Glúteo',
-                  rest: false,
-                },
-                {
-                  day: 'JUE',
-                  full: 'Jueves',
-                  routine: 'Push Ligero',
-                  desc: 'Técnica • Volumen',
-                  rest: false,
-                },
-                {
-                  day: 'VIE',
-                  full: 'Viernes',
-                  routine: 'Pull Intenso',
-                  desc: 'Fuerza • Espalda',
-                  rest: false,
-                },
-                {
-                  day: 'SAB',
-                  full: 'Sábado',
-                  routine: 'Pierna Pro',
-                  desc: 'Cuádriceps • Femoral',
-                  rest: false,
-                },
-                {
-                  day: 'DOM',
-                  full: 'Domingo',
-                  routine: 'Descanso',
-                  desc: 'Recuperación total',
-                  rest: true,
-                },
-              ].map((item, index) => (
-                <View
-                  key={index}
-                  className={`mr-4 w-72 rounded-3xl p-5 ${
-                    item.rest ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-white dark:bg-zinc-900'
-                  } shadow-sm`}
-                >
-                  <View className="flex-row items-center justify-between">
-                    <View>
-                      <Text className="text-xs text-gray-400">{item.full}</Text>
-                      <Text className="text-lg font-bold text-black dark:text-white">
-                        {item.day}
-                      </Text>
-                    </View>
-
-                    <View
-                      className={`rounded-full px-3 py-1 ${
-                        item.rest ? 'bg-gray-400' : 'bg-blue-600'
-                      }`}
-                    >
-                      <Text className="text-xs font-semibold text-white">
-                        {item.rest ? 'REST' : 'WORK'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View className="mt-6">
-                    <Text
-                      className={`text-xl font-bold ${
-                        item.rest ? 'text-gray-500' : 'text-black dark:text-white'
-                      }`}
-                    >
-                      {item.routine}
-                    </Text>
-
-                    <Text className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      {item.desc}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (!item.rest) {
-                        router.push({
-                          pathname: '/routine/[day]',
-                          params: { day: item.day },
-                        });
-                      }
-                    }}
-                    className={`mt-8 items-center rounded-full py-3 ${
-                      item.rest ? 'bg-gray-300 dark:bg-gray-700' : 'bg-blue-600'
-                    }`}
-                  >
-                    <Text className={`font-semibold ${item.rest ? 'text-gray-600' : 'text-white'}`}>
-                      {item.rest ? 'Descansar' : 'Ver rutina'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-
-            <Text className="mt-8 mb-4 text-lg font-bold text-black dark:text-white">Posts</Text>
+        {/* Stats row */}
+        <View className="mt-5 flex-row justify-around">
+          <View className="items-center">
+            <Text className="text-lg font-bold text-foreground">{posts?.length ?? 0}</Text>
+            <Text className="text-xs text-muted-foreground">POSTS</Text>
           </View>
-        }
-      />
+          <View className="h-full w-px bg-border" />
+          <View className="items-center">
+            <Text className="text-lg font-bold text-foreground">0</Text>
+            <Text className="text-xs text-muted-foreground">SEGUIDORES</Text>
+          </View>
+          <View className="h-full w-px bg-border" />
+          <View className="items-center">
+            <Text className="text-lg font-bold text-foreground">0</Text>
+            <Text className="text-xs text-muted-foreground">SIGUIENDO</Text>
+          </View>
+        </View>
+      </View>
 
-      {/* Exercise Details Modal */}
-      <ExerciseModal exercise={selectedExercise} onClose={() => setSelectedExercise(null)} />
-    </View>
+      {/* ── PRs Bento ── */}
+      <View className="mt-6 px-4">
+        <View className="mb-3 flex-row items-center justify-between">
+          <Text className="text-lg font-bold text-foreground">Records personales</Text>
+          {isOwner && (
+            <TouchableOpacity onPress={() => router.push('/profile/edit-pr')} activeOpacity={0.7}>
+              <Text className="text-sm font-semibold text-primary">Gestionar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {prsLoading ? (
+          <View style={{ height: 248, flexDirection: 'row', gap: 8 }}>
+            <Skeleton style={{ flex: 1, height: 248, borderRadius: 16 }} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Skeleton style={{ flex: 1, borderRadius: 16 }} />
+              <Skeleton style={{ flex: 1, borderRadius: 16 }} />
+            </View>
+          </View>
+        ) : (
+          <PrBentoGrid
+            prs={allPrs}
+            isOwner={isOwner}
+            onAddPr={() => router.push('/profile/edit-pr')}
+            onPressPr={(pr) => setSelectedPr(pr)}
+          />
+        )}
+      </View>
+
+      {/* ── Rutina semanal ── */}
+      <View className="mt-8">
+        <View className="mb-3 flex-row items-center justify-between px-4">
+          <Text className="text-lg font-bold text-foreground">Rutina semanal</Text>
+          {isOwner && (
+            <TouchableOpacity
+              onPress={() => router.push('/routine/ai-routine')}
+              activeOpacity={0.7}
+            >
+              <Text className="text-sm font-semibold text-primary">✨ IA</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {routineLoading ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} style={{ width: 240, height: 160, borderRadius: 24 }} />
+            ))}
+          </ScrollView>
+        ) : (
+          <WeeklyRoutineScroll
+            routine={routine ?? {}}
+            onDayPress={handleDayPress}
+          />
+        )}
+      </View>
+
+      {/* ── AI Routine CTA ── */}
+      {isOwner && (
+        <View className="mx-4 mt-6 rounded-3xl bg-foreground p-5">
+          <Text className="text-2xl font-extrabold text-primary">Crea tu rutina con IA</Text>
+          <Text className="mt-2 text-sm text-muted-foreground">
+            Genera un plan personalizado según tus objetivos en segundos
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/routine/ai-routine')}
+            activeOpacity={0.8}
+            className="mt-5 items-center rounded-full bg-primary py-3"
+          >
+            <Text className="font-bold text-primary-foreground">✨ Crear rutina ahora</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── Posts grid ── */}
+      <View className="mt-8">
+        <Text className="mb-4 px-4 text-lg font-bold text-foreground">Posts</Text>
+        {postsLoading ? (
+          <View className="flex-row flex-wrap px-4 gap-1">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                style={{ width: '48%', aspectRatio: 1, borderRadius: 12, marginBottom: 4 }}
+              />
+            ))}
+          </View>
+        ) : (
+          <PostsGrid
+            posts={posts ?? []}
+            onLongPress={(post) => setSelectedPost(post)}
+          />
+        )}
+      </View>
+
+      {/* ── Dialogs ── */}
+      <PrDetailDialog pr={selectedPr} onClose={() => setSelectedPr(null)} />
+      <PostFullscreenDialog post={selectedPost} onClose={() => setSelectedPost(null)} />
+    </ScrollView>
   );
 }

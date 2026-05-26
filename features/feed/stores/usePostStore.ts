@@ -13,6 +13,7 @@ const POST_SELECT = `
   likes_count,
   comments_count,
   profiles (
+    id,
     username,
     first_name,
     last_name,
@@ -43,6 +44,7 @@ function rowToPost(row: PostRow): Post {
 
   return {
     id: row.id,
+    authorId: profile?.id ?? undefined,
     user: username,
     time: formatRelativeTime(row.created_at),
     createdAt: row.created_at,
@@ -67,6 +69,8 @@ interface PostActions {
   fetchPosts: () => Promise<void>;
   fetchMorePosts: () => Promise<void>;
   prependPost: (post: Post) => void;
+  applyLike: (postId: string, liked: boolean, delta: number) => void;
+  bumpCommentCount: (postId: string, delta: number) => void;
   reset: () => void;
 }
 
@@ -149,5 +153,22 @@ export const usePostStore = create<PostState & PostActions>()((set, get) => ({
 
   prependPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
 
+  applyLike: (postId, _liked, delta) =>
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, likesCount: Math.max(0, p.likesCount + delta) } : p
+      ),
+    })),
+
+  bumpCommentCount: (postId, delta) =>
+    set((state) => ({
+      posts: state.posts.map((p) =>
+        p.id === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount + delta) } : p
+      ),
+    })),
+
   reset: () => set(initialState),
 }));
+
+export const usePostById = (postId: string): Post | undefined =>
+  usePostStore((state) => state.posts.find((p) => p.id === postId));

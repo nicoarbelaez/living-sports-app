@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
-import { Play, ThumbsUp, ThumbsDown } from 'lucide-react-native';
+import { ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import AvatarWithEmoji from '@/components/ui/avatar-with-emoji';
 import { Button } from '@/components/ui/button';
+import { VideoPlayer } from '@/components/ui/video-player';
 import type { CompetitionEntry } from '@/types/competition';
-import { useTheme } from '@/providers/theme';
+import { getFullName } from '@/features/posts/hooks/useComments';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; text: string }> = {
   pending: {
@@ -37,23 +38,25 @@ interface EntryCardProps {
 }
 
 export default function EntryCard({ entry, isOwn, isVoting, onVote }: EntryCardProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  // Default portrait (9:16) — workout videos are typically recorded vertically
+  const [aspectRatio, setAspectRatio] = useState(9 / 16);
+
   const sc = STATUS_CONFIG[entry.validationStatus] ?? STATUS_CONFIG.pending;
   const canVote = !isOwn && entry.validationStatus === 'pending' && !isVoting;
 
   return (
-    <View className="mb-4 rounded-2xl bg-white p-4 dark:bg-gray-900">
-      <View className="mb-3 flex-row items-center gap-3">
+    <View className="bg-card mb-4 overflow-hidden rounded-2xl">
+      {/* Header */}
+      <View className="flex-row items-center gap-3 px-4 pt-4 pb-3">
         <AvatarWithEmoji
-          imageUrl={entry.user?.avatarUrl}
-          fallback={entry.user?.username?.[0]?.toUpperCase() ?? '?'}
+          imageUrl={entry.user?.avatar_url}
+          fallback={getFullName(entry.user) ?? 'Usuario'}
           size="sm"
         />
         <View className="flex-1">
-          <Text className="text-sm font-semibold text-black dark:text-white">
-            {entry.user?.username ?? 'Usuario'}
-            {isOwn && <Text className="font-normal text-blue-500"> (tú)</Text>}
+          <Text className="text-foreground text-sm font-semibold">
+            {getFullName(entry.user) ?? 'Usuario'}
+            {isOwn && <Text className="text-primary font-normal"> (tú)</Text>}
           </Text>
         </View>
         <View className={`rounded-full px-2 py-0.5 ${sc.color}`}>
@@ -61,47 +64,59 @@ export default function EntryCard({ entry, isOwn, isVoting, onVote }: EntryCardP
         </View>
       </View>
 
-      <View className="mb-3 h-40 items-center justify-center overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
-        <Play size={32} color={isDark ? '#6b7280' : '#9ca3af'} />
-        <Text className="mt-1 text-xs text-gray-400">Video de evidencia</Text>
+      {/* Video — container height adapts once real aspect ratio is known */}
+      <View style={{ aspectRatio }} className="bg-muted w-full">
+        <VideoPlayer
+          uri={entry.videoUrl}
+          autoPlay={false}
+          contentFit="contain"
+          onAspectRatioChange={setAspectRatio}
+        />
       </View>
 
-      <Text className="mb-1 text-base font-bold text-black dark:text-white">
-        Valor: <Text className="text-blue-600">{entry.prValue}</Text>
-      </Text>
-      {entry.description && (
-        <Text className="mb-2 text-sm text-gray-500 dark:text-gray-400">{entry.description}</Text>
-      )}
-
-      <View className="mb-3 flex-row gap-4">
-        <Text className="text-xs text-green-600">✓ {entry.approvalsCount} aprobaciones</Text>
-        <Text className="text-xs text-red-500">✗ {entry.rejectionsCount} rechazos</Text>
+      {/* Info */}
+      <View className="gap-1 px-4 py-3">
+        <Text className="text-foreground text-base font-bold">
+          Valor: <Text className="text-primary">{entry.prValue}</Text>
+        </Text>
+        {entry.description && (
+          <Text className="text-muted-foreground text-sm">{entry.description}</Text>
+        )}
+        <View className="mt-1 flex-row gap-4">
+          <Text className="text-positive text-xs">✓ {entry.approvalsCount} aprobaciones</Text>
+          <Text className="text-destructive text-xs">✗ {entry.rejectionsCount} rechazos</Text>
+        </View>
       </View>
 
-      {canVote && (
-        <View className="flex-row gap-3">
-          <Button
-            variant="success"
-            size="sm"
-            icon={<ThumbsUp size={16} />}
-            onPress={() => onVote('approve')}
-            className="flex-1 rounded-xl py-2.5"
-          >
-            <Text className="text-sm font-semibold text-white">Aprobar</Text>
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            icon={<ThumbsDown size={16} />}
-            onPress={() => onVote('reject')}
-            className="flex-1 rounded-xl py-2.5"
-          >
-            <Text className="text-sm font-semibold text-white">Rechazar</Text>
-          </Button>
+      {/* Actions */}
+      {(canVote || isVoting) && (
+        <View className="px-4 pb-4">
+          {isVoting ? (
+            <ActivityIndicator color="#9fe870" />
+          ) : (
+            <View className="flex-row gap-3">
+              <Button
+                variant="success"
+                size="sm"
+                icon={<ThumbsUp size={16} />}
+                onPress={() => onVote('approve')}
+                className="flex-1 rounded-xl py-2.5"
+              >
+                <Text className="text-sm font-semibold text-white">Aprobar</Text>
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                icon={<ThumbsDown size={16} />}
+                onPress={() => onVote('reject')}
+                className="flex-1 rounded-xl py-2.5"
+              >
+                <Text className="text-sm font-semibold text-white">Rechazar</Text>
+              </Button>
+            </View>
+          )}
         </View>
       )}
-
-      {isVoting && <ActivityIndicator color="#3b82f6" />}
     </View>
   );
 }

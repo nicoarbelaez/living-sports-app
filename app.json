@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Living Sports ",
+    "name": "Living Sports",
     "slug": "living-sports-app",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "newArchEnabled": true,
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -26,9 +26,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "platforms": [
-      "android"
-    ],
+    "platforms": ["android"],
     "scheme": "livingsports",
     "plugins": [
       "expo-router",
@@ -43,7 +41,8 @@
       ],
       "expo-font",
       "@react-native-community/datetimepicker",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,
